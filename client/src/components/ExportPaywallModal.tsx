@@ -44,8 +44,8 @@ export const ExportPaywallModal: React.FC<DonationModalProps> = ({
     // Mark as donated in localStorage
     try { localStorage.setItem('designforge_donated', 'true'); } catch {}
     setShowThanks(true);
-    // Open donation link (placeholder — replace with real link)
-    const donationUrl = 'https://buymeacoffee.com/designforge';
+    // Open donation link
+    const donationUrl = 'https://ko-fi.com/cacc25';
     window.open(donationUrl, '_blank');
     // After brief delay, proceed with the export
     setTimeout(() => {
