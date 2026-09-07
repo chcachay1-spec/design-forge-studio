@@ -39,6 +39,12 @@ import { generateCssCode, generateTailwindClasses, generateReactJsx } from '../l
 import { LUCIDE_ICONS_LIST, STOCK_PHOTOS } from '../lib/assets-library';
 import { AutoLayoutControl } from './AutoLayoutControl';
 import { A11yContrastChecker } from './A11yContrastChecker';
+import { 
+  FONT_FAMILIES_CATALOG, 
+  FONT_CATEGORIES, 
+  TEXT_EFFECTS_PRESETS, 
+  TEXT_GRADIENTS_PRESETS 
+} from '../lib/typography-library';
 
 interface InspectorProps {
   selectedNode: DesignNode | null;
@@ -92,6 +98,11 @@ export const Inspector: React.FC<InspectorProps> = ({
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
   const [isPhotoPickerOpen, setIsPhotoPickerOpen] = useState(false);
   const [photoCategory, setPhotoCategory] = useState<'avatars' | 'products' | 'tech' | 'abstract'>('avatars');
+  const [fontCategoryFilter, setFontCategoryFilter] = useState<string>('all');
+
+  const filteredFontFamilies = fontCategoryFilter === 'all'
+    ? FONT_FAMILIES_CATALOG
+    : FONT_FAMILIES_CATALOG.filter(f => f.category === fontCategoryFilter);
 
   const filteredIcons = LUCIDE_ICONS_LIST.filter(icon => 
     icon.name.toLowerCase().includes(iconSearch.toLowerCase())
@@ -1343,37 +1354,164 @@ export const Inspector: React.FC<InspectorProps> = ({
           </div>
         </div>
 
-        {/* Professional Typography */}
+        {/* Professional Typography & Text Styles Studio */}
         <div className="space-y-3">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-            <Type className="w-3.5 h-3.5 text-blue-400" />
-            <span>Tipografía & Estilos de Letra</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-400">
+              <Type className="w-3.5 h-3.5" />
+              <span>Tipografía & Estilos de Letra</span>
+            </div>
+            <span className="text-[10px] bg-blue-500/20 text-blue-300 font-mono px-1.5 py-0.5 rounded-full">
+              32 Fuentes
+            </span>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2.5">
+            {/* Category Filter Pills */}
+            <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none text-[10px]">
+              {FONT_CATEGORIES.map(cat => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setFontCategoryFilter(cat.id)}
+                  className={`px-2 py-0.5 rounded-md whitespace-nowrap transition-colors ${
+                    fontCategoryFilter === cat.id
+                      ? 'bg-blue-600 text-white font-medium shadow-sm'
+                      : 'bg-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-850 border border-slate-800'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Font Family Selector */}
             <div className="space-y-1">
-              <label className="text-[11px] text-slate-500">Familia Tipográfica</label>
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] text-slate-400 font-medium">Familia Tipográfica</label>
+                <span className="text-[10px] text-slate-500 font-mono">
+                  {filteredFontFamilies.length} disponibles
+                </span>
+              </div>
               <select
                 value={styles.fontFamily || 'Inter'}
                 onChange={(e) => onUpdateStyle(selectedNode.id, 'fontFamily', e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500 transition-colors font-medium"
               >
-                <option value="Inter">Inter (Moderna y Limpia)</option>
-                <option value="Poppins">Poppins (Geométrica)</option>
-                <option value="Roboto">Roboto (Google / Android)</option>
-                <option value="Fira Code">Fira Code (Monospace / Código)</option>
-                <option value="Playfair Display">Playfair Display (Serif Elegante)</option>
+                {filteredFontFamilies.map(font => (
+                  <option 
+                    key={font.family} 
+                    value={font.family}
+                    style={{ fontFamily: font.family }}
+                  >
+                    {font.name} — {font.description}
+                  </option>
+                ))}
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            {/* Live Typography Preview Card */}
+            <div className="p-2 rounded-lg bg-slate-950 border border-slate-800/80 flex items-center justify-between overflow-hidden">
+              <div className="flex flex-col truncate">
+                <span className="text-[9px] text-slate-500 uppercase tracking-wider font-mono">Muestra Tipográfica</span>
+                <span 
+                  className="text-sm text-slate-200 truncate mt-0.5"
+                  style={{ 
+                    fontFamily: styles.fontFamily || 'Inter',
+                    fontWeight: styles.fontWeight || '400',
+                    fontStyle: styles.fontStyle || 'normal',
+                    textDecoration: styles.textDecoration || 'none',
+                    letterSpacing: styles.letterSpacing || 'normal',
+                    textShadow: styles.textShadow || undefined
+                  }}
+                >
+                  Aa Bb Gg 123 • {styles.fontFamily || 'Inter'}
+                </span>
+              </div>
+              <span 
+                className="text-xl px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-blue-400 font-bold shrink-0 ml-2"
+                style={{ fontFamily: styles.fontFamily || 'Inter' }}
+              >
+                Ag
+              </span>
+            </div>
+
+            {/* Quick Style Format Buttons (Bold, Italic, Underline, Strikethrough, Uppercase) */}
+            <div className="space-y-1">
+              <label className="text-[11px] text-slate-500">Estilos Rápidos de Formato</label>
+              <div className="grid grid-cols-5 gap-1.5">
+                <button
+                  type="button"
+                  title="Negrita (Bold)"
+                  onClick={() => onUpdateStyle(selectedNode.id, 'fontWeight', styles.fontWeight === '700' ? '400' : '700')}
+                  className={`py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                    styles.fontWeight === '700' || styles.fontWeight === '800' || styles.fontWeight === '900'
+                      ? 'bg-blue-600 text-white border-blue-500 shadow-sm'
+                      : 'bg-slate-900 text-slate-400 hover:text-white border-slate-800'
+                  }`}
+                >
+                  B
+                </button>
+                <button
+                  type="button"
+                  title="Cursiva (Italic)"
+                  onClick={() => onUpdateStyle(selectedNode.id, 'fontStyle', styles.fontStyle === 'italic' ? 'normal' : 'italic')}
+                  className={`py-1.5 rounded-lg text-xs italic font-serif transition-all border ${
+                    styles.fontStyle === 'italic'
+                      ? 'bg-blue-600 text-white border-blue-500 shadow-sm'
+                      : 'bg-slate-900 text-slate-400 hover:text-white border-slate-800'
+                  }`}
+                >
+                  I
+                </button>
+                <button
+                  type="button"
+                  title="Subrayado (Underline)"
+                  onClick={() => onUpdateStyle(selectedNode.id, 'textDecoration', styles.textDecoration === 'underline' ? 'none' : 'underline')}
+                  className={`py-1.5 rounded-lg text-xs underline font-medium transition-all border ${
+                    styles.textDecoration === 'underline'
+                      ? 'bg-blue-600 text-white border-blue-500 shadow-sm'
+                      : 'bg-slate-900 text-slate-400 hover:text-white border-slate-800'
+                  }`}
+                >
+                  U
+                </button>
+                <button
+                  type="button"
+                  title="Tachado (Strikethrough)"
+                  onClick={() => onUpdateStyle(selectedNode.id, 'textDecoration', styles.textDecoration === 'line-through' ? 'none' : 'line-through')}
+                  className={`py-1.5 rounded-lg text-xs line-through font-medium transition-all border ${
+                    styles.textDecoration === 'line-through'
+                      ? 'bg-blue-600 text-white border-blue-500 shadow-sm'
+                      : 'bg-slate-900 text-slate-400 hover:text-white border-slate-800'
+                  }`}
+                >
+                  S
+                </button>
+                <button
+                  type="button"
+                  title="MAYÚSCULAS"
+                  onClick={() => onUpdateStyle(selectedNode.id, 'textTransform', styles.textTransform === 'uppercase' ? 'none' : 'uppercase')}
+                  className={`py-1.5 rounded-lg text-[11px] font-mono font-bold transition-all border ${
+                    styles.textTransform === 'uppercase'
+                      ? 'bg-blue-600 text-white border-blue-500 shadow-sm'
+                      : 'bg-slate-900 text-slate-400 hover:text-white border-slate-800'
+                  }`}
+                >
+                  TT
+                </button>
+              </div>
+            </div>
+
+            {/* Typography Metrics (Size & Weight) */}
+            <div className="grid grid-cols-2 gap-2.5">
               <div className="space-y-1">
                 <label className="text-[11px] text-slate-500">Tamaño Fuente</label>
                 <input
                   type="text"
                   value={styles.fontSize || ''}
                   onChange={(e) => onUpdateStyle(selectedNode.id, 'fontSize', e.target.value)}
-                  placeholder="14px / 1.5rem"
+                  placeholder="16px / 1.25rem"
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none font-mono"
                 />
               </div>
@@ -1384,16 +1522,19 @@ export const Inspector: React.FC<InspectorProps> = ({
                   onChange={(e) => onUpdateStyle(selectedNode.id, 'fontWeight', e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none"
                 >
+                  <option value="300">Light (300)</option>
                   <option value="400">Regular (400)</option>
                   <option value="500">Medium (500)</option>
                   <option value="600">Semibold (600)</option>
                   <option value="700">Bold (700)</option>
                   <option value="800">Extrabold (800)</option>
+                  <option value="900">Black (900)</option>
                 </select>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            {/* Letter Spacing & Line Height */}
+            <div className="grid grid-cols-2 gap-2.5">
               <div className="space-y-1">
                 <label className="text-[11px] text-slate-500">Interletrado (Tracking)</label>
                 <select
@@ -1402,24 +1543,107 @@ export const Inspector: React.FC<InspectorProps> = ({
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none"
                 >
                   <option value="normal">Normal (0)</option>
-                  <option value="-0.03em">Apretado (-0.03em)</option>
-                  <option value="0.05em">Espaciado (0.05em)</option>
-                  <option value="0.1em">Muy Espaciado (0.1em)</option>
+                  <option value="-0.04em">Apretado (-0.04em)</option>
+                  <option value="0.04em">Espaciado (0.04em)</option>
+                  <option value="0.1em">Amplio (0.1em)</option>
+                  <option value="0.2em">Titular (0.2em)</option>
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-[11px] text-slate-500">Transformación</label>
+                <label className="text-[11px] text-slate-500">Interlineado (Leading)</label>
                 <select
-                  value={styles.textTransform || 'none'}
-                  onChange={(e) => onUpdateStyle(selectedNode.id, 'textTransform', e.target.value)}
+                  value={styles.lineHeight || 'normal'}
+                  onChange={(e) => onUpdateStyle(selectedNode.id, 'lineHeight', e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none"
                 >
-                  <option value="none">Normal</option>
-                  <option value="uppercase">MAYÚSCULAS</option>
-                  <option value="lowercase">minúsculas</option>
-                  <option value="capitalize">Capitalizar</option>
+                  <option value="normal">Normal (Auto)</option>
+                  <option value="1">Ajustado (1.0)</option>
+                  <option value="1.25">Compacto (1.25)</option>
+                  <option value="1.5">Estándar (1.5)</option>
+                  <option value="1.75">Relajado (1.75)</option>
+                  <option value="2">Doble (2.0)</option>
                 </select>
               </div>
+            </div>
+
+            {/* Text Alignment */}
+            <div className="space-y-1">
+              <label className="text-[11px] text-slate-500">Alineación de Texto</label>
+              <div className="grid grid-cols-4 gap-1.5">
+                {[
+                  { id: 'left', label: 'Izquierda', symbol: '⇤' },
+                  { id: 'center', label: 'Centro', symbol: '↔' },
+                  { id: 'right', label: 'Derecha', symbol: '⇥' },
+                  { id: 'justify', label: 'Justificar', symbol: '≡' }
+                ].map(align => (
+                  <button
+                    key={align.id}
+                    type="button"
+                    onClick={() => onUpdateStyle(selectedNode.id, 'textAlign', align.id)}
+                    className={`py-1 rounded-lg text-xs transition-colors border ${
+                      styles.textAlign === align.id
+                        ? 'bg-blue-600 text-white border-blue-500'
+                        : 'bg-slate-900 text-slate-400 hover:text-white border-slate-800'
+                    }`}
+                  >
+                    {align.symbol} {align.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Special Text Effects & Neon Glows */}
+            <div className="space-y-1 pt-1 border-t border-slate-800/60">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] text-slate-400 font-medium">Efecto Especial / Neón</label>
+                {styles.textShadow && (
+                  <button
+                    type="button"
+                    onClick={() => onUpdateStyle(selectedNode.id, 'textShadow', '')}
+                    className="text-[10px] text-slate-500 hover:text-rose-400 transition-colors"
+                  >
+                    Quitar efecto
+                  </button>
+                )}
+              </div>
+              <select
+                value={styles.textShadow || ''}
+                onChange={(e) => onUpdateStyle(selectedNode.id, 'textShadow', e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-cyan-300 focus:outline-none"
+              >
+                {TEXT_EFFECTS_PRESETS.map(fx => (
+                  <option key={fx.id} value={fx.cssShadow || ''}>
+                    {fx.name} — {fx.description}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Text Gradient Fill */}
+            <div className="space-y-1 pt-1 border-t border-slate-800/60">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] text-slate-400 font-medium">Degradado de Color (Texto)</label>
+                {styles.textGradient && styles.textGradient !== 'none' && (
+                  <button
+                    type="button"
+                    onClick={() => onUpdateStyle(selectedNode.id, 'textGradient', '')}
+                    className="text-[10px] text-slate-500 hover:text-rose-400 transition-colors"
+                  >
+                    Color sólido
+                  </button>
+                )}
+              </div>
+              <select
+                value={styles.textGradient || ''}
+                onChange={(e) => onUpdateStyle(selectedNode.id, 'textGradient', e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-pink-300 focus:outline-none"
+              >
+                {TEXT_GRADIENTS_PRESETS.map(grad => (
+                  <option key={grad.id} value={grad.cssGradient || ''}>
+                    {grad.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

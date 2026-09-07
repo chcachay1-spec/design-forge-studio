@@ -84,7 +84,11 @@ export interface DesignNode {
     margin?: string;
     fontSize?: string;
     fontWeight?: string;
-    fontFamily?: 'Inter' | 'Poppins' | 'Roboto' | 'Fira Code' | 'Playfair Display' | 'sans-serif';
+    fontFamily?: string;
+    fontStyle?: 'normal' | 'italic';
+    textDecoration?: 'none' | 'underline' | 'line-through' | 'overline';
+    textShadow?: string;
+    textGradient?: string;
     letterSpacing?: string;
     lineHeight?: string;
     textAlign?: 'left' | 'center' | 'right' | 'justify';

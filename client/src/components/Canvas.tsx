@@ -185,19 +185,26 @@ export const Canvas: React.FC<CanvasProps> = ({
           : `url("${node.styles.backgroundImage}")`)
       : (node.styles.backgroundGradient || undefined);
 
+    const hasTextGradient = !!node.styles.textGradient && node.styles.textGradient !== 'none';
+
     const inlineStyles: React.CSSProperties = {
       backgroundColor: node.styles.backgroundColor,
-      backgroundImage: bgImageVal,
+      backgroundImage: hasTextGradient ? node.styles.textGradient : bgImageVal,
       backgroundSize: (node.styles.backgroundSize as any) || (node.styles.backgroundImage ? 'cover' : undefined),
       backgroundPosition: (node.styles.backgroundPosition as any) || (node.styles.backgroundImage ? 'center' : undefined),
       backgroundRepeat: (node.styles.backgroundRepeat as any) || 'no-repeat',
-      color: node.styles.color,
+      WebkitBackgroundClip: hasTextGradient ? 'text' : undefined,
+      WebkitTextFillColor: hasTextGradient ? 'transparent' : undefined,
+      color: hasTextGradient ? undefined : node.styles.color,
       borderRadius: node.styles.borderRadius,
       padding: node.styles.padding,
       margin: node.styles.margin,
       fontSize: node.styles.fontSize,
       fontWeight: node.styles.fontWeight,
-      fontFamily: node.styles.fontFamily ? `'${node.styles.fontFamily}', sans-serif` : undefined,
+      fontFamily: node.styles.fontFamily ? `'${node.styles.fontFamily}', -apple-system, BlinkMacSystemFont, sans-serif` : undefined,
+      fontStyle: node.styles.fontStyle,
+      textDecoration: node.styles.textDecoration,
+      textShadow: node.styles.textShadow,
       letterSpacing: node.styles.letterSpacing,
       lineHeight: node.styles.lineHeight,
       textAlign: node.styles.textAlign,
