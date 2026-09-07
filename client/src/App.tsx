@@ -197,6 +197,40 @@ export function App() {
     }
   };
 
+  // Export Individual Element / Node as isolated PNG Asset
+  const handleExportNodePng = async (nodeId: string, nodeName: string) => {
+    const el = document.getElementById(nodeId);
+    if (!el) {
+      alert('No se encontró el elemento en el lienzo para exportar.');
+      return;
+    }
+
+    try {
+      soundEngine.playProceduralSound('chime');
+      setToastMessage(`Exportando "${nodeName}" como asset PNG...`);
+      const dataUrl = await toPng(el, {
+        quality: 0.98,
+        pixelRatio: 3, // Ultra-sharp asset capture
+        filter: (child) => {
+          const dom = child as HTMLElement;
+          if (dom.classList && dom.classList.contains('exclude-from-capture')) return false;
+          return true;
+        }
+      });
+
+      const link = document.createElement('a');
+      const sanitized = nodeName.toLowerCase().replace(/[^a-z0-9]/gi, '_');
+      link.download = `${sanitized}-asset.png`;
+      link.href = dataUrl;
+      link.click();
+      setToastMessage(`¡Asset "${nodeName}.png" exportado con éxito!`);
+      setTimeout(() => setToastMessage(null), 2500);
+    } catch (err) {
+      console.error('Error al exportar asset PNG:', err);
+      alert('Error al exportar asset PNG: ' + String(err));
+    }
+  };
+
   // Export Complete React + Vite + Tailwind Project as ZIP
   const handleExportReactProject = async () => {
     try {
@@ -443,6 +477,23 @@ export function App() {
           type: 'toggle_state',
         },
       };
+    } else if (type === 'image') {
+      defaultNode = {
+        id: newId,
+        name: 'Imagen / Asset PNG',
+        type: 'image',
+        styles: {
+          backgroundColor: '#0f172a',
+          borderRadius: '16px',
+          borderWidth: '1px',
+          borderColor: '#1e293b',
+          width: '100%',
+          height: '180px',
+        },
+        sounds: {
+          onClick: 'pop',
+        },
+      };
     } else if (type === 'avatar') {
       defaultNode = {
         id: newId,
@@ -620,6 +671,391 @@ export function App() {
           width: '100%',
         },
       };
+    } else if (type === 'icon_button') {
+      defaultNode = {
+        id: newId,
+        name: 'Botón de Icono',
+        type: 'icon_button',
+        iconName: 'Sparkles',
+        styles: {
+          backgroundColor: '#1e293b',
+          color: '#818cf8',
+          padding: '10px',
+          borderRadius: '14px',
+          borderWidth: '1px',
+          borderColor: '#334155',
+        },
+        sounds: { onClick: 'click' },
+      };
+    } else if (type === 'fab') {
+      defaultNode = {
+        id: newId,
+        name: 'FAB Flotante',
+        type: 'fab',
+        content: 'Nuevo',
+        iconName: 'Plus',
+        styles: {
+          backgroundColor: '#6366f1',
+          color: '#ffffff',
+          padding: '14px 20px',
+          borderRadius: '9999px',
+          boxShadow: '0 10px 25px rgba(99, 102, 241, 0.4)',
+        },
+        sounds: { onClick: 'pop' },
+      };
+    } else if (type === 'toggle_button') {
+      defaultNode = {
+        id: newId,
+        name: 'Botón de Alternancia',
+        type: 'toggle_button',
+        options: ['Lista', 'Cuadrícula'],
+        styles: {
+          backgroundColor: '#0f172a',
+          padding: '4px',
+          borderRadius: '12px',
+          borderWidth: '1px',
+          borderColor: '#334155',
+        },
+        sounds: { onClick: 'switch' },
+      };
+    } else if (type === 'hyperlink') {
+      defaultNode = {
+        id: newId,
+        name: 'Enlace Web',
+        type: 'hyperlink',
+        content: 'Aprender más sobre DesignForge',
+        styles: {
+          color: '#60a5fa',
+          fontSize: '13px',
+          padding: '4px 0px',
+        },
+        sounds: { onClick: 'click' },
+      };
+    } else if (type === 'textarea') {
+      defaultNode = {
+        id: newId,
+        name: 'Área de Texto',
+        type: 'textarea',
+        content: 'Descripción Detallada',
+        placeholder: 'Escribe aquí tu mensaje o especificaciones...',
+        styles: {
+          width: '100%',
+          padding: '4px 0px',
+        },
+      };
+    } else if (type === 'checkbox') {
+      defaultNode = {
+        id: newId,
+        name: 'Casilla de Verificación',
+        type: 'checkbox',
+        content: 'Recordar mis preferencias en esta sesión',
+        checked: true,
+        styles: {
+          padding: '8px 0px',
+        },
+        sounds: { onClick: 'switch' },
+      };
+    } else if (type === 'radio') {
+      defaultNode = {
+        id: newId,
+        name: 'Botón de Opción (Radio)',
+        type: 'radio',
+        content: 'Plan Anual con 20% de descuento',
+        checked: true,
+        styles: {
+          padding: '8px 0px',
+        },
+        sounds: { onClick: 'switch' },
+      };
+    } else if (type === 'select') {
+      defaultNode = {
+        id: newId,
+        name: 'Menú Desplegable',
+        type: 'select',
+        content: 'Selecciona una categoría...',
+        options: ['Tecnología', 'Diseño', 'Finanzas', 'Marketing'],
+        styles: {
+          backgroundColor: '#0f172a',
+          padding: '12px 14px',
+          borderRadius: '12px',
+          borderWidth: '1px',
+          borderColor: '#334155',
+          width: '100%',
+        },
+        sounds: { onClick: 'click' },
+      };
+    } else if (type === 'datepicker') {
+      defaultNode = {
+        id: newId,
+        name: 'Selector de Fecha y Hora',
+        type: 'datepicker',
+        content: '14 Octubre 2026 - 10:00 AM',
+        styles: {
+          backgroundColor: '#0f172a',
+          padding: '12px 14px',
+          borderRadius: '12px',
+          borderWidth: '1px',
+          borderColor: '#334155',
+          width: '100%',
+        },
+        sounds: { onClick: 'pop' },
+      };
+    } else if (type === 'colorpicker') {
+      defaultNode = {
+        id: newId,
+        name: 'Selector de Color',
+        type: 'colorpicker',
+        content: 'Color de Acento',
+        styles: {
+          backgroundColor: '#6366f1',
+          padding: '8px 12px',
+          borderRadius: '12px',
+          borderWidth: '1px',
+          borderColor: '#334155',
+          width: '100%',
+        },
+        sounds: { onClick: 'click' },
+      };
+    } else if (type === 'file_uploader') {
+      defaultNode = {
+        id: newId,
+        name: 'Cargador de Archivos',
+        type: 'file_uploader',
+        content: 'Arrastra tus archivos de diseño aquí',
+        styles: {
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          padding: '24px 16px',
+          borderRadius: '16px',
+          width: '100%',
+        },
+        sounds: { onClick: 'whoosh' },
+      };
+    } else if (type === 'chips_input') {
+      defaultNode = {
+        id: newId,
+        name: 'Campos de Fichas (Chips)',
+        type: 'chips_input',
+        options: ['UI/UX', 'Figma', 'Material Design', 'React'],
+        styles: {
+          backgroundColor: '#0f172a',
+          padding: '8px',
+          borderRadius: '12px',
+          borderWidth: '1px',
+          borderColor: '#334155',
+          width: '100%',
+        },
+        sounds: { onClick: 'pop' },
+      };
+    } else if (type === 'modal') {
+      defaultNode = {
+        id: newId,
+        name: 'Ventana Modal Dialog',
+        type: 'modal',
+        content: 'Confirmar Eliminación',
+        secondaryContent: '¿Estás seguro de que deseas eliminar este proyecto? Esta acción no se puede deshacer.',
+        styles: {
+          backgroundColor: '#0f172a',
+          padding: '18px',
+          borderRadius: '20px',
+          borderWidth: '1px',
+          borderColor: '#334155',
+          width: '100%',
+        },
+        sounds: { onClick: 'alert' },
+      };
+    } else if (type === 'sheet') {
+      defaultNode = {
+        id: newId,
+        name: 'Hoja Lateral (Sheet)',
+        type: 'sheet',
+        content: 'Filtros Avanzados',
+        secondaryContent: 'Ajusta los parámetros de búsqueda, rango de precios y categorías.',
+        styles: {
+          backgroundColor: '#1e293b',
+          padding: '16px',
+          borderRadius: '16px',
+          borderWidth: '1px',
+          borderColor: '#334155',
+          width: '100%',
+        },
+        sounds: { onClick: 'whoosh' },
+      };
+    } else if (type === 'accordion') {
+      defaultNode = {
+        id: newId,
+        name: 'Acordeón Colapsable',
+        type: 'accordion',
+        content: 'Preguntas Frecuentes: Licencias',
+        secondaryContent: 'Nuestras licencias cubren proyectos personales y comerciales de forma ilimitada.',
+        styles: {
+          backgroundColor: '#0f172a',
+          borderRadius: '14px',
+          borderWidth: '1px',
+          borderColor: '#334155',
+          width: '100%',
+        },
+        sounds: { onClick: 'switch' },
+      };
+    } else if (type === 'carousel') {
+      defaultNode = {
+        id: newId,
+        name: 'Contenedor Desplazable (Carrusel)',
+        type: 'carousel',
+        styles: {
+          padding: '8px 0px',
+          width: '100%',
+        },
+        sounds: { onClick: 'whoosh' },
+      };
+    } else if (type === 'sidebar') {
+      defaultNode = {
+        id: newId,
+        name: 'Menú Lateral (Sidebar)',
+        type: 'sidebar',
+        content: 'Navegación Principal',
+        styles: {
+          backgroundColor: '#0f172a',
+          padding: '16px 12px',
+          borderRadius: '18px',
+          borderWidth: '1px',
+          borderColor: '#1e293b',
+          width: '100%',
+        },
+        sounds: { onClick: 'pop' },
+      };
+    } else if (type === 'footer') {
+      defaultNode = {
+        id: newId,
+        name: 'Pie de Página (Footer)',
+        type: 'footer',
+        content: '© 2026 DesignForge Studio Inc. Construido con pasión para diseñadores.',
+        styles: {
+          backgroundColor: '#0b0f19',
+          padding: '20px 16px',
+          borderRadius: '14px',
+          borderWidth: '1px',
+          borderColor: '#1e293b',
+          width: '100%',
+        },
+      };
+    } else if (type === 'breadcrumbs') {
+      defaultNode = {
+        id: newId,
+        name: 'Migas de Pan (Breadcrumbs)',
+        type: 'breadcrumbs',
+        content: 'Configuración de Cuenta',
+        styles: {
+          padding: '6px 0px',
+          width: '100%',
+        },
+        sounds: { onClick: 'click' },
+      };
+    } else if (type === 'pagination') {
+      defaultNode = {
+        id: newId,
+        name: 'Control de Paginación',
+        type: 'pagination',
+        styles: {
+          padding: '8px 0px',
+          display: 'flex',
+          justifyContent: 'center',
+          width: '100%',
+        },
+        sounds: { onClick: 'click' },
+      };
+    } else if (type === 'spinner') {
+      defaultNode = {
+        id: newId,
+        name: 'Indicador de Carga (Spinner)',
+        type: 'spinner',
+        styles: {
+          display: 'flex',
+          justifyContent: 'center',
+          padding: '16px',
+          width: '100%',
+        },
+      };
+    } else if (type === 'skeleton') {
+      defaultNode = {
+        id: newId,
+        name: 'Marcador Skeleton Screen',
+        type: 'skeleton',
+        styles: {
+          width: '100%',
+          padding: '12px',
+          borderRadius: '16px',
+          borderWidth: '1px',
+          borderColor: '#1e293b',
+        },
+      };
+    } else if (type === 'toast') {
+      defaultNode = {
+        id: newId,
+        name: 'Notificación Toast',
+        type: 'toast',
+        content: 'Cambios guardados automáticamente en la nube',
+        styles: {
+          backgroundColor: '#0f172a',
+          padding: '12px 16px',
+          borderRadius: '14px',
+          borderWidth: '1px',
+          borderColor: 'rgba(16, 185, 129, 0.3)',
+          width: '100%',
+        },
+        sounds: { onClick: 'chime' },
+      };
+    } else if (type === 'banner') {
+      defaultNode = {
+        id: newId,
+        name: 'Mensaje de Línea (Banner)',
+        type: 'banner',
+        content: 'Actualización disponible: DesignForge v3.2 ya está lista para instalar.',
+        styles: {
+          width: '100%',
+        },
+        sounds: { onClick: 'bell' },
+      };
+    } else if (type === 'tooltip') {
+      defaultNode = {
+        id: newId,
+        name: 'Información Tooltip',
+        type: 'tooltip',
+        content: 'Atajo de teclado: Ctrl + Shift + P para paleta rápida',
+        styles: {
+          padding: '4px 0px',
+        },
+      };
+    } else if (type === 'table') {
+      defaultNode = {
+        id: newId,
+        name: 'Tabla de Datos',
+        type: 'table',
+        styles: {
+          backgroundColor: '#0f172a',
+          borderRadius: '14px',
+          borderWidth: '1px',
+          borderColor: '#1e293b',
+          width: '100%',
+        },
+        sounds: { onClick: 'click' },
+      };
+    } else if (type === 'media_player') {
+      defaultNode = {
+        id: newId,
+        name: 'Reproductor Multimedia',
+        type: 'media_player',
+        content: 'Demo Synth Wave UI Sound',
+        styles: {
+          backgroundColor: '#0f172a',
+          padding: '14px',
+          borderRadius: '18px',
+          borderWidth: '1px',
+          borderColor: '#1e293b',
+          width: '100%',
+        },
+        sounds: { onClick: 'pop' },
+      };
+
     } else if (type === 'vector') {
       defaultNode = {
         id: newId,
@@ -1485,6 +1921,7 @@ export function App() {
           onOpenAnimationStudio={() => setIsAnimationStudioOpen(true)}
           onOpenSoundLab={() => setIsSoundLabOpen(true)}
           onOpenVectorStudio={() => setIsVectorStudioOpen(true)}
+          onExportNodePng={handleExportNodePng}
         />
 
         {/* Slide-in Sound Lab */}

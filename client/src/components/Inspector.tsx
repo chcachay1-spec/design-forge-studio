@@ -31,7 +31,9 @@ import {
   Wand2,
   Image as ImageIcon,
   Smile,
-  PenTool
+  PenTool,
+  Upload,
+  Camera
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import type { DesignNode, ScreenDefinition, CustomAnimationDefinition } from '../lib/types';
@@ -53,6 +55,7 @@ interface InspectorProps {
   onOpenAnimationStudio?: () => void;
   onOpenSoundLab?: () => void;
   onOpenVectorStudio?: () => void;
+  onExportNodePng?: (nodeId: string, nodeName: string) => void;
 }
 
 export const Inspector: React.FC<InspectorProps> = ({
@@ -69,6 +72,7 @@ export const Inspector: React.FC<InspectorProps> = ({
   onOpenAnimationStudio,
   onOpenSoundLab,
   onOpenVectorStudio,
+  onExportNodePng,
 }) => {
   if (!selectedNode) {
     return (
@@ -129,8 +133,17 @@ export const Inspector: React.FC<InspectorProps> = ({
           </h2>
         </div>
         
-        {/* Action Controls: Delete */}
+        {/* Action Controls: Export PNG & Delete */}
         <div className="flex items-center gap-1">
+          {onExportNodePng && (
+            <button
+              onClick={() => onExportNodePng(selectedNode.id, selectedNode.name)}
+              className="p-1 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-md transition-colors"
+              title="Exportar este elemento como asset PNG aislado"
+            >
+              <Camera className="w-3.5 h-3.5" />
+            </button>
+          )}
           {selectedNode.id !== 'app-root' && selectedNode.id !== 'app-root-details' && (
             <button
               onClick={() => onDeleteNode(selectedNode.id)}
@@ -419,17 +432,41 @@ export const Inspector: React.FC<InspectorProps> = ({
               </button>
             </div>
 
-            {/* Custom URL input */}
-            <input
-              type="text"
-              placeholder="URL de imagen externa..."
-              value={selectedNode.type === 'avatar' ? (selectedNode.avatarUrl || '') : (selectedNode.imageUrl || '')}
-              onChange={(e) => {
-                const key = selectedNode.type === 'avatar' ? 'avatarUrl' : 'imageUrl';
-                onUpdateProperty?.(selectedNode.id, key, e.target.value);
-              }}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none font-mono"
-            />
+            {/* Custom URL or Local File Upload */}
+            <div className="space-y-1">
+              <input
+                type="text"
+                placeholder="URL de imagen externa..."
+                value={selectedNode.type === 'avatar' ? (selectedNode.avatarUrl || '') : (selectedNode.imageUrl || '')}
+                onChange={(e) => {
+                  const key = selectedNode.type === 'avatar' ? 'avatarUrl' : 'imageUrl';
+                  onUpdateProperty?.(selectedNode.id, key, e.target.value);
+                }}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none font-mono"
+              />
+              <label className="w-full py-1.5 px-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 rounded-lg text-slate-300 hover:text-white text-[10px] font-medium flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
+                <Upload className="w-3 h-3 text-indigo-400" />
+                <span>Subir Asset PNG / JPG Local</span>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                      const dataUrl = event.target?.result as string;
+                      const key = selectedNode.type === 'avatar' ? 'avatarUrl' : 'imageUrl';
+                      onUpdateProperty?.(selectedNode.id, key, dataUrl);
+                      soundEngine.playProceduralSound('chime');
+                    };
+                    reader.readAsDataURL(file);
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+            </div>
 
             {/* Curated Unsplash Gallery */}
             {isPhotoPickerOpen && (

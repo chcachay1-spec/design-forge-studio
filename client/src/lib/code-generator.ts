@@ -76,16 +76,29 @@ export function generateTailwindClasses(node: DesignNode): string {
 
 export function generateReactJsx(node: DesignNode): string {
   const tailwind = generateTailwindClasses(node);
-  const tag = node.type === 'button' ? 'button' : node.type === 'input' ? 'input' : 'div';
   const tagContent = node.content || '';
 
   if (node.type === 'input') {
     return '<input\n  type="text"\n  placeholder="' + (node.placeholder || 'Escribe aquí...') + '"\n  className="' + tailwind + '"\n/>';
   }
 
-  if (node.type === 'button') {
+  if (node.type === 'textarea') {
+    return '<textarea\n  placeholder="' + (node.placeholder || 'Escribe...') + '"\n  rows={3}\n  className="' + tailwind + '"\n/>';
+  }
+
+  if (node.type === 'button' || node.type === 'fab' || node.type === 'icon_button') {
     return '<button\n  className="' + tailwind + '"\n>\n  ' + (tagContent || 'Botón') + '\n</button>';
   }
+
+  if (node.type === 'image') {
+    return '<img\n  src="' + (node.imageUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800') + '"\n  alt="' + node.name + '"\n  className="' + tailwind + '"\n/>';
+  }
+
+  if (node.type === 'hyperlink') {
+    return '<a\n  href="#' + node.id + '"\n  className="' + tailwind + '"\n>\n  ' + (tagContent || 'Enlace') + '\n</a>';
+  }
+
+  const tag = node.type === 'navbar' ? 'header' : node.type === 'tabbar' || node.type === 'breadcrumbs' ? 'nav' : node.type === 'sidebar' ? 'aside' : node.type === 'footer' ? 'footer' : 'div';
 
   const childJsx = node.children && node.children.length > 0
     ? '\n' + node.children.map(c => '    ' + generateReactJsx(c)).join('\n') + '\n'

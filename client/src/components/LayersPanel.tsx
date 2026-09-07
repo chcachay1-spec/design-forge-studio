@@ -19,7 +19,30 @@ import {
   SplitSquareVertical,
   Minus,
   Component,
-  PenTool
+  PenTool,
+  CheckSquare,
+  CircleDot,
+  Calendar,
+  Pipette,
+  UploadCloud,
+  Tag,
+  AppWindow,
+  PanelRightOpen,
+  ChevronsUpDown,
+  GalleryHorizontalEnd,
+  PanelLeft,
+  Footprints,
+  Compass,
+  ListOrdered,
+  RotateCw,
+  BoxSelect,
+  Bell,
+  AlertTriangle,
+  HelpCircle,
+  Table,
+  PlaySquare,
+  Link,
+  PlusCircle
 } from 'lucide-react';
 import type { DesignNode } from '../lib/types';
 import { soundEngine } from '../lib/audio-engine';
@@ -36,6 +59,8 @@ interface LayersPanelProps {
   onInstantiateMaster?: (master: DesignNode) => void;
 }
 
+type ComponentCategory = 'action' | 'forms' | 'containers' | 'nav' | 'feedback' | 'media' | 'masters';
+
 export const LayersPanel: React.FC<LayersPanelProps> = ({
   nodes,
   selectedNodeId,
@@ -50,28 +75,68 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
   const [dropPosition, setDropPosition] = useState<'before' | 'after' | 'inside'>('after');
-  const [activeTab, setActiveTab] = useState<'all' | 'mobile' | 'data' | 'components'>('all');
+  const [activeCategory, setActiveCategory] = useState<ComponentCategory>('action');
 
   const getNodeIcon = (type: DesignNode['type']) => {
     switch (type) {
       case 'button':
         return <MousePointerClick className="w-3.5 h-3.5 text-indigo-400" />;
+      case 'icon_button':
+        return <PlusCircle className="w-3.5 h-3.5 text-indigo-400" />;
+      case 'fab':
+        return <PlusCircle className="w-3.5 h-3.5 text-amber-400" />;
+      case 'toggle_button':
+        return <SplitSquareVertical className="w-3.5 h-3.5 text-indigo-400" />;
+      case 'hyperlink':
+        return <Link className="w-3.5 h-3.5 text-blue-400" />;
       case 'text':
         return <Type className="w-3.5 h-3.5 text-blue-400" />;
       case 'card':
         return <Square className="w-3.5 h-3.5 text-emerald-400" />;
       case 'input':
         return <TextCursorInput className="w-3.5 h-3.5 text-amber-400" />;
+      case 'textarea':
+        return <TextCursorInput className="w-3.5 h-3.5 text-amber-500" />;
+      case 'checkbox':
+        return <CheckSquare className="w-3.5 h-3.5 text-indigo-400" />;
+      case 'radio':
+        return <CircleDot className="w-3.5 h-3.5 text-indigo-400" />;
+      case 'select':
+        return <ChevronsUpDown className="w-3.5 h-3.5 text-indigo-400" />;
+      case 'datepicker':
+        return <Calendar className="w-3.5 h-3.5 text-indigo-400" />;
+      case 'colorpicker':
+        return <Pipette className="w-3.5 h-3.5 text-pink-400" />;
+      case 'file_uploader':
+        return <UploadCloud className="w-3.5 h-3.5 text-emerald-400" />;
+      case 'chips_input':
+        return <Tag className="w-3.5 h-3.5 text-cyan-400" />;
       case 'switch':
         return <ToggleLeft className="w-3.5 h-3.5 text-cyan-400" />;
       case 'avatar':
         return <UserCircle className="w-3.5 h-3.5 text-purple-400" />;
       case 'badge':
         return <span className="w-2 h-2 rounded-full bg-pink-400" />;
+      case 'modal':
+        return <AppWindow className="w-3.5 h-3.5 text-purple-400" />;
+      case 'sheet':
+        return <PanelRightOpen className="w-3.5 h-3.5 text-teal-400" />;
+      case 'accordion':
+        return <ChevronsUpDown className="w-3.5 h-3.5 text-amber-400" />;
+      case 'carousel':
+        return <GalleryHorizontalEnd className="w-3.5 h-3.5 text-pink-400" />;
       case 'navbar':
         return <Smartphone className="w-3.5 h-3.5 text-indigo-400" />;
       case 'tabbar':
         return <Layers className="w-3.5 h-3.5 text-pink-400" />;
+      case 'sidebar':
+        return <PanelLeft className="w-3.5 h-3.5 text-indigo-400" />;
+      case 'footer':
+        return <Footprints className="w-3.5 h-3.5 text-slate-400" />;
+      case 'breadcrumbs':
+        return <Compass className="w-3.5 h-3.5 text-blue-400" />;
+      case 'pagination':
+        return <ListOrdered className="w-3.5 h-3.5 text-indigo-400" />;
       case 'searchbar':
         return <Search className="w-3.5 h-3.5 text-sky-400" />;
       case 'slider':
@@ -82,6 +147,20 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
         return <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />;
       case 'progress':
         return <BarChart3 className="w-3.5 h-3.5 text-violet-400" />;
+      case 'spinner':
+        return <RotateCw className="w-3.5 h-3.5 text-indigo-400 animate-spin" />;
+      case 'skeleton':
+        return <BoxSelect className="w-3.5 h-3.5 text-slate-500" />;
+      case 'toast':
+        return <Bell className="w-3.5 h-3.5 text-emerald-400" />;
+      case 'banner':
+        return <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />;
+      case 'tooltip':
+        return <HelpCircle className="w-3.5 h-3.5 text-sky-400" />;
+      case 'table':
+        return <Table className="w-3.5 h-3.5 text-indigo-400" />;
+      case 'media_player':
+        return <PlaySquare className="w-3.5 h-3.5 text-rose-400" />;
       case 'divider':
         return <Minus className="w-3.5 h-3.5 text-slate-500" />;
       case 'vector':
@@ -233,55 +312,140 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
     );
   };
 
+  const PALETTE_CATEGORIES: Record<Exclude<ComponentCategory, 'masters'>, Array<{ type: DesignNode['type']; label: string; icon: React.ReactNode }>> = {
+    action: [
+      { type: 'button', label: 'Botón Estándar', icon: <MousePointerClick className="w-3.5 h-3.5 text-indigo-400" /> },
+      { type: 'icon_button', label: 'Botón de Icono', icon: <PlusCircle className="w-3.5 h-3.5 text-indigo-400" /> },
+      { type: 'fab', label: 'FAB Flotante', icon: <PlusCircle className="w-3.5 h-3.5 text-amber-400" /> },
+      { type: 'toggle_button', label: 'Toggle Group', icon: <SplitSquareVertical className="w-3.5 h-3.5 text-indigo-400" /> },
+      { type: 'hyperlink', label: 'Enlace Web', icon: <Link className="w-3.5 h-3.5 text-blue-400" /> },
+    ],
+    forms: [
+      { type: 'input', label: 'Input de Texto', icon: <TextCursorInput className="w-3.5 h-3.5 text-amber-400" /> },
+      { type: 'textarea', label: 'Área de Texto', icon: <TextCursorInput className="w-3.5 h-3.5 text-amber-500" /> },
+      { type: 'checkbox', label: 'Checkbox', icon: <CheckSquare className="w-3.5 h-3.5 text-indigo-400" /> },
+      { type: 'radio', label: 'Radio Button', icon: <CircleDot className="w-3.5 h-3.5 text-indigo-400" /> },
+      { type: 'switch', label: 'Switch Toggle', icon: <ToggleLeft className="w-3.5 h-3.5 text-cyan-400" /> },
+      { type: 'select', label: 'Menú Dropdown', icon: <ChevronsUpDown className="w-3.5 h-3.5 text-indigo-400" /> },
+      { type: 'slider', label: 'Slider Rango', icon: <Sliders className="w-3.5 h-3.5 text-amber-400" /> },
+      { type: 'datepicker', label: 'Selector Fecha', icon: <Calendar className="w-3.5 h-3.5 text-indigo-400" /> },
+      { type: 'colorpicker', label: 'Selector Color', icon: <Pipette className="w-3.5 h-3.5 text-pink-400" /> },
+      { type: 'file_uploader', label: 'Cargador Files', icon: <UploadCloud className="w-3.5 h-3.5 text-emerald-400" /> },
+      { type: 'chips_input', label: 'Chips Tags', icon: <Tag className="w-3.5 h-3.5 text-cyan-400" /> },
+    ],
+    containers: [
+      { type: 'card', label: 'Tarjeta Card', icon: <Square className="w-3.5 h-3.5 text-emerald-400" /> },
+      { type: 'modal', label: 'Ventana Modal', icon: <AppWindow className="w-3.5 h-3.5 text-purple-400" /> },
+      { type: 'sheet', label: 'Side Sheet', icon: <PanelRightOpen className="w-3.5 h-3.5 text-teal-400" /> },
+      { type: 'accordion', label: 'Acordeón', icon: <ChevronsUpDown className="w-3.5 h-3.5 text-amber-400" /> },
+      { type: 'segmented', label: 'Segmented Tabs', icon: <SplitSquareVertical className="w-3.5 h-3.5 text-teal-400" /> },
+      { type: 'carousel', label: 'Carrusel Slider', icon: <GalleryHorizontalEnd className="w-3.5 h-3.5 text-pink-400" /> },
+      { type: 'divider', label: 'Separador Línea', icon: <Minus className="w-3.5 h-3.5 text-slate-500" /> },
+    ],
+    nav: [
+      { type: 'navbar', label: 'Header / Navbar', icon: <Smartphone className="w-3.5 h-3.5 text-indigo-400" /> },
+      { type: 'tabbar', label: 'TabBar Inferior', icon: <Layers className="w-3.5 h-3.5 text-pink-400" /> },
+      { type: 'sidebar', label: 'Menú Sidebar', icon: <PanelLeft className="w-3.5 h-3.5 text-indigo-400" /> },
+      { type: 'breadcrumbs', label: 'Migas de Pan', icon: <Compass className="w-3.5 h-3.5 text-blue-400" /> },
+      { type: 'pagination', label: 'Paginación', icon: <ListOrdered className="w-3.5 h-3.5 text-indigo-400" /> },
+      { type: 'footer', label: 'Pie de Página', icon: <Footprints className="w-3.5 h-3.5 text-slate-400" /> },
+      { type: 'searchbar', label: 'Buscador', icon: <Search className="w-3.5 h-3.5 text-sky-400" /> },
+    ],
+    feedback: [
+      { type: 'spinner', label: 'Spinner Carga', icon: <RotateCw className="w-3.5 h-3.5 text-indigo-400 animate-spin" /> },
+      { type: 'progress', label: 'Barra Progreso', icon: <BarChart3 className="w-3.5 h-3.5 text-violet-400" /> },
+      { type: 'skeleton', label: 'Skeleton Shimmer', icon: <BoxSelect className="w-3.5 h-3.5 text-slate-500" /> },
+      { type: 'toast', label: 'Toast Alerta', icon: <Bell className="w-3.5 h-3.5 text-emerald-400" /> },
+      { type: 'banner', label: 'Banner Mensaje', icon: <AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> },
+      { type: 'badge', label: 'Insignia Badge', icon: <span className="w-2 h-2 rounded-full bg-pink-400" /> },
+      { type: 'metric', label: 'Métrica KPI', icon: <TrendingUp className="w-3.5 h-3.5 text-emerald-400" /> },
+    ],
+    media: [
+      { type: 'image', label: 'Imagen / Asset PNG', icon: <UploadCloud className="w-3.5 h-3.5 text-pink-400" /> },
+      { type: 'avatar', label: 'Avatar Perfil', icon: <UserCircle className="w-3.5 h-3.5 text-purple-400" /> },
+      { type: 'table', label: 'Tabla de Datos', icon: <Table className="w-3.5 h-3.5 text-indigo-400" /> },
+      { type: 'media_player', label: 'Media Player', icon: <PlaySquare className="w-3.5 h-3.5 text-rose-400" /> },
+      { type: 'tooltip', label: 'Tooltip Ayuda', icon: <HelpCircle className="w-3.5 h-3.5 text-sky-400" /> },
+      { type: 'vector', label: 'Vector Art', icon: <PenTool className="w-3.5 h-3.5 text-indigo-400" /> },
+      { type: 'text', label: 'Texto Tipográfico', icon: <Type className="w-3.5 h-3.5 text-blue-400" /> },
+    ]
+  };
+
   return (
     <aside className="w-64 bg-slate-950/80 backdrop-blur-md border-r border-slate-800/60 flex flex-col h-full select-none text-slate-300">
       {/* Top Header */}
       <div className="h-10 px-3 border-b border-slate-800/50 flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
           <FolderTree className="w-3 h-3 text-indigo-400" />
-          <span>Capas</span>
+          <span>Capas & Componentes</span>
         </div>
       </div>
 
-      {/* Pro Component Palette (Drag & Drop) with Categories */}
+      {/* Design System Category Selector (Material & Carbon Standard) */}
       <div className="p-2 border-b border-slate-800/50 bg-slate-900/20 space-y-1.5">
         <div className="flex items-center justify-between text-[10px] font-medium text-slate-500 uppercase tracking-wider px-1">
-          <span>Componentes</span>
-          <span className="text-[9px] text-slate-500 lowercase">arrastra al lienzo</span>
+          <span>Sistemas de Diseño</span>
+          <span className="text-[9px] text-indigo-400 font-mono">40+ Elementos</span>
         </div>
 
-        {/* Category Filter Tabs */}
-        <div className="flex items-center bg-slate-900/60 p-0.5 rounded-lg border border-slate-800/50 text-[10px]">
+        {/* Categories Bar */}
+        <div className="grid grid-cols-4 gap-0.5 bg-slate-900/60 p-0.5 rounded-lg border border-slate-800/50 text-[10px]">
           <button
-            onClick={() => setActiveTab('all')}
-            className={`flex-1 py-0.5 rounded-md font-medium transition-all ${activeTab === 'all' ? 'bg-slate-800 text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'}`}
+            onClick={() => setActiveCategory('action')}
+            className={`py-1 rounded-md font-medium text-center transition-all ${activeCategory === 'action' ? 'bg-slate-800 text-white shadow-xs font-semibold' : 'text-slate-400 hover:text-slate-200'}`}
+            title="1. Elementos de Acción y Comando"
           >
-            Todos
+            Acción
           </button>
           <button
-            onClick={() => setActiveTab('mobile')}
-            className={`flex-1 py-0.5 rounded-md font-medium transition-all ${activeTab === 'mobile' ? 'bg-slate-800 text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'}`}
+            onClick={() => setActiveCategory('forms')}
+            className={`py-1 rounded-md font-medium text-center transition-all ${activeCategory === 'forms' ? 'bg-slate-800 text-white shadow-xs font-semibold' : 'text-slate-400 hover:text-slate-200'}`}
+            title="2. Formularios y Selección"
           >
-            Móvil
+            Inputs
           </button>
           <button
-            onClick={() => setActiveTab('data')}
-            className={`flex-1 py-0.5 rounded-md font-medium transition-all ${activeTab === 'data' ? 'bg-slate-800 text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'}`}
+            onClick={() => setActiveCategory('containers')}
+            className={`py-1 rounded-md font-medium text-center transition-all ${activeCategory === 'containers' ? 'bg-slate-800 text-white shadow-xs font-semibold' : 'text-slate-400 hover:text-slate-200'}`}
+            title="3. Contenedores y Estructura"
           >
-            Datos
+            Cajas
           </button>
           <button
-            onClick={() => setActiveTab('components')}
-            className={`flex-1 py-0.5 rounded-md font-medium transition-all ${activeTab === 'components' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'}`}
-            title="Componentes Maestros del Proyecto"
+            onClick={() => setActiveCategory('nav')}
+            className={`py-1 rounded-md font-medium text-center transition-all ${activeCategory === 'nav' ? 'bg-slate-800 text-white shadow-xs font-semibold' : 'text-slate-400 hover:text-slate-200'}`}
+            title="4. Navegación y Ubicación"
+          >
+            Nav
+          </button>
+        </div>
+        <div className="grid grid-cols-3 gap-0.5 bg-slate-900/60 p-0.5 rounded-lg border border-slate-800/50 text-[10px]">
+          <button
+            onClick={() => setActiveCategory('feedback')}
+            className={`py-1 rounded-md font-medium text-center transition-all ${activeCategory === 'feedback' ? 'bg-slate-800 text-white shadow-xs font-semibold' : 'text-slate-400 hover:text-slate-200'}`}
+            title="5. Estado, Alerta y Feedback"
+          >
+            Feedback
+          </button>
+          <button
+            onClick={() => setActiveCategory('media')}
+            className={`py-1 rounded-md font-medium text-center transition-all ${activeCategory === 'media' ? 'bg-slate-800 text-white shadow-xs font-semibold' : 'text-slate-400 hover:text-slate-200'}`}
+            title="6. Informativos y Multimedia"
+          >
+            Media
+          </button>
+          <button
+            onClick={() => setActiveCategory('masters')}
+            className={`py-1 rounded-md font-medium text-center transition-all ${activeCategory === 'masters' ? 'bg-purple-600 text-white shadow-xs font-semibold' : 'text-purple-400 hover:text-white'}`}
+            title="Componentes Maestros Reutilizables"
           >
             ❖ Maestros
           </button>
         </div>
 
         {/* Master Components Library Tab */}
-        {activeTab === 'components' && (
-          <div className="space-y-1.5 max-h-48 overflow-y-auto pr-0.5">
+        {activeCategory === 'masters' && (
+          <div className="space-y-1.5 max-h-52 overflow-y-auto pr-0.5">
             {masterComponents.length > 0 ? (
               masterComponents.map((master) => (
                 <div
@@ -306,209 +470,30 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
               ))
             ) : (
               <div className="p-3 text-center text-slate-500 text-[11px]">
-                No hay componentes maestros. Pasa el cursor sobre una capa y haz clic en el icono ❖ para crear uno.
+                No hay componentes maestros. Pasa el cursor sobre una capa y haz clic en ❖ para guardarla como componente.
               </div>
             )}
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-1 max-h-48 overflow-y-auto pr-0.5">
-          {/* Mobile TabBar */}
-          {(activeTab === 'all' || activeTab === 'mobile') && (
-            <div
-              draggable
-              onDragStart={(e) => handlePaletteDragStart(e, 'tabbar')}
-              onClick={() => onAddNode('tabbar', selectedNodeId || undefined)}
-              className="flex items-center gap-1.5 p-1.5 bg-slate-900 hover:bg-pink-600/20 text-slate-300 hover:text-white rounded-lg border border-slate-800 hover:border-pink-500/40 cursor-grab active:cursor-grabbing transition-all text-[11px]"
-            >
-              <Layers className="w-3.5 h-3.5 text-pink-400" />
-              <span className="font-medium truncate">TabBar Inferior</span>
-            </div>
-          )}
-
-          {/* Mobile NavBar */}
-          {(activeTab === 'all' || activeTab === 'mobile') && (
-            <div
-              draggable
-              onDragStart={(e) => handlePaletteDragStart(e, 'navbar')}
-              onClick={() => onAddNode('navbar', selectedNodeId || undefined)}
-              className="flex items-center gap-1.5 p-1.5 bg-slate-900 hover:bg-indigo-600/20 text-slate-300 hover:text-white rounded-lg border border-slate-800 hover:border-indigo-500/40 cursor-grab active:cursor-grabbing transition-all text-[11px]"
-            >
-              <Smartphone className="w-3.5 h-3.5 text-indigo-400" />
-              <span className="font-medium truncate">NavBar Cabecera</span>
-            </div>
-          )}
-
-          {/* SearchBar */}
-          {(activeTab === 'all' || activeTab === 'mobile') && (
-            <div
-              draggable
-              onDragStart={(e) => handlePaletteDragStart(e, 'searchbar')}
-              onClick={() => onAddNode('searchbar', selectedNodeId || undefined)}
-              className="flex items-center gap-1.5 p-1.5 bg-slate-900 hover:bg-sky-600/20 text-slate-300 hover:text-white rounded-lg border border-slate-800 hover:border-sky-500/40 cursor-grab active:cursor-grabbing transition-all text-[11px]"
-            >
-              <Search className="w-3.5 h-3.5 text-sky-400" />
-              <span className="font-medium truncate">Buscador</span>
-            </div>
-          )}
-
-          {/* Segmented Control */}
-          {(activeTab === 'all' || activeTab === 'mobile') && (
-            <div
-              draggable
-              onDragStart={(e) => handlePaletteDragStart(e, 'segmented')}
-              onClick={() => onAddNode('segmented', selectedNodeId || undefined)}
-              className="flex items-center gap-1.5 p-1.5 bg-slate-900 hover:bg-teal-600/20 text-slate-300 hover:text-white rounded-lg border border-slate-800 hover:border-teal-500/40 cursor-grab active:cursor-grabbing transition-all text-[11px]"
-            >
-              <SplitSquareVertical className="w-3.5 h-3.5 text-teal-400" />
-              <span className="font-medium truncate">Segmented Tabs</span>
-            </div>
-          )}
-
-          {/* Metric KPI Card */}
-          {(activeTab === 'all' || activeTab === 'data') && (
-            <div
-              draggable
-              onDragStart={(e) => handlePaletteDragStart(e, 'metric')}
-              onClick={() => onAddNode('metric', selectedNodeId || undefined)}
-              className="flex items-center gap-1.5 p-1.5 bg-slate-900 hover:bg-emerald-600/20 text-slate-300 hover:text-white rounded-lg border border-slate-800 hover:border-emerald-500/40 cursor-grab active:cursor-grabbing transition-all text-[11px]"
-            >
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="font-medium truncate">Card Métrica / KPI</span>
-            </div>
-          )}
-
-          {/* Progress Bar */}
-          {(activeTab === 'all' || activeTab === 'data') && (
-            <div
-              draggable
-              onDragStart={(e) => handlePaletteDragStart(e, 'progress')}
-              onClick={() => onAddNode('progress', selectedNodeId || undefined)}
-              className="flex items-center gap-1.5 p-1.5 bg-slate-900 hover:bg-violet-600/20 text-slate-300 hover:text-white rounded-lg border border-slate-800 hover:border-violet-500/40 cursor-grab active:cursor-grabbing transition-all text-[11px]"
-            >
-              <BarChart3 className="w-3.5 h-3.5 text-violet-400" />
-              <span className="font-medium truncate">Barra Progreso</span>
-            </div>
-          )}
-
-          {/* Slider Range */}
-          {(activeTab === 'all' || activeTab === 'data') && (
-            <div
-              draggable
-              onDragStart={(e) => handlePaletteDragStart(e, 'slider')}
-              onClick={() => onAddNode('slider', selectedNodeId || undefined)}
-              className="flex items-center gap-1.5 p-1.5 bg-slate-900 hover:bg-amber-600/20 text-slate-300 hover:text-white rounded-lg border border-slate-800 hover:border-amber-500/40 cursor-grab active:cursor-grabbing transition-all text-[11px]"
-            >
-              <Sliders className="w-3.5 h-3.5 text-amber-400" />
-              <span className="font-medium truncate">Slider Rango</span>
-            </div>
-          )}
-
-          {/* Divider */}
-          {(activeTab === 'all' || activeTab === 'data') && (
-            <div
-              draggable
-              onDragStart={(e) => handlePaletteDragStart(e, 'divider')}
-              onClick={() => onAddNode('divider', selectedNodeId || undefined)}
-              className="flex items-center gap-1.5 p-1.5 bg-slate-900 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-800 hover:border-slate-600 cursor-grab active:cursor-grabbing transition-all text-[11px]"
-            >
-              <Minus className="w-3.5 h-3.5 text-slate-400" />
-              <span className="font-medium truncate">Separador</span>
-            </div>
-          )}
-
-          {/* Vector Art (Figma/Illustrator) */}
-          {(activeTab === 'all' || activeTab === 'data') && (
-            <div
-              draggable
-              onDragStart={(e) => handlePaletteDragStart(e, 'vector')}
-              onClick={() => onAddNode('vector', selectedNodeId || undefined)}
-              className="flex items-center gap-1.5 p-1.5 bg-slate-900 hover:bg-indigo-600/20 text-slate-300 hover:text-white rounded-lg border border-slate-800 hover:border-indigo-500/40 cursor-grab active:cursor-grabbing transition-all text-[11px]"
-              title="Forma Vectorial Dinámica"
-            >
-              <PenTool className="w-3.5 h-3.5 text-indigo-400" />
-              <span className="font-medium truncate">Vector Art</span>
-            </div>
-          )}
-
-          {/* Draggable Button */}
-          {(activeTab === 'all') && (
-            <div
-              draggable
-              onDragStart={(e) => handlePaletteDragStart(e, 'button')}
-              onClick={() => onAddNode('button', selectedNodeId || undefined)}
-              className="flex items-center gap-1.5 p-1.5 bg-slate-900 hover:bg-indigo-600/20 text-slate-300 hover:text-white rounded-lg border border-slate-800 hover:border-indigo-500/40 cursor-grab active:cursor-grabbing transition-all text-[11px]"
-            >
-              <MousePointerClick className="w-3.5 h-3.5 text-indigo-400" />
-              <span className="font-medium truncate">Botón</span>
-            </div>
-          )}
-
-          {/* Draggable Card */}
-          {(activeTab === 'all') && (
-            <div
-              draggable
-              onDragStart={(e) => handlePaletteDragStart(e, 'card')}
-              onClick={() => onAddNode('card', selectedNodeId || undefined)}
-              className="flex items-center gap-1.5 p-1.5 bg-slate-900 hover:bg-emerald-600/20 text-slate-300 hover:text-white rounded-lg border border-slate-800 hover:border-emerald-500/40 cursor-grab active:cursor-grabbing transition-all text-[11px]"
-            >
-              <Square className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="font-medium truncate">Tarjeta Box</span>
-            </div>
-          )}
-
-          {/* Draggable Text */}
-          {(activeTab === 'all') && (
-            <div
-              draggable
-              onDragStart={(e) => handlePaletteDragStart(e, 'text')}
-              onClick={() => onAddNode('text', selectedNodeId || undefined)}
-              className="flex items-center gap-1.5 p-1.5 bg-slate-900 hover:bg-blue-600/20 text-slate-300 hover:text-white rounded-lg border border-slate-800 hover:border-blue-500/40 cursor-grab active:cursor-grabbing transition-all text-[11px]"
-            >
-              <Type className="w-3.5 h-3.5 text-blue-400" />
-              <span className="font-medium truncate">Texto</span>
-            </div>
-          )}
-
-          {/* Draggable Input */}
-          {(activeTab === 'all' || activeTab === 'data') && (
-            <div
-              draggable
-              onDragStart={(e) => handlePaletteDragStart(e, 'input')}
-              onClick={() => onAddNode('input', selectedNodeId || undefined)}
-              className="flex items-center gap-1.5 p-1.5 bg-slate-900 hover:bg-amber-600/20 text-slate-300 hover:text-white rounded-lg border border-slate-800 hover:border-amber-500/40 cursor-grab active:cursor-grabbing transition-all text-[11px]"
-            >
-              <TextCursorInput className="w-3.5 h-3.5 text-amber-400" />
-              <span className="font-medium truncate">Input Texto</span>
-            </div>
-          )}
-
-          {/* Draggable Switch */}
-          {(activeTab === 'all' || activeTab === 'data') && (
-            <div
-              draggable
-              onDragStart={(e) => handlePaletteDragStart(e, 'switch')}
-              onClick={() => onAddNode('switch', selectedNodeId || undefined)}
-              className="flex items-center gap-1.5 p-1.5 bg-slate-900 hover:bg-cyan-600/20 text-slate-300 hover:text-white rounded-lg border border-slate-800 hover:border-cyan-500/40 cursor-grab active:cursor-grabbing transition-all text-[11px]"
-            >
-              <ToggleLeft className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="font-medium truncate">Switch</span>
-            </div>
-          )}
-
-          {/* Draggable Avatar */}
-          {(activeTab === 'all') && (
-            <div
-              draggable
-              onDragStart={(e) => handlePaletteDragStart(e, 'avatar')}
-              onClick={() => onAddNode('avatar', selectedNodeId || undefined)}
-              className="flex items-center gap-1.5 p-1.5 bg-slate-900 hover:bg-purple-600/20 text-slate-300 hover:text-white rounded-lg border border-slate-800 hover:border-purple-500/40 cursor-grab active:cursor-grabbing transition-all text-[11px]"
-            >
-              <UserCircle className="w-3.5 h-3.5 text-purple-400" />
-              <span className="font-medium truncate">Avatar</span>
-            </div>
-          )}
-        </div>
+        {/* Category Component Items Grid */}
+        {activeCategory !== 'masters' && (
+          <div className="grid grid-cols-2 gap-1 max-h-52 overflow-y-auto pr-0.5">
+            {PALETTE_CATEGORIES[activeCategory].map((comp) => (
+              <div
+                key={comp.type}
+                draggable
+                onDragStart={(e) => handlePaletteDragStart(e, comp.type)}
+                onClick={() => onAddNode(comp.type, selectedNodeId || undefined)}
+                className="flex items-center gap-1.5 p-1.5 bg-slate-900/90 hover:bg-indigo-600/20 text-slate-300 hover:text-white rounded-lg border border-slate-800 hover:border-indigo-500/40 cursor-grab active:cursor-grabbing transition-all text-[11px]"
+                title={`Insertar ${comp.label}`}
+              >
+                {comp.icon}
+                <span className="font-medium truncate">{comp.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Layer Hierarchy List */}

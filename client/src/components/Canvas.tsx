@@ -4,7 +4,25 @@ import { soundEngine } from '../lib/audio-engine';
 import { DrawingLayer } from './DrawingLayer';
 import { CommentsLayer } from './CommentsLayer';
 import * as LucideIcons from 'lucide-react';
-import { ChevronLeft, MoreVertical, Home, Search, Compass, User, TrendingUp } from 'lucide-react';
+import { 
+  ChevronLeft, 
+  MoreVertical, 
+  Home, 
+  Search, 
+  Compass, 
+  User, 
+  TrendingUp,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Calendar,
+  UploadCloud,
+  AlertTriangle,
+  Play,
+  RotateCw,
+  X,
+  ExternalLink
+} from 'lucide-react';
 
 interface CanvasProps {
   nodes: DesignNode[];
@@ -549,6 +567,595 @@ export const Canvas: React.FC<CanvasProps> = ({
         </div>
       );
     }
+
+// Chunk 1: Action & Command
+    if (node.type === 'icon_button') {
+      const IconComponent = node.iconName && (LucideIcons as any)[node.iconName]
+        ? (LucideIcons as any)[node.iconName]
+        : LucideIcons.Sparkles;
+
+      return (
+        <button
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          onMouseEnter={handleNodeMouseEnter}
+          style={inlineStyles}
+          className={baseClass + ' select-none active:scale-95 inline-flex items-center justify-center p-2 rounded-xl transition-transform'}
+          title={node.content || 'Botón de Icono'}
+        >
+          {selectionBadge}
+          <IconComponent size={18} />
+        </button>
+      );
+    }
+
+    if (node.type === 'fab') {
+      const IconComponent = node.iconName && (LucideIcons as any)[node.iconName]
+        ? (LucideIcons as any)[node.iconName]
+        : LucideIcons.Plus;
+
+      return (
+        <button
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          onMouseEnter={handleNodeMouseEnter}
+          style={inlineStyles}
+          className={baseClass + ' select-none active:scale-95 flex items-center justify-center gap-2 shadow-2xl rounded-full transition-transform'}
+        >
+          {selectionBadge}
+          <IconComponent size={20} />
+          {node.content && <span className="font-semibold text-xs pr-1">{node.content}</span>}
+        </button>
+      );
+    }
+
+    if (node.type === 'toggle_button') {
+      const opts = node.options || ['Lista', 'Cuadrícula', 'Detalles'];
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' inline-flex p-1 rounded-xl bg-slate-900 border border-slate-800 gap-1 select-none'}
+        >
+          {selectionBadge}
+          {opts.map((opt, i) => (
+            <button
+              key={i}
+              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors ${
+                i === 0 ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    if (node.type === 'hyperlink') {
+      return (
+        <a
+          key={node.id}
+          id={node.id}
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            handleNodeClick(e);
+          }}
+          onMouseEnter={handleNodeMouseEnter}
+          style={inlineStyles}
+          className={baseClass + ' inline-flex items-center gap-1 underline underline-offset-4 hover:opacity-80 transition-opacity select-none'}
+        >
+          {selectionBadge}
+          <span>{node.content || 'Visitar enlace'}</span>
+          <ExternalLink size={12} className="opacity-70" />
+        </a>
+      );
+    }
+
+    // Chunk 2: Forms & Selection
+    if (node.type === 'textarea') {
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' flex flex-col gap-1.5 select-none'}
+        >
+          {selectionBadge}
+          {node.content && <span className="text-xs font-medium text-slate-300">{node.content}</span>}
+          <textarea
+            readOnly={!isPreviewMode}
+            placeholder={node.placeholder || 'Escribe tus comentarios o descripción extensa...'}
+            rows={3}
+            className="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl p-2.5 text-xs text-slate-100 placeholder-slate-500 outline-none resize-none focus:border-indigo-500 transition-colors"
+          />
+        </div>
+      );
+    }
+
+    if (node.type === 'checkbox') {
+      const isChecked = node.checked ?? true;
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' inline-flex items-center gap-2.5 cursor-pointer select-none'}
+        >
+          {selectionBadge}
+          <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+            isChecked ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-slate-600 bg-slate-900'
+          }`}>
+            {isChecked && <Check size={12} strokeWidth={3} />}
+          </div>
+          <span className="text-xs text-slate-200 font-medium">{node.content || 'Acepto los términos y condiciones'}</span>
+        </div>
+      );
+    }
+
+    if (node.type === 'radio') {
+      const isChecked = node.checked ?? true;
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' inline-flex items-center gap-2.5 cursor-pointer select-none'}
+        >
+          {selectionBadge}
+          <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
+            isChecked ? 'border-indigo-500' : 'border-slate-600'
+          }`}>
+            {isChecked && <div className="w-2 h-2 rounded-full bg-indigo-500" />}
+          </div>
+          <span className="text-xs text-slate-200 font-medium">{node.content || 'Opción seleccionada'}</span>
+        </div>
+      );
+    }
+
+    if (node.type === 'select') {
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' flex items-center justify-between p-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-slate-200 select-none shadow-sm'}
+        >
+          {selectionBadge}
+          <span>{node.content || 'Seleccionar categoría...'}</span>
+          <ChevronDown size={14} className="text-slate-400" />
+        </div>
+      );
+    }
+
+    if (node.type === 'datepicker') {
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' flex items-center justify-between p-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-slate-200 select-none shadow-sm'}
+        >
+          {selectionBadge}
+          <div className="flex items-center gap-2">
+            <Calendar size={14} className="text-indigo-400" />
+            <span>{node.content || '07 Sep 2026, 14:30'}</span>
+          </div>
+          <span className="text-[10px] text-slate-500 font-mono">📅 Elegir</span>
+        </div>
+      );
+    }
+
+    if (node.type === 'colorpicker') {
+      const colorVal = node.styles.backgroundColor || '#6366f1';
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' flex items-center gap-2.5 p-2 bg-slate-900 border border-slate-800 rounded-xl select-none'}
+        >
+          {selectionBadge}
+          <div className="w-6 h-6 rounded-lg shadow-inner border border-white/20" style={{ backgroundColor: colorVal }} />
+          <div className="flex flex-col">
+            <span className="text-[10px] text-slate-400 font-medium">{node.content || 'Color Primario'}</span>
+            <span className="text-xs font-mono text-white uppercase font-bold">{colorVal}</span>
+          </div>
+        </div>
+      );
+    }
+
+    if (node.type === 'file_uploader') {
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' border-2 border-dashed border-slate-700 hover:border-indigo-500/70 p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-1.5 transition-colors select-none'}
+        >
+          {selectionBadge}
+          <UploadCloud size={24} className="text-indigo-400" />
+          <span className="text-xs font-semibold text-slate-200">{node.content || 'Arrastra archivos aquí o examina'}</span>
+          <span className="text-[10px] text-slate-500">Soporta PNG, JPG, PDF (máx. 15MB)</span>
+        </div>
+      );
+    }
+
+    if (node.type === 'chips_input') {
+      const chips = node.options || ['Diseño UI', 'Sistemas', 'Vercel', 'Next.js'];
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' flex flex-wrap gap-1.5 p-2 bg-slate-900 border border-slate-800 rounded-xl select-none'}
+        >
+          {selectionBadge}
+          {chips.map((chip, idx) => (
+            <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-800 text-indigo-300 text-[11px] font-medium border border-indigo-500/30">
+              {chip}
+              <X size={10} className="hover:text-rose-400 cursor-pointer" />
+            </span>
+          ))}
+        </div>
+      );
+    }
+
+    // Chunk 3: Containers & Structure
+    if (node.type === 'modal') {
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' p-4 bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl space-y-3 select-none'}
+        >
+          {selectionBadge}
+          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+            <span className="text-xs font-bold text-white">{node.content || 'Título del Modal'}</span>
+            <button className="text-slate-500 hover:text-white p-1">✕</button>
+          </div>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            {node.secondaryContent || 'Este diálogo emergente interrumpe la navegación para requerir atención inmediata o confirmación.'}
+          </p>
+          <div className="flex justify-end gap-2 pt-2">
+            <button className="px-3 py-1.5 rounded-lg text-xs text-slate-300 hover:bg-slate-800">Cancelar</button>
+            <button className="px-3 py-1.5 rounded-lg text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-semibold shadow">Confirmar</button>
+          </div>
+        </div>
+      );
+    }
+
+    if (node.type === 'sheet') {
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' p-3.5 bg-slate-900 border-l border-indigo-500/40 rounded-xl shadow-xl space-y-2 select-none'}
+        >
+          {selectionBadge}
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-white uppercase tracking-wider">{node.content || 'Panel Lateral / Sheet'}</span>
+            <span className="text-[10px] font-mono text-indigo-400">SIDE SHEET</span>
+          </div>
+          <p className="text-[11px] text-slate-400">
+            {node.secondaryContent || 'Panel de opciones que se desliza desde los bordes para filtros o configuración.'}
+          </p>
+        </div>
+      );
+    }
+
+    if (node.type === 'accordion') {
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' bg-slate-900 border border-slate-800 rounded-xl overflow-hidden select-none shadow-sm'}
+        >
+          {selectionBadge}
+          <div className="flex items-center justify-between p-3 cursor-pointer hover:bg-slate-800/50 transition-colors">
+            <span className="text-xs font-semibold text-white">{node.content || '¿Cómo funciona la exportación?'}</span>
+            <ChevronRight size={14} className="text-slate-400" />
+          </div>
+          <div className="p-3 pt-0 text-[11px] text-slate-400 border-t border-slate-800/60 leading-relaxed">
+            {node.secondaryContent || 'Haz clic para expandir o colapsar secciones de contenido verticalmente.'}
+          </div>
+        </div>
+      );
+    }
+
+    if (node.type === 'carousel') {
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' flex flex-col gap-2 select-none overflow-hidden'}
+        >
+          {selectionBadge}
+          <div className="flex gap-2.5 overflow-x-auto pb-1">
+            {[1, 2, 3].map(item => (
+              <div key={item} className="min-w-[140px] h-24 rounded-xl bg-gradient-to-br from-indigo-900/60 to-purple-900/60 border border-indigo-500/30 p-2.5 flex flex-col justify-end">
+                <span className="text-[10px] text-indigo-300 font-mono">SLIDE 0{item}</span>
+                <span className="text-xs font-bold text-white">Item Destacado</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-center gap-1">
+            <div className="w-4 h-1 rounded-full bg-indigo-500" />
+            <div className="w-1.5 h-1 rounded-full bg-slate-700" />
+            <div className="w-1.5 h-1 rounded-full bg-slate-700" />
+          </div>
+        </div>
+      );
+    }
+
+    // Chunk 4: Navigation & Location
+    if (node.type === 'sidebar') {
+      return (
+        <aside
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' p-3 bg-slate-900/90 border border-slate-800 rounded-2xl flex flex-col gap-1 select-none shadow-md'}
+        >
+          {selectionBadge}
+          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5 px-2">
+            {node.content || 'Menú Navegación'}
+          </div>
+          {[
+            { label: 'Dashboard', icon: Home, active: true },
+            { label: 'Analíticas', icon: TrendingUp },
+            { label: 'Configuración', icon: User }
+          ].map((item, idx) => (
+            <div
+              key={idx}
+              className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                item.active ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <item.icon size={14} />
+              <span>{item.label}</span>
+            </div>
+          ))}
+        </aside>
+      );
+    }
+
+    if (node.type === 'footer') {
+      return (
+        <footer
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' p-4 bg-slate-950 border-t border-slate-800/80 flex flex-col gap-2 text-center select-none'}
+        >
+          {selectionBadge}
+          <div className="flex justify-center gap-4 text-xs text-slate-400">
+            <a href="#" className="hover:text-white">Términos</a>
+            <a href="#" className="hover:text-white">Privacidad</a>
+            <a href="#" className="hover:text-white">Contacto</a>
+          </div>
+          <span className="text-[10px] text-slate-500 font-mono">
+            {node.content || '© 2026 DesignForge Studio. Todos los derechos reservados.'}
+          </span>
+        </footer>
+      );
+    }
+
+    if (node.type === 'breadcrumbs') {
+      return (
+        <nav
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' flex items-center gap-1.5 text-xs select-none'}
+        >
+          {selectionBadge}
+          <span className="text-slate-400 hover:text-white cursor-pointer">Inicio</span>
+          <span className="text-slate-600">/</span>
+          <span className="text-slate-400 hover:text-white cursor-pointer">Componentes</span>
+          <span className="text-slate-600">/</span>
+          <span className="text-indigo-400 font-semibold">{node.content || 'Navegación'}</span>
+        </nav>
+      );
+    }
+
+    if (node.type === 'pagination') {
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' inline-flex items-center gap-1 select-none'}
+        >
+          {selectionBadge}
+          <button className="px-2 py-1 rounded bg-slate-900 text-slate-400 text-xs border border-slate-800">‹</button>
+          <button className="px-2.5 py-1 rounded bg-indigo-600 text-white font-bold text-xs">1</button>
+          <button className="px-2.5 py-1 rounded bg-slate-900 text-slate-300 text-xs hover:bg-slate-800">2</button>
+          <button className="px-2.5 py-1 rounded bg-slate-900 text-slate-300 text-xs hover:bg-slate-800">3</button>
+          <button className="px-2 py-1 rounded bg-slate-900 text-slate-400 text-xs border border-slate-800">›</button>
+        </div>
+      );
+    }
+
+    // Chunk 5: Feedback & Status
+    if (node.type === 'spinner') {
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' inline-flex items-center justify-center p-3 select-none'}
+        >
+          {selectionBadge}
+          <RotateCw size={24} className="text-indigo-500 animate-spin" />
+        </div>
+      );
+    }
+
+    if (node.type === 'skeleton') {
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' space-y-2 p-3 bg-slate-900/60 border border-slate-800 rounded-xl select-none'}
+        >
+          {selectionBadge}
+          <div className="w-1/3 h-3 bg-slate-700/60 rounded animate-pulse" />
+          <div className="w-full h-8 bg-slate-800/80 rounded-lg animate-pulse" />
+          <div className="w-4/5 h-3 bg-slate-700/40 rounded animate-pulse" />
+        </div>
+      );
+    }
+
+    if (node.type === 'toast') {
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' p-3 bg-slate-900/95 border border-emerald-500/50 rounded-xl shadow-2xl flex items-center justify-between gap-3 select-none'}
+        >
+          {selectionBadge}
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+              <Check size={12} />
+            </div>
+            <span className="text-xs font-semibold text-white">{node.content || 'Enlace copiado al portapapeles'}</span>
+          </div>
+          <span className="text-[10px] text-slate-500">Hace 2s</span>
+        </div>
+      );
+    }
+
+    if (node.type === 'banner') {
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center justify-between select-none'}
+        >
+          {selectionBadge}
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={16} className="text-amber-400 shrink-0" />
+            <span className="text-xs font-medium text-amber-200 leading-snug">
+              {node.content || 'Modo de mantenimiento activo. Algunas funciones pueden estar limitadas.'}
+            </span>
+          </div>
+          <button className="text-amber-400 hover:text-white p-1 text-xs">✕</button>
+        </div>
+      );
+    }
+
+    // Chunk 6: Information & Multimedia
+    if (node.type === 'tooltip') {
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' relative inline-block select-none'}
+        >
+          {selectionBadge}
+          <div className="bg-slate-900 text-white text-xs font-medium px-2.5 py-1 rounded-lg border border-slate-700 shadow-xl inline-flex items-center gap-1">
+            <span>{node.content || 'Explicación del elemento'}</span>
+          </div>
+        </div>
+      );
+    }
+
+    if (node.type === 'table') {
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' border border-slate-800 rounded-xl overflow-hidden select-none shadow-sm'}
+        >
+          {selectionBadge}
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="bg-slate-900 border-b border-slate-800 text-slate-400">
+                <th className="p-2 font-semibold">Elemento</th>
+                <th className="p-2 font-semibold">Estado</th>
+                <th className="p-2 font-semibold">Valor</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/60 text-slate-200">
+              <tr>
+                <td className="p-2">Material Design</td>
+                <td className="p-2"><span className="text-[10px] text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded">Activo</span></td>
+                <td className="p-2 font-mono text-indigo-300">100%</td>
+              </tr>
+              <tr>
+                <td className="p-2">Carbon System</td>
+                <td className="p-2"><span className="text-[10px] text-cyan-400 bg-cyan-950/60 px-1.5 py-0.5 rounded">Listo</span></td>
+                <td className="p-2 font-mono text-indigo-300">40 comp</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    if (node.type === 'media_player') {
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' p-3 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col gap-2.5 select-none shadow-lg'}
+        >
+          {selectionBadge}
+          <div className="w-full h-24 rounded-xl bg-slate-950 flex items-center justify-center border border-slate-800">
+            <button className="w-10 h-10 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-lg transition-transform active:scale-90">
+              <Play size={18} className="fill-current ml-0.5" />
+            </button>
+          </div>
+          <div className="flex items-center justify-between text-xs text-slate-300">
+            <span className="font-semibold truncate">{node.content || 'Pista de Sonido / Audio UI'}</span>
+            <span className="text-[10px] font-mono text-indigo-400">01:24 / 03:40</span>
+          </div>
+          <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+            <div className="w-2/5 h-full bg-indigo-500 rounded-full" />
+          </div>
+        </div>
+      );
+    }
+
 
     if (node.type === 'vector') {
       return (
