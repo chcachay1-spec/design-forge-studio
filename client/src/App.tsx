@@ -1,4 +1,8 @@
 import { useState, useEffect } from 'react';
+import { storageEngine } from './lib/storage';
+import { swapScreenTheme } from './lib/theme-swapper';
+import { AiScreenGeneratorModal } from './components/AiScreenGeneratorModal';
+
 import { Topbar } from './components/Topbar';
 import { Canvas } from './components/Canvas';
 import { Inspector } from './components/Inspector';
@@ -68,6 +72,120 @@ export function App() {
   const [masterComponents, setMasterComponents] = useState<DesignNode[]>([]);
   const [customSounds, setCustomSounds] = useState<CustomSoundDefinition[]>([]);
   const [customAnimations, setCustomAnimations] = useState<CustomAnimationDefinition[]>(INITIAL_CUSTOM_ANIMATIONS);
+
+  // Persistence & Auto-Save State
+  const [isSaving, setIsSaving] = useState(false);
+  const [isAiScreenModalOpen, setIsAiScreenModalOpen] = useState(false);
+  const [showRulers, setShowRulers] = useState(true);
+  const [currentThemeMode, setCurrentThemeMode] = useState<'dark' | 'light'>('dark');
+
+  // Load project from localStorage on initial mount
+  useEffect(() => {
+    const saved = storageEngine.loadProject();
+    if (saved && saved.screens && saved.screens.length > 0) {
+      setScreens(saved.screens);
+      if (saved.activeScreenId) setActiveScreenId(saved.activeScreenId);
+      if (saved.theme) setTheme(saved.theme);
+      if (saved.customSounds) setCustomSounds(saved.customSounds);
+      if (saved.customAnimations) setCustomAnimations(saved.customAnimations);
+      console.log('[DesignForge] Auto-restored project from local storage:', saved.name);
+    }
+  }, []);
+
+  // Debounced auto-save project state to localStorage
+  useEffect(() => {
+    setIsSaving(true);
+    const timer = setTimeout(() => {
+      storageEngine.saveProject({
+        id: 'forge_active',
+        name: 'Proyecto Principal DesignForge',
+        screens,
+        activeScreenId,
+        theme,
+        customSounds,
+        customAnimations,
+      });
+      setIsSaving(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [screens, activeScreenId, theme, customSounds, customAnimations]);
+
+  // Handle Save Snapshot
+  const handleSaveSnapshot = () => {
+    storageEngine.createSnapshot('', {
+      id: 'forge_active',
+      name: 'Proyecto Principal DesignForge',
+      screens,
+      activeScreenId,
+      theme,
+      customSounds,
+      customAnimations,
+    });
+    soundEngine.playProceduralSound('chime');
+    setToastMessage('¡Punto de restauración (Snapshot) guardado!');
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  // Handle Export .forge JSON file
+  const handleExportForgeFile = () => {
+    storageEngine.exportForgeFile({
+      version: '1.0',
+      id: 'forge_' + Date.now(),
+      name: 'proyecto_designforge',
+      updatedAt: Date.now(),
+      screens,
+      activeScreenId,
+      theme,
+      customSounds,
+      customAnimations,
+    });
+    soundEngine.playProceduralSound('chime');
+    setToastMessage('¡Archivo de proyecto .forge descargado!');
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  // Handle Import .forge JSON file
+  const handleImportForgeFile = async (file: File) => {
+    try {
+      const project = await storageEngine.importForgeFile(file);
+      setPastScreens(prev => [...prev.slice(-25), screens]);
+      setFutureScreens([]);
+      setScreens(project.screens);
+      if (project.activeScreenId) setActiveScreenId(project.activeScreenId);
+      if (project.theme) setTheme(project.theme);
+      if (project.customSounds) setCustomSounds(project.customSounds);
+      if (project.customAnimations) setCustomAnimations(project.customAnimations);
+      soundEngine.playProceduralSound('chime');
+      setToastMessage('¡Proyecto .forge cargado con éxito!');
+      setTimeout(() => setToastMessage(null), 3000);
+    } catch (err: any) {
+      alert('Error al abrir archivo .forge: ' + err.message);
+    }
+  };
+
+  // Handle Global Theme Toggle (Dark / Light)
+  const handleToggleThemeMode = () => {
+    const nextMode = currentThemeMode === 'dark' ? 'light' : 'dark';
+    setCurrentThemeMode(nextMode);
+    soundEngine.playProceduralSound('switch');
+    setPastScreens(prev => [...prev.slice(-25), screens]);
+    setFutureScreens([]);
+    setScreens(prevScreens => prevScreens.map(s => swapScreenTheme(s, nextMode)));
+    setToastMessage(`Modo ${nextMode === 'dark' ? 'Oscuro' : 'Claro'} aplicado a todas las pantallas.`);
+    setTimeout(() => setToastMessage(null), 2500);
+  };
+
+  // Handle AI Generated Screen
+  const handleAiScreenGenerated = (newScreen: ScreenDefinition) => {
+    setPastScreens(prev => [...prev.slice(-25), screens]);
+    setFutureScreens([]);
+    setScreens(prev => [...prev, newScreen]);
+    setActiveScreenId(newScreen.id);
+    setSelectedNodeId(null);
+    setToastMessage(`Pantalla IA "${newScreen.name}" generada e insertada.`);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
 
   // Dynamically inject custom animation keyframes into document head
   useEffect(() => {
@@ -1834,6 +1952,15 @@ export function App() {
         onExportReactProject={handleExportReactProject}
         onToggleAnimationStudio={() => setIsAnimationStudioOpen(true)}
         onToggleVectorStudio={() => setIsVectorStudioOpen(true)}
+        onSaveSnapshot={handleSaveSnapshot}
+        onExportForgeFile={handleExportForgeFile}
+        onImportForgeFile={handleImportForgeFile}
+        onOpenAiScreenGenerator={() => setIsAiScreenModalOpen(true)}
+        onToggleThemeMode={handleToggleThemeMode}
+        currentThemeMode={currentThemeMode}
+        showRulers={showRulers}
+        onToggleRulers={() => setShowRulers(!showRulers)}
+        isSaving={isSaving}
       />
 
       {/* Main Studio Workspace */}
@@ -1884,6 +2011,7 @@ export function App() {
             onResolveComment={handleResolveComment}
             onDeleteComment={handleDeleteComment}
             isGridActive={isGridActive}
+            showRulers={showRulers}
           />
         )}
 
@@ -1991,6 +2119,13 @@ export function App() {
           isOpen={isTemplatesOpen}
           onClose={() => setIsTemplatesOpen(false)}
           onApplyTemplate={handleApplyTemplate}
+        />
+
+        {/* AI Full Screen & Wireframe Generator Modal */}
+        <AiScreenGeneratorModal
+          isOpen={isAiScreenModalOpen}
+          onClose={() => setIsAiScreenModalOpen(false)}
+          onScreenGenerated={handleAiScreenGenerated}
         />
 
         {/* Interactive Modal Dialog (Interactive Testing Mode) */}

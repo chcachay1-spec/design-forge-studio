@@ -3,6 +3,7 @@ import type { DesignNode, DeviceMode, DrawingStroke, CanvasComment } from '../li
 import { soundEngine } from '../lib/audio-engine';
 import { DrawingLayer } from './DrawingLayer';
 import { CommentsLayer } from './CommentsLayer';
+import { CanvasRulers } from './CanvasRulers';
 import * as LucideIcons from 'lucide-react';
 import { 
   ChevronLeft, 
@@ -47,6 +48,8 @@ interface CanvasProps {
   onDeleteComment: (id: string) => void;
   // 8px Alignment Grid
   isGridActive?: boolean;
+  // Graduated Rulers
+  showRulers?: boolean;
 }
 
 export const Canvas: React.FC<CanvasProps> = ({
@@ -69,8 +72,10 @@ export const Canvas: React.FC<CanvasProps> = ({
   onResolveComment,
   onDeleteComment,
   isGridActive,
+  showRulers = true,
 }) => {
   const [dragOverNodeId, setDragOverNodeId] = useState<string | null>(null);
+  const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | undefined>(undefined);
 
   const getDeviceDimensions = () => {
     switch (deviceMode) {
@@ -1209,11 +1214,19 @@ export const Canvas: React.FC<CanvasProps> = ({
     <div 
       className="flex-1 bg-slate-950 relative overflow-auto flex items-center justify-center p-12 select-none"
       onClick={() => onSelectNode(null)}
+      onMouseMove={(e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        setCursorPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      }}
+      onMouseLeave={() => setCursorPos(undefined)}
       style={{
         backgroundImage: 'radial-gradient(#334155 1px, transparent 1px)',
         backgroundSize: '24px 24px',
       }}
     >
+      {/* Precision Graduated Rulers & Guides */}
+      {showRulers && <CanvasRulers zoom={zoom} cursorPos={cursorPos} />}
+
       {/* Freehand Drawing Canvas Overlay */}
       <DrawingLayer
         isActive={isDrawingActive}

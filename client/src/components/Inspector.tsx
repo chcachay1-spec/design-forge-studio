@@ -15,10 +15,6 @@ import {
   Check,
   Code2,
   Sliders,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
   MessageSquare,
   ArrowLeft,
   ArrowUp,
@@ -40,6 +36,8 @@ import type { DesignNode, ScreenDefinition, CustomAnimationDefinition } from '..
 import { soundEngine } from '../lib/audio-engine';
 import { generateCssCode, generateTailwindClasses, generateReactJsx } from '../lib/code-generator';
 import { LUCIDE_ICONS_LIST, STOCK_PHOTOS } from '../lib/assets-library';
+import { AutoLayoutControl } from './AutoLayoutControl';
+import { A11yContrastChecker } from './A11yContrastChecker';
 
 interface InspectorProps {
   selectedNode: DesignNode | null;
@@ -840,119 +838,17 @@ export const Inspector: React.FC<InspectorProps> = ({
             </div>
           </div>
 
-          {/* Direction, Alignment & Distribution */}
-          <div className="space-y-2 pt-1 border-t border-slate-800/80">
-            {/* Direction */}
-            <div className="flex items-center justify-between">
-              <label className="text-[11px] text-slate-400">Dirección Layout</label>
-              <div className="flex bg-slate-900 p-0.5 rounded-lg border border-slate-800 text-[10px]">
-                <button
-                  type="button"
-                  onClick={() => onUpdateStyle(selectedNode.id, 'flexDirection', 'row')}
-                  className={'px-2 py-0.5 rounded ' + (styles.flexDirection !== 'column' ? 'bg-indigo-600 text-white font-medium' : 'text-slate-400 hover:text-white')}
-                >
-                  Fila →
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onUpdateStyle(selectedNode.id, 'flexDirection', 'column')}
-                  className={'px-2 py-0.5 rounded ' + (styles.flexDirection === 'column' ? 'bg-indigo-600 text-white font-medium' : 'text-slate-400 hover:text-white')}
-                >
-                  Columna ↓
-                </button>
-              </div>
-            </div>
+          {/* Auto Layout Pro (Figma 3x3 Matrix + Independent Quadrant Padding) */}
+          <AutoLayoutControl 
+            node={selectedNode} 
+            onUpdateStyle={onUpdateStyle} 
+          />
 
-            {/* Horizontal Alignment */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-[11px] text-slate-400">
-                <span>Alineación Eje Principal (Justify)</span>
-              </div>
-              <div className="flex bg-slate-900 p-1 rounded-lg border border-slate-800 justify-between">
-                <button
-                  type="button"
-                  onClick={() => onUpdateStyle(selectedNode.id, 'justifyContent', 'flex-start')}
-                  className={'p-1.5 rounded ' + (styles.justifyContent === 'flex-start' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white')}
-                  title="Inicio"
-                >
-                  <AlignLeft className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onUpdateStyle(selectedNode.id, 'justifyContent', 'center')}
-                  className={'p-1.5 rounded ' + (styles.justifyContent === 'center' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white')}
-                  title="Centro"
-                >
-                  <AlignCenter className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onUpdateStyle(selectedNode.id, 'justifyContent', 'flex-end')}
-                  className={'p-1.5 rounded ' + (styles.justifyContent === 'flex-end' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white')}
-                  title="Final"
-                >
-                  <AlignRight className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onUpdateStyle(selectedNode.id, 'justifyContent', 'space-between')}
-                  className={'p-1.5 rounded ' + (styles.justifyContent === 'space-between' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white')}
-                  title="Distribuir (Space Between)"
-                >
-                  <AlignJustify className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Cross Axis Alignment */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-[11px] text-slate-400">
-                <span>Alineación Eje Cruzado (Align)</span>
-              </div>
-              <div className="flex bg-slate-900 p-0.5 rounded-lg border border-slate-800 text-[10px] text-center">
-                <button
-                  type="button"
-                  onClick={() => onUpdateStyle(selectedNode.id, 'alignItems', 'flex-start')}
-                  className={'flex-1 py-1 rounded ' + (styles.alignItems === 'flex-start' ? 'bg-indigo-600 text-white font-medium' : 'text-slate-400 hover:text-white')}
-                >
-                  Arriba / Inicio
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onUpdateStyle(selectedNode.id, 'alignItems', 'center')}
-                  className={'flex-1 py-1 rounded ' + (styles.alignItems === 'center' ? 'bg-indigo-600 text-white font-medium' : 'text-slate-400 hover:text-white')}
-                >
-                  Centro
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onUpdateStyle(selectedNode.id, 'alignItems', 'flex-end')}
-                  className={'flex-1 py-1 rounded ' + (styles.alignItems === 'flex-end' ? 'bg-indigo-600 text-white font-medium' : 'text-slate-400 hover:text-white')}
-                >
-                  Abajo / Fin
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onUpdateStyle(selectedNode.id, 'alignItems', 'stretch')}
-                  className={'flex-1 py-1 rounded ' + (styles.alignItems === 'stretch' || !styles.alignItems ? 'bg-indigo-600 text-white font-medium' : 'text-slate-400 hover:text-white')}
-                >
-                  Estirar
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Gap between children */}
-          <div className="space-y-1">
-            <label className="text-[11px] text-slate-500">Espaciado Entre Hijos (Gap)</label>
-            <input
-              type="text"
-              value={styles.gap || ''}
-              onChange={(e) => onUpdateStyle(selectedNode.id, 'gap', e.target.value)}
-              placeholder="8px / 16px / 24px"
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none font-mono"
-            />
-          </div>
+          {/* Accesibilidad & Contraste WCAG AA/AAA */}
+          <A11yContrastChecker 
+            node={selectedNode} 
+            onUpdateStyle={onUpdateStyle} 
+          />
 
           {/* Depth & Z-Index: Poner sobre algo o detrás de algo */}
           <div className="space-y-2 pt-2 border-t border-slate-800/80">
