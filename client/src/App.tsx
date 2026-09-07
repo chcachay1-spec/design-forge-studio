@@ -418,6 +418,31 @@ export function App() {
     setNodes(prev => updateRecursive(prev));
   };
 
+  // Immutably update multiple style properties at once
+  const handleUpdateMultipleStyles = (nodeId: string, updates: Record<string, string>) => {
+    const updateRecursive = (list: DesignNode[]): DesignNode[] => {
+      return list.map(n => {
+        if (n.id === nodeId) {
+          return {
+            ...n,
+            styles: {
+              ...n.styles,
+              ...updates,
+            },
+          };
+        }
+        if (n.children) {
+          return {
+            ...n,
+            children: updateRecursive(n.children),
+          };
+        }
+        return n;
+      });
+    };
+    setNodes(prev => updateRecursive(prev));
+  };
+
   // Immutably update sound triggers
   const handleUpdateSound = (
     nodeId: string,
@@ -2162,6 +2187,8 @@ export function App() {
             onDeleteComment={handleDeleteComment}
             isGridActive={isGridActive}
             showRulers={showRulers}
+            onUpdateStyle={handleUpdateStyle}
+            onUpdateMultipleStyles={handleUpdateMultipleStyles}
           />
         )}
 

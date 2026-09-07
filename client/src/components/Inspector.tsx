@@ -5,6 +5,7 @@ import {
   Square, 
   Palette, 
   Maximize2, 
+  Minimize2,
   Layers,
   Trash2,
   Zap,
@@ -79,9 +80,17 @@ export const Inspector: React.FC<InspectorProps> = ({
   onOpenVectorStudio,
   onExportNodePng,
 }) => {
+  const [isWideWidth, setIsWideWidth] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('designforge_inspector_wide') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
   if (!selectedNode) {
     return (
-      <aside className="w-80 neo-glass-panel border-y-0 border-r-0 rounded-none p-6 flex flex-col items-center justify-center text-center text-slate-500 select-none z-20">
+      <aside className={(isWideWidth ? 'w-[420px]' : 'w-80') + ' neo-glass-panel border-y-0 border-r-0 rounded-none p-6 flex flex-col items-center justify-center text-center text-slate-500 select-none z-20 transition-all duration-200'}>
         <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-3 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
           <Layers className="w-6 h-6 text-cyan-400 opacity-80" />
         </div>
@@ -136,8 +145,17 @@ export const Inspector: React.FC<InspectorProps> = ({
     return generateReactJsx(selectedNode);
   };
 
+  const toggleWidth = () => {
+    setIsWideWidth(prev => {
+      const next = !prev;
+      try { localStorage.setItem('designforge_inspector_wide', String(next)); } catch {}
+      soundEngine.playProceduralSound('pop');
+      return next;
+    });
+  };
+
   return (
-    <aside className="w-80 neo-glass-panel border-y-0 border-r-0 rounded-none flex flex-col h-full text-slate-300 select-none overflow-y-auto z-20 shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
+    <aside className={(isWideWidth ? 'w-[420px]' : 'w-80') + ' neo-glass-panel border-y-0 border-r-0 rounded-none flex flex-col h-full text-slate-300 select-none overflow-y-auto z-20 shadow-[-10px_0_30px_rgba(0,0,0,0.5)] transition-all duration-200'}>
       {/* Element Header */}
       <div className="h-11 px-3.5 border-b border-white/[0.08] flex items-center justify-between bg-black/40 sticky top-0 backdrop-blur-xl z-20">
         <div className="flex items-center gap-2 truncate">
@@ -149,8 +167,16 @@ export const Inspector: React.FC<InspectorProps> = ({
           </h2>
         </div>
         
-        {/* Action Controls: Export PNG & Delete */}
+        {/* Action Controls: Width Toggle, Export PNG & Delete */}
         <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={toggleWidth}
+            className="p-1.5 text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10 rounded-lg transition-colors border border-transparent hover:border-cyan-400/30"
+            title={isWideWidth ? "Restablecer ancho regular (320px)" : "Hacer barra lateral más ancha (420px)"}
+          >
+            {isWideWidth ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+          </button>
           {onExportNodePng && (
             <button
               onClick={() => onExportNodePng(selectedNode.id, selectedNode.name)}
