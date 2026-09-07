@@ -18,7 +18,8 @@ import {
   BarChart3,
   SplitSquareVertical,
   Minus,
-  Component
+  Component,
+  PenTool
 } from 'lucide-react';
 import type { DesignNode } from '../lib/types';
 import { soundEngine } from '../lib/audio-engine';
@@ -83,6 +84,8 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
         return <BarChart3 className="w-3.5 h-3.5 text-violet-400" />;
       case 'divider':
         return <Minus className="w-3.5 h-3.5 text-slate-500" />;
+      case 'vector':
+        return <PenTool className="w-3.5 h-3.5 text-indigo-400" />;
       default:
         return <Layers className="w-3.5 h-3.5 text-slate-400" />;
     }
@@ -411,6 +414,20 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
             >
               <Minus className="w-3.5 h-3.5 text-slate-400" />
               <span className="font-medium truncate">Separador</span>
+            </div>
+          )}
+
+          {/* Vector Art (Figma/Illustrator) */}
+          {(activeTab === 'all' || activeTab === 'data') && (
+            <div
+              draggable
+              onDragStart={(e) => handlePaletteDragStart(e, 'vector')}
+              onClick={() => onAddNode('vector', selectedNodeId || undefined)}
+              className="flex items-center gap-1.5 p-1.5 bg-slate-900 hover:bg-indigo-600/20 text-slate-300 hover:text-white rounded-lg border border-slate-800 hover:border-indigo-500/40 cursor-grab active:cursor-grabbing transition-all text-[11px]"
+              title="Forma Vectorial Dinámica"
+            >
+              <PenTool className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="font-medium truncate">Vector Art</span>
             </div>
           )}
 

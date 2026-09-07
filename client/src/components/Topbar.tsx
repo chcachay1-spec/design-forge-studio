@@ -23,7 +23,8 @@ import {
   Camera,
   Network,
   Maximize2,
-  Code2
+  Code2,
+  PenTool
 } from 'lucide-react';
 import type { DeviceMode, ScreenDefinition } from '../lib/types';
 
@@ -73,6 +74,8 @@ interface TopbarProps {
   onOpenPresentation?: () => void;
   // Animation Studio
   onToggleAnimationStudio?: () => void;
+  // Vector Studio (Figma / Illustrator / Affinity)
+  onToggleVectorStudio?: () => void;
 }
 
 export const Topbar: React.FC<TopbarProps> = ({
@@ -110,6 +113,7 @@ export const Topbar: React.FC<TopbarProps> = ({
   onOpenPresentation,
   onExportReactProject,
   onToggleAnimationStudio,
+  onToggleVectorStudio,
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -384,6 +388,18 @@ export const Topbar: React.FC<TopbarProps> = ({
           >
             <Sparkles className="w-3.5 h-3.5 text-pink-400" />
             <span className="hidden sm:inline">Animación</span>
+          </button>
+        )}
+
+        {/* Vector Studio Toggle (Figma & Illustrator tools) */}
+        {onToggleVectorStudio && (
+          <button
+            onClick={onToggleVectorStudio}
+            className="p-1.5 sm:px-2.5 sm:py-1 text-xs font-medium rounded-lg transition-colors border bg-slate-900/60 text-indigo-400 hover:text-indigo-300 hover:bg-slate-800/60 border-slate-800/50 flex items-center gap-1"
+            title="Estudio Vectorial: Redes Vectoriales, Creador de Formas y Persona Píxel"
+          >
+            <PenTool className="w-3.5 h-3.5 text-indigo-400" />
+            <span className="hidden sm:inline">Vectores</span>
           </button>
         )}
 

@@ -30,7 +30,8 @@ import {
   SunMoon,
   Wand2,
   Image as ImageIcon,
-  Smile
+  Smile,
+  PenTool
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import type { DesignNode, ScreenDefinition, CustomAnimationDefinition } from '../lib/types';
@@ -51,6 +52,7 @@ interface InspectorProps {
   onMoveDepth?: (direction: 'front' | 'back' | 'forward' | 'backward') => void;
   onOpenAnimationStudio?: () => void;
   onOpenSoundLab?: () => void;
+  onOpenVectorStudio?: () => void;
 }
 
 export const Inspector: React.FC<InspectorProps> = ({
@@ -66,6 +68,7 @@ export const Inspector: React.FC<InspectorProps> = ({
   onMoveDepth,
   onOpenAnimationStudio,
   onOpenSoundLab,
+  onOpenVectorStudio,
 }) => {
   if (!selectedNode) {
     return (
@@ -228,6 +231,55 @@ export const Inspector: React.FC<InspectorProps> = ({
       {activeTab === 'design' && (
 
       <div className="p-4 space-y-5">
+        {/* Vector Studio Direct Launch & SVG Path Editor */}
+        {selectedNode.type === 'vector' && (
+          <div className="space-y-3 p-3 bg-indigo-950/30 rounded-xl border border-indigo-500/40">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-indigo-300 flex items-center gap-1.5">
+                <PenTool className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Geometría Vectorial</span>
+              </span>
+              {onOpenVectorStudio && (
+                <button
+                  type="button"
+                  onClick={onOpenVectorStudio}
+                  className="px-2 py-1 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold rounded-lg shadow flex items-center gap-1 transition-colors"
+                >
+                  <PenTool className="w-2.5 h-2.5" />
+                  <span>Abrir Estudio</span>
+                </button>
+              )}
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] text-slate-400">Trazado SVG Path (d):</label>
+              <textarea
+                rows={3}
+                value={selectedNode.svgPath || ''}
+                onChange={(e) => onUpdateProperty?.(selectedNode.id, 'svgPath', e.target.value)}
+                placeholder="M 50 50 L 150 50 L 100 120 Z"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-[10px] text-indigo-200 font-mono resize-none focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Global Vector Studio Access shortcut button for ANY element in Edit mode */}
+        {onOpenVectorStudio && (
+          <div className="p-2.5 bg-slate-900/40 rounded-xl border border-slate-800/80 flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <PenTool className="w-3.5 h-3.5 text-indigo-400" />
+              <div className="text-[11px] text-slate-300 font-medium">Herramientas Vectoriales</div>
+            </div>
+            <button
+              type="button"
+              onClick={onOpenVectorStudio}
+              className="text-[10px] bg-slate-800 hover:bg-indigo-600 text-slate-300 hover:text-white px-2 py-1 rounded-md transition-colors font-medium"
+            >
+              Figma & Illustrator ↗
+            </button>
+          </div>
+        )}
+
         {(selectedNode.type === 'text' || 
           selectedNode.type === 'button' || 
           selectedNode.type === 'badge' || 

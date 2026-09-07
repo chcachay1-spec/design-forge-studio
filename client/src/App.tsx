@@ -10,6 +10,8 @@ import { TemplatesModal } from './components/TemplatesModal';
 import { FlowView } from './components/FlowView';
 import { PresentationModal } from './components/PresentationModal';
 import { AnimationStudioModal } from './components/AnimationStudioModal';
+import { VectorStudioModal } from './components/VectorStudioModal';
+import { ClaudeDesignPillBar, type ClaudeDesignMode } from './components/ClaudeDesignPillBar';
 import { type ProjectTemplate } from './lib/templates';
 import { toPng } from 'html-to-image';
 import { 
@@ -60,6 +62,9 @@ export function App() {
   const [isFlowViewOpen, setIsFlowViewOpen] = useState(false);
   const [isPresentationOpen, setIsPresentationOpen] = useState(false);
   const [isAnimationStudioOpen, setIsAnimationStudioOpen] = useState(false);
+  const [isVectorStudioOpen, setIsVectorStudioOpen] = useState(false);
+  const [claudeMode, setClaudeMode] = useState<ClaudeDesignMode>('select');
+  const [isElementAiLoading, setIsElementAiLoading] = useState(false);
   const [masterComponents, setMasterComponents] = useState<DesignNode[]>([]);
   const [customSounds, setCustomSounds] = useState<CustomSoundDefinition[]>([]);
   const [customAnimations, setCustomAnimations] = useState<CustomAnimationDefinition[]>(INITIAL_CUSTOM_ANIMATIONS);
@@ -613,6 +618,25 @@ export function App() {
         styles: {
           padding: '8px 0px',
           width: '100%',
+        },
+      };
+    } else if (type === 'vector') {
+      defaultNode = {
+        id: newId,
+        name: 'Forma Vectorial',
+        type: 'vector',
+        svgPath: 'M 100 80 L 220 80 L 160 180 Z',
+        styles: {
+          backgroundColor: 'rgba(99, 102, 241, 0.25)',
+          borderColor: '#6366f1',
+          borderWidth: '2px',
+          width: '100%',
+          height: '140px',
+          borderRadius: '16px',
+          padding: '12px',
+        },
+        sounds: {
+          onClick: 'pop',
         },
       };
     } else {
@@ -1225,6 +1249,116 @@ export function App() {
     }
   };
 
+  // Insert Vector Node from Vector Studio
+  const handleInsertVectorNode = (svgPath: string, name: string) => {
+    const newId = `vector-${Date.now().toString().slice(-4)}`;
+    const newVectorNode: DesignNode = {
+      id: newId,
+      name: name || 'Arte Vectorial',
+      type: 'vector',
+      svgPath: svgPath,
+      styles: {
+        backgroundColor: 'rgba(99, 102, 241, 0.25)',
+        borderColor: '#6366f1',
+        borderWidth: '2px',
+        borderRadius: '16px',
+        padding: '16px',
+        width: '100%',
+        height: '160px',
+      },
+      sounds: {
+        onClick: 'pop',
+      },
+    };
+
+    const targetParent = selectedNodeId || currentScreen.rootNode.id;
+    const insertRecursive = (list: DesignNode[]): DesignNode[] => {
+      return list.map(n => {
+        if (n.id === targetParent) {
+          return {
+            ...n,
+            children: [...(n.children || []), newVectorNode],
+          };
+        }
+        if (n.children) {
+          return {
+            ...n,
+            children: insertRecursive(n.children),
+          };
+        }
+        return n;
+      });
+    };
+
+    setNodes(prev => insertRecursive(prev));
+    setSelectedNodeId(newId);
+    setToastMessage('¡Elemento vectorial insertado en el lienzo!');
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  // Claude Design Targeted Element AI Edit (Comment mode)
+  const handleApplyElementAiChange = async (nodeId: string, userPrompt: string) => {
+    setIsElementAiLoading(true);
+    soundEngine.playProceduralSound('chime');
+    try {
+      const targetNode = findNode(nodeId, nodes);
+      if (!targetNode) {
+        setIsElementAiLoading(false);
+        return;
+      }
+
+      const pLower = userPrompt.toLowerCase();
+      // Targeted heuristics applied immediately without modifying whole project
+      if (pLower.includes('verde') || pLower.includes('green') || pLower.includes('emerald')) {
+        handleUpdateStyle(nodeId, 'backgroundColor', '#10b981');
+        handleUpdateStyle(nodeId, 'boxShadow', '0 4px 14px rgba(16, 185, 129, 0.4)');
+      } else if (pLower.includes('azul') || pLower.includes('blue') || pLower.includes('indigo')) {
+        handleUpdateStyle(nodeId, 'backgroundColor', '#6366f1');
+        handleUpdateStyle(nodeId, 'boxShadow', '0 4px 14px rgba(99, 102, 241, 0.4)');
+      } else if (pLower.includes('rosa') || pLower.includes('pink') || pLower.includes('morado') || pLower.includes('purple')) {
+        handleUpdateStyle(nodeId, 'backgroundColor', '#ec4899');
+        handleUpdateStyle(nodeId, 'boxShadow', '0 4px 14px rgba(236, 72, 153, 0.4)');
+      } else if (pLower.includes('oscuro') || pLower.includes('dark') || pLower.includes('negro')) {
+        handleUpdateStyle(nodeId, 'backgroundColor', '#0f172a');
+        handleUpdateStyle(nodeId, 'borderColor', '#334155');
+      } else if (pLower.includes('redondo') || pLower.includes('pill') || pLower.includes('circular')) {
+        handleUpdateStyle(nodeId, 'borderRadius', '9999px');
+      }
+
+      // Check text change intent
+      const textMatch = userPrompt.match(/['"](.*?)['"]/);
+      if (textMatch && textMatch[1]) {
+        handleUpdateContent(nodeId, textMatch[1]);
+      }
+
+      // Check animation intent
+      if (pLower.includes('brillo') || pLower.includes('glow')) {
+        handleUpdateStyle(nodeId, 'animation', 'glow');
+      } else if (pLower.includes('pulso') || pLower.includes('pulse')) {
+        handleUpdateStyle(nodeId, 'animation', 'pulse');
+      } else if (pLower.includes('flotar') || pLower.includes('float')) {
+        handleUpdateStyle(nodeId, 'animation', 'float');
+      }
+
+      // Check sound intent
+      if (pLower.includes('sonido campana') || pLower.includes('bell')) {
+        handleUpdateSound(nodeId, 'onClick', 'bell');
+      } else if (pLower.includes('sonido pop') || pLower.includes('pop')) {
+        handleUpdateSound(nodeId, 'onClick', 'pop');
+      } else if (pLower.includes('sonido chime') || pLower.includes('chime')) {
+        handleUpdateSound(nodeId, 'onClick', 'chime');
+      }
+
+      setToastMessage(`✓ IA aplicó cambios directos a "${targetNode.name}"`);
+      setTimeout(() => setToastMessage(null), 3000);
+      soundEngine.playProceduralSound('pop');
+    } catch (err) {
+      console.error('Error aplicando cambio con IA:', err);
+    } finally {
+      setIsElementAiLoading(false);
+    }
+  };
+
   return (
     <div className="h-screen w-screen flex flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans">
       {/* Topbar with Screen Switcher & Drawing Mode */}
@@ -1263,6 +1397,7 @@ export function App() {
         onOpenPresentation={() => setIsPresentationOpen(true)}
         onExportReactProject={handleExportReactProject}
         onToggleAnimationStudio={() => setIsAnimationStudioOpen(true)}
+        onToggleVectorStudio={() => setIsVectorStudioOpen(true)}
       />
 
       {/* Main Studio Workspace */}
@@ -1316,6 +1451,25 @@ export function App() {
           />
         )}
 
+        {/* Floating Claude Design Interaction Bar (Select, Comment/AI, Edit) */}
+        {!isFlowViewOpen && (
+          <ClaudeDesignPillBar
+            activeMode={claudeMode}
+            onModeChange={(m) => {
+              setClaudeMode(m);
+              if (m === 'comment') {
+                setIsCommentsActive(true);
+              } else {
+                setIsCommentsActive(false);
+              }
+            }}
+            selectedNode={selectedNode}
+            onOpenVectorStudio={() => setIsVectorStudioOpen(true)}
+            onApplyElementAiChange={handleApplyElementAiChange}
+            isAiLoading={isElementAiLoading}
+          />
+        )}
+
         {/* Right: Visual Property, Geometry, Actions & Sound Inspector */}
         <Inspector
           selectedNode={selectedNode}
@@ -1330,6 +1484,7 @@ export function App() {
           onMoveDepth={handleMoveDepth}
           onOpenAnimationStudio={() => setIsAnimationStudioOpen(true)}
           onOpenSoundLab={() => setIsSoundLabOpen(true)}
+          onOpenVectorStudio={() => setIsVectorStudioOpen(true)}
         />
 
         {/* Slide-in Sound Lab */}
@@ -1364,6 +1519,14 @@ export function App() {
             }
           }}
           onMoveDepth={handleMoveDepth}
+        />
+
+        {/* Vector Studio Modal (Figma Vector Networks, Shaper Tool & Pixel Persona) */}
+        <VectorStudioModal
+          isOpen={isVectorStudioOpen}
+          onClose={() => setIsVectorStudioOpen(false)}
+          onInsertVectorNode={handleInsertVectorNode}
+          selectedNode={selectedNode}
         />
 
         {/* Slide-in AI Bridge */}

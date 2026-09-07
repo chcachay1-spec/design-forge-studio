@@ -550,6 +550,35 @@ export const Canvas: React.FC<CanvasProps> = ({
       );
     }
 
+    if (node.type === 'vector') {
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          onMouseEnter={handleNodeMouseEnter}
+          style={inlineStyles}
+          className={baseClass + ' flex items-center justify-center overflow-hidden'}
+        >
+          {selectionBadge}
+          <svg
+            viewBox="0 0 420 340"
+            className="w-full h-full drop-shadow-md"
+            style={{ overflow: 'visible' }}
+          >
+            <path
+              d={node.svgPath || 'M 50 50 L 150 50 L 100 120 Z'}
+              fill={node.styles.backgroundColor && node.styles.backgroundColor !== 'transparent' ? node.styles.backgroundColor : 'rgba(99, 102, 241, 0.25)'}
+              stroke={node.styles.borderColor || '#6366f1'}
+              strokeWidth={node.styles.borderWidth ? parseInt(node.styles.borderWidth) : 2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+      );
+    }
+
     return (
       <div
         key={node.id}

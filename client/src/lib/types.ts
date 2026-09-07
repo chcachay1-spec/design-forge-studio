@@ -18,7 +18,8 @@ export interface DesignNode {
     | 'segmented'
     | 'metric'
     | 'progress'
-    | 'divider';
+    | 'divider'
+    | 'vector';
   content?: string;
   secondaryContent?: string;
   placeholder?: string;
@@ -28,6 +29,13 @@ export interface DesignNode {
   avatarUrl?: string;
   imageUrl?: string;
   iconName?: string;
+  svgPath?: string;
+  vectorData?: {
+    nodes?: Array<{ id: string; x: number; y: number; connections?: string[] }>;
+    fill?: string;
+    stroke?: string;
+    strokeWidth?: number;
+  };
   isMasterComponent?: boolean;
   masterComponentId?: string;
   children?: DesignNode[];
