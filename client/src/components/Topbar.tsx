@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Smartphone, 
   Tablet, 
@@ -29,7 +29,11 @@ import {
   Sun,
   Moon,
   Wand2,
-  Ruler
+  Ruler,
+  ChevronDown,
+  FolderOpen,
+  Eye,
+  Sliders
 } from 'lucide-react';
 import type { DeviceMode, ScreenDefinition } from '../lib/types';
 
@@ -81,7 +85,7 @@ interface TopbarProps {
   onToggleAnimationStudio?: () => void;
   // Vector Studio (Figma / Illustrator / Affinity)
   onToggleVectorStudio?: () => void;
-  // New Pro Features: Persistence, AI Generator, Theme Swapping & Rulers
+  // Pro Features: Persistence, AI Generator, Theme Swapping & Rulers
   onSaveSnapshot?: () => void;
   onExportForgeFile?: () => void;
   onImportForgeFile?: (file: File) => void;
@@ -139,13 +143,29 @@ export const Topbar: React.FC<TopbarProps> = ({
   onToggleRulers,
   isSaving = false,
 }) => {
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const forgeInputRef = React.useRef<HTMLInputElement>(null);
+  // Dropdown states
+  const [openDropdown, setOpenDropdown] = useState<'project' | 'view' | 'studios' | 'export' | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const forgeInputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       onImportZip(file);
+      setOpenDropdown(null);
     }
   };
 
@@ -153,39 +173,459 @@ export const Topbar: React.FC<TopbarProps> = ({
     const file = e.target.files?.[0];
     if (file && onImportForgeFile) {
       onImportForgeFile(file);
+      setOpenDropdown(null);
     }
   };
 
   return (
-    <header className="h-12 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/60 px-3 flex items-center justify-between text-slate-400 select-none z-30 transition-all">
-      {/* Brand & Screens Tabs */}
-      <div className="flex items-center gap-2">
-        {/* Brand */}
-        <div className="flex items-center gap-1.5 font-semibold text-white tracking-tight text-xs">
-          <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-white" />
+    <header ref={dropdownRef} className="bg-slate-950/95 backdrop-blur-md border-b border-slate-800/70 select-none z-30 transition-all flex flex-col">
+      {/* Hidden File Inputs */}
+      <input type="file" ref={fileInputRef} accept=".zip" className="hidden" onChange={handleFileChange} />
+      <input type="file" ref={forgeInputRef} accept=".forge,.json" className="hidden" onChange={handleForgeChange} />
+
+      {/* ========================================================================= */}
+      {/* ROW 1: PRIMARY APP BAR (Brand, Dropdown Menus, Center Viewport, Run/Export) */}
+      {/* ========================================================================= */}
+      <div className="h-11 px-3 flex items-center justify-between border-b border-slate-900/60 text-slate-300">
+        
+        {/* Left: Brand + Professional Dropdown Menus (Figma style) */}
+        <div className="flex items-center gap-2">
+          {/* Brand Icon */}
+          <div className="flex items-center gap-1.5 font-bold text-white text-xs mr-1">
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 text-white" />
+            </div>
+            <span className="hidden sm:inline tracking-tight font-extrabold text-[13px]">DesignForge</span>
           </div>
-          <span className="hidden sm:inline font-bold">DesignForge</span>
+
+          {/* 1. Menú Proyecto / Archivo */}
+          <div className="relative">
+            <button
+              onClick={() => setOpenDropdown(openDropdown === 'project' ? null : 'project')}
+              className={'flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg transition-all ' + (
+                openDropdown === 'project' ? 'bg-slate-800 text-white shadow-xs' : 'hover:bg-slate-800/60 text-slate-300'
+              )}
+            >
+              <FolderOpen className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Proyecto</span>
+              <ChevronDown className="w-3 h-3 opacity-60" />
+            </button>
+
+            {openDropdown === 'project' && (
+              <div className="absolute left-0 top-full mt-1 w-56 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
+                <div className="px-3 py-1 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Persistencia & Archivo</div>
+                
+                {onSaveSnapshot && (
+                  <button
+                    onClick={() => { onSaveSnapshot(); setOpenDropdown(null); }}
+                    className="w-full px-3 py-2 text-left hover:bg-slate-800/80 flex items-center justify-between text-slate-200 transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Save className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Guardar Snapshot</span>
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono">Local</span>
+                  </button>
+                )}
+
+                {onExportForgeFile && (
+                  <button
+                    onClick={() => { onExportForgeFile(); setOpenDropdown(null); }}
+                    className="w-full px-3 py-2 text-left hover:bg-slate-800/80 flex items-center justify-between text-slate-200 transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Download className="w-3.5 h-3.5 text-indigo-400" />
+                      <span>Descargar .forge</span>
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono">JSON</span>
+                  </button>
+                )}
+
+                {onImportForgeFile && (
+                  <button
+                    onClick={() => { forgeInputRef.current?.click(); }}
+                    className="w-full px-3 py-2 text-left hover:bg-slate-800/80 flex items-center justify-between text-slate-200 transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Upload className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Abrir archivo .forge</span>
+                    </span>
+                  </button>
+                )}
+
+                <div className="my-1 border-t border-slate-800/80" />
+
+                <button
+                  onClick={() => { onOpenTemplates(); setOpenDropdown(null); }}
+                  className="w-full px-3 py-2 text-left hover:bg-slate-800/80 flex items-center justify-between text-slate-200 transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <LayoutTemplate className="w-3.5 h-3.5 text-pink-400" />
+                    <span>Biblioteca de Plantillas</span>
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* 2. Menú Vista & Lienzo */}
+          <div className="relative">
+            <button
+              onClick={() => setOpenDropdown(openDropdown === 'view' ? null : 'view')}
+              className={'flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg transition-all ' + (
+                openDropdown === 'view' ? 'bg-slate-800 text-white shadow-xs' : 'hover:bg-slate-800/60 text-slate-300'
+              )}
+            >
+              <Eye className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Ver Lienzo</span>
+              <ChevronDown className="w-3 h-3 opacity-60" />
+            </button>
+
+            {openDropdown === 'view' && (
+              <div className="absolute left-0 top-full mt-1 w-56 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
+                <div className="px-3 py-1 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Lienzo y Guías</div>
+
+                {onToggleRulers && (
+                  <button
+                    onClick={() => { onToggleRulers(); setOpenDropdown(null); }}
+                    className="w-full px-3 py-2 text-left hover:bg-slate-800/80 flex items-center justify-between text-slate-200 transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Ruler className="w-3.5 h-3.5 text-indigo-400" />
+                      <span>Reglas Graduadas (Rulers)</span>
+                    </span>
+                    <span className={'text-[10px] font-bold ' + (showRulers ? 'text-emerald-400' : 'text-slate-500')}>
+                      {showRulers ? 'ON' : 'OFF'}
+                    </span>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => { onToggleGrid(); setOpenDropdown(null); }}
+                  className="w-full px-3 py-2 text-left hover:bg-slate-800/80 flex items-center justify-between text-slate-200 transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <Grid className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Rejilla de 8px</span>
+                  </span>
+                  <span className={'text-[10px] font-bold ' + (isGridActive ? 'text-emerald-400' : 'text-slate-500')}>
+                    {isGridActive ? 'ON' : 'OFF'}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => { onToggleFlowView(); setOpenDropdown(null); }}
+                  className="w-full px-3 py-2 text-left hover:bg-slate-800/80 flex items-center justify-between text-slate-200 transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <Network className="w-3.5 h-3.5 text-purple-400" />
+                    <span>Mapa de Flujo Multi-Pantalla</span>
+                  </span>
+                  <span className={'text-[10px] font-bold ' + (isFlowViewOpen ? 'text-emerald-400' : 'text-slate-500')}>
+                    {isFlowViewOpen ? 'ON' : 'OFF'}
+                  </span>
+                </button>
+
+                <div className="my-1 border-t border-slate-800/80" />
+
+                <button
+                  onClick={() => { onToggleDrawing(); setOpenDropdown(null); }}
+                  className="w-full px-3 py-2 text-left hover:bg-slate-800/80 flex items-center justify-between text-slate-200 transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <Pencil className="w-3.5 h-3.5 text-pink-400" />
+                    <span>Dibujo Libre sobre Canvas</span>
+                  </span>
+                  <span className={'text-[10px] font-bold ' + (isDrawingActive ? 'text-pink-400' : 'text-slate-500')}>
+                    {isDrawingActive ? 'ON' : 'OFF'}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => { onToggleComments(); setOpenDropdown(null); }}
+                  className="w-full px-3 py-2 text-left hover:bg-slate-800/80 flex items-center justify-between text-slate-200 transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <MessageSquare className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Notas y Comentarios</span>
+                  </span>
+                  <span className={'text-[10px] font-bold ' + (isCommentsActive ? 'text-amber-400' : 'text-slate-500')}>
+                    {isCommentsActive ? 'ON' : 'OFF'}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => { onToggleDesignTokens(); setOpenDropdown(null); }}
+                  className="w-full px-3 py-2 text-left hover:bg-slate-800/80 flex items-center justify-between text-slate-200 transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <Palette className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Tokens de Diseño Globales</span>
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* 3. Menú Estudios Pro (Sonido, Animación, Vectores, IA) */}
+          <div className="relative">
+            <button
+              onClick={() => setOpenDropdown(openDropdown === 'studios' ? null : 'studios')}
+              className={'flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg transition-all ' + (
+                openDropdown === 'studios' ? 'bg-slate-800 text-white shadow-xs' : 'hover:bg-slate-800/60 text-slate-300'
+              )}
+            >
+              <Sliders className="w-3.5 h-3.5 text-amber-400" />
+              <span>Estudios Pro</span>
+              <ChevronDown className="w-3 h-3 opacity-60" />
+            </button>
+
+            {openDropdown === 'studios' && (
+              <div className="absolute left-0 top-full mt-1 w-60 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
+                <div className="px-3 py-1 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Módulos Especializados</div>
+
+                <button
+                  onClick={() => { onToggleSoundLab(); setOpenDropdown(null); }}
+                  className="w-full px-3 py-2 text-left hover:bg-slate-800/80 flex items-center justify-between text-slate-200 transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <Volume2 className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Sound Design Studio</span>
+                  </span>
+                  <span className={'text-[10px] px-1.5 py-0.5 rounded ' + (isSoundLabOpen ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-amber-500/20 text-amber-300')}>
+                    {isSoundLabOpen ? 'Abierto' : 'Audio'}
+                  </span>
+                </button>
+
+                {onToggleAnimationStudio && (
+                  <button
+                    onClick={() => { onToggleAnimationStudio(); setOpenDropdown(null); }}
+                    className="w-full px-3 py-2 text-left hover:bg-slate-800/80 flex items-center justify-between text-slate-200 transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Sparkles className="w-3.5 h-3.5 text-pink-400" />
+                      <span>Animación & Z-Index Studio</span>
+                    </span>
+                    <span className="text-[10px] bg-pink-500/20 text-pink-300 px-1 rounded">CSS</span>
+                  </button>
+                )}
+
+                {onToggleVectorStudio && (
+                  <button
+                    onClick={() => { onToggleVectorStudio(); setOpenDropdown(null); }}
+                    className="w-full px-3 py-2 text-left hover:bg-slate-800/80 flex items-center justify-between text-slate-200 transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <PenTool className="w-3.5 h-3.5 text-indigo-400" />
+                      <span>Vector Studio & Shaper</span>
+                    </span>
+                    <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-1 rounded">SVG</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => { onToggleAiPanel(); setOpenDropdown(null); }}
+                  className="w-full px-3 py-2 text-left hover:bg-slate-800/80 flex items-center justify-between text-slate-200 transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <Bot className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Panel Asistente IA (Bridge)</span>
+                  </span>
+                  <span className={'text-[10px] px-1.5 py-0.5 rounded ' + (isAiPanelOpen ? 'bg-cyan-500 text-slate-950 font-bold' : 'bg-cyan-500/20 text-cyan-300')}>
+                    {isAiPanelOpen ? 'Abierto' : 'Prompt'}
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Auto-Save Indicator */}
-        <div className="hidden md:flex items-center gap-1 text-[10px] text-emerald-400 font-mono bg-emerald-950/40 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span>{isSaving ? 'Guardando...' : 'Auto-guardado'}</span>
+        {/* Center: Device Breakpoints & Quick Zoom */}
+        <div className="flex items-center gap-2">
+          {/* Breakpoints Selector */}
+          <div className="flex items-center bg-slate-900/80 p-0.5 rounded-lg border border-slate-800">
+            <button
+              onClick={() => setDeviceMode('mobile')}
+              className={'flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md transition-all ' + (
+                deviceMode === 'mobile' ? 'bg-slate-800 text-white shadow-xs font-semibold' : 'text-slate-400 hover:text-slate-200'
+              )}
+              title="Breakpoint Móvil (390px)"
+            >
+              <Smartphone className="w-3 h-3" />
+              <span className="hidden md:inline">Móvil</span>
+            </button>
+            <button
+              onClick={() => setDeviceMode('tablet')}
+              className={'flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md transition-all ' + (
+                deviceMode === 'tablet' ? 'bg-slate-800 text-white shadow-xs font-semibold' : 'text-slate-400 hover:text-slate-200'
+              )}
+              title="Breakpoint Tablet (768px)"
+            >
+              <Tablet className="w-3 h-3" />
+              <span className="hidden md:inline">Tablet</span>
+            </button>
+            <button
+              onClick={() => setDeviceMode('desktop')}
+              className={'flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md transition-all ' + (
+                deviceMode === 'desktop' ? 'bg-slate-800 text-white shadow-xs font-semibold' : 'text-slate-400 hover:text-slate-200'
+              )}
+              title="Breakpoint Escritorio (1200px)"
+            >
+              <Monitor className="w-3 h-3" />
+              <span className="hidden md:inline">Web</span>
+            </button>
+          </div>
+
+          {/* Quick Zoom & Reset */}
+          <div className="hidden sm:flex items-center bg-slate-900/80 px-1.5 py-0.5 rounded-lg border border-slate-800 text-xs gap-1">
+            <button 
+              onClick={() => setZoom(z => Math.max(0.4, Number((z - 0.1).toFixed(1))))}
+              className="p-1 text-slate-400 hover:text-white rounded"
+              title="Alejar Zoom"
+            >
+              <ZoomOut className="w-3 h-3" />
+            </button>
+            <span className="w-8 text-center font-mono text-[11px] text-slate-300">{Math.round(zoom * 100)}%</span>
+            <button 
+              onClick={() => setZoom(z => Math.min(2.0, Number((z + 0.1).toFixed(1))))}
+              className="p-1 text-slate-400 hover:text-white rounded"
+              title="Acercar Zoom"
+            >
+              <ZoomIn className="w-3 h-3" />
+            </button>
+            <button 
+              onClick={() => setZoom(1.0)}
+              className="p-1 text-slate-500 hover:text-slate-300 rounded"
+              title="Restablecer (100%)"
+            >
+              <RotateCcw className="w-2.5 h-2.5" />
+            </button>
+          </div>
         </div>
 
-        <div className="h-4 w-px bg-slate-800/80 mx-0.5" />
+        {/* Right: Quick Action Buttons (Mode, Present, Export) */}
+        <div className="flex items-center gap-1.5">
+          {/* Global Theme Toggle */}
+          {onToggleThemeMode && (
+            <button
+              onClick={onToggleThemeMode}
+              className="p-1.5 text-slate-400 hover:text-amber-300 hover:bg-slate-900 rounded-lg transition-colors border border-transparent hover:border-slate-800"
+              title={currentThemeMode === 'dark' ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
+            >
+              {currentThemeMode === 'dark' ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-indigo-400" />}
+            </button>
+          )}
 
-        {/* Screen Switcher Pills */}
-        <div className="flex items-center gap-0.5 bg-slate-900/60 p-0.5 rounded-lg border border-slate-800/50 max-w-xs md:max-w-md overflow-x-auto">
+          {/* Interactive Mode Toggle */}
+          <button
+            onClick={() => setIsPreviewMode(!isPreviewMode)}
+            className={'flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg transition-all ' + (
+              isPreviewMode
+                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-xs'
+                : 'bg-slate-900 hover:bg-slate-850 text-slate-300 border border-slate-800'
+            )}
+            title="Alternar entre modo Edición e Interactivo"
+          >
+            <Play className={'w-3 h-3 ' + (isPreviewMode ? 'fill-emerald-400' : '')} />
+            <span className="hidden sm:inline">{isPreviewMode ? 'Interactivo' : 'Diseño'}</span>
+          </button>
+
+          {/* Full-Screen Presentation */}
+          {onOpenPresentation && (
+            <button
+              onClick={onOpenPresentation}
+              className="hidden md:flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-900 hover:bg-slate-850 text-slate-300 hover:text-white border border-slate-800 transition-colors"
+              title="Presentación a Pantalla Completa"
+            >
+              <Maximize2 className="w-3 h-3 text-cyan-400" />
+              <span>Presentar</span>
+            </button>
+          )}
+
+          {/* Menú Desplegable de Exportación */}
+          <div className="relative">
+            <button
+              onClick={() => setOpenDropdown(openDropdown === 'export' ? null : 'export')}
+              className="flex items-center gap-1 px-3 py-1 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg shadow-sm transition-all"
+            >
+              <Download className="w-3 h-3" />
+              <span>Exportar</span>
+              <ChevronDown className="w-3 h-3 opacity-80" />
+            </button>
+
+            {openDropdown === 'export' && (
+              <div className="absolute right-0 top-full mt-1 w-64 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
+                <div className="px-3 py-1 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Handoff & Producción</div>
+
+                {onExportReactProject && (
+                  <button
+                    onClick={() => { onExportReactProject(); setOpenDropdown(null); }}
+                    className="w-full px-3 py-2 text-left hover:bg-slate-800/80 flex items-center justify-between text-slate-200 transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Code2 className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Proyecto React + Vite + Tailwind</span>
+                    </span>
+                    <span className="text-[10px] bg-cyan-500/20 text-cyan-300 px-1 rounded">ZIP</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => { onExportZip(); setOpenDropdown(null); }}
+                  className="w-full px-3 py-2 text-left hover:bg-slate-800/80 flex items-center justify-between text-slate-200 transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <Download className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>Bundle HTML Offline Ejecutable</span>
+                  </span>
+                  <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-1 rounded">ZIP</span>
+                </button>
+
+                <button
+                  onClick={() => { onExportPng(); setOpenDropdown(null); }}
+                  className="w-full px-3 py-2 text-left hover:bg-slate-800/80 flex items-center justify-between text-slate-200 transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <Camera className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Captura Completa del Mockup</span>
+                  </span>
+                  <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1 rounded">PNG</span>
+                </button>
+
+                <div className="my-1 border-t border-slate-800/80" />
+
+                <button
+                  onClick={() => { fileInputRef.current?.click(); }}
+                  className="w-full px-3 py-2 text-left hover:bg-slate-800/80 flex items-center justify-between text-slate-200 transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <Upload className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Importar Proyecto desde ZIP</span>
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* ROW 2: WORKSPACE TABS & SCREEN BAR (Pestañas de Pantallas, IA Gen, Undo/Redo) */}
+      {/* ========================================================================= */}
+      <div className="h-9 px-3 flex items-center justify-between bg-slate-950/70 border-t border-slate-900/80 text-xs">
+        
+        {/* Left: Screen Tabs + Create New Screen */}
+        <div className="flex items-center gap-1 overflow-x-auto max-w-xl py-0.5">
+          <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mr-1 hidden sm:inline">Pantallas:</span>
+
           {screens.map(s => (
             <button
               key={s.id}
               onClick={() => onSelectScreen(s.id)}
-              className={'px-2.5 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1 shrink-0 ' + (
+              className={'px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 shrink-0 text-xs font-medium ' + (
                 activeScreenId === s.id
-                  ? 'bg-slate-800 text-white shadow-xs'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                  ? 'bg-slate-800 text-white font-semibold shadow-xs border border-slate-700/60'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
               )}
             >
               <span>{s.name}</span>
@@ -194,381 +634,58 @@ export const Topbar: React.FC<TopbarProps> = ({
 
           <button
             onClick={onAddScreen}
-            className="p-1 px-1.5 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-md text-xs transition-colors shrink-0"
-            title="Crear nueva ventana/pantalla vacía"
+            className="p-1 px-1.5 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-md transition-colors shrink-0"
+            title="Crear nueva pantalla vacía"
           >
-            <Plus className="w-3 h-3" />
+            <Plus className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* AI Screen Generator Button */}
-        {onOpenAiScreenGenerator && (
-          <button
-            onClick={onOpenAiScreenGenerator}
-            className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg bg-gradient-to-r from-indigo-600/30 to-pink-600/30 hover:from-indigo-600/50 hover:to-pink-600/50 text-white border border-indigo-500/40 transition-all shadow-sm"
-            title="Generar Pantalla Completa con IA por Prompt"
-          >
-            <Wand2 className="w-3 h-3 text-pink-400" />
-            <span className="hidden xl:inline">Generar IA</span>
-          </button>
-        )}
-
-        {/* Templates Button */}
-        <button
-          onClick={onOpenTemplates}
-          className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-900/60 hover:bg-slate-800/80 text-slate-300 hover:text-white border border-slate-800/60 transition-all"
-          title="Abrir biblioteca de plantillas completas"
-        >
-          <LayoutTemplate className="w-3 h-3 text-indigo-400" />
-          <span className="hidden 2xl:inline">Plantillas</span>
-        </button>
-
-        {/* Undo & Redo History Controls */}
-        <div className="flex items-center bg-slate-900/60 p-0.5 rounded-lg border border-slate-800/50">
-          <button
-            disabled={!canUndo}
-            onClick={onUndo}
-            className={'p-1 rounded-md transition-colors ' + (
-              canUndo ? 'text-slate-300 hover:text-white hover:bg-slate-800/60' : 'text-slate-600 cursor-not-allowed'
-            )}
-            title="Deshacer cambio (Ctrl+Z)"
-          >
-            <Undo2 className="w-3.5 h-3.5" />
-          </button>
-          <button
-            disabled={!canRedo}
-            onClick={onRedo}
-            className={'p-1 rounded-md transition-colors ' + (
-              canRedo ? 'text-slate-300 hover:text-white hover:bg-slate-800/60' : 'text-slate-600 cursor-not-allowed'
-            )}
-            title="Rehacer cambio (Ctrl+Y)"
-          >
-            <Redo2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* Device Viewport Toggle */}
-        <div className="hidden lg:flex items-center bg-slate-900/60 p-0.5 rounded-lg border border-slate-800/50">
-          <button
-            onClick={() => setDeviceMode('mobile')}
-            className={'flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md transition-colors ' + (
-              deviceMode === 'mobile'
-                ? 'bg-slate-800 text-white shadow-xs'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
-            )}
-            title="Breakpoint Móvil (390px)"
-          >
-            <Smartphone className="w-3 h-3" />
-            <span>Móvil</span>
-          </button>
-          <button
-            onClick={() => setDeviceMode('tablet')}
-            className={'flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md transition-colors ' + (
-              deviceMode === 'tablet'
-                ? 'bg-slate-800 text-white shadow-xs'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
-            )}
-            title="Breakpoint Tablet (768px)"
-          >
-            <Tablet className="w-3 h-3" />
-            <span>Tablet</span>
-          </button>
-          <button
-            onClick={() => setDeviceMode('desktop')}
-            className={'flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md transition-colors ' + (
-              deviceMode === 'desktop'
-                ? 'bg-slate-800 text-white shadow-xs'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
-            )}
-            title="Breakpoint Web Desktop (1200px)"
-          >
-            <Monitor className="w-3 h-3" />
-            <span>Web</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Canvas Viewport Zoom & Tools */}
-      <div className="flex items-center gap-1.5">
-        {/* Zoom */}
-        <div className="flex items-center bg-slate-900/60 px-1.5 py-0.5 rounded-lg border border-slate-800/50 text-xs gap-1">
-          <button 
-            onClick={() => setZoom(z => Math.max(0.4, Number((z - 0.1).toFixed(1))))}
-            className="p-1 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded"
-            title="Alejar Zoom"
-          >
-            <ZoomOut className="w-3 h-3" />
-          </button>
-          <span className="w-8 text-center font-mono text-[11px] text-slate-300">{Math.round(zoom * 100)}%</span>
-          <button 
-            onClick={() => setZoom(z => Math.min(2.0, Number((z + 0.1).toFixed(1))))}
-            className="p-1 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded"
-            title="Acercar Zoom"
-          >
-            <ZoomIn className="w-3 h-3" />
-          </button>
-          <button 
-            onClick={() => setZoom(1.0)}
-            className="p-1 text-slate-500 hover:text-slate-300 rounded"
-            title="Restablecer (100%)"
-          >
-            <RotateCcw className="w-2.5 h-2.5" />
-          </button>
-        </div>
-
-        {/* Minimal Tool Icons Group */}
-        <div className="flex items-center bg-slate-900/60 p-0.5 rounded-lg border border-slate-800/50">
-          {/* Drawing Mode Toggle */}
-          <button
-            onClick={onToggleDrawing}
-            className={'p-1.5 rounded-md transition-all ' + (
-              isDrawingActive
-                ? 'bg-pink-500/20 text-pink-400 border border-pink-500/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
-            )}
-            title="Modo Dibujo libre"
-          >
-            <Pencil className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Design Tokens */}
-          <button
-            onClick={onToggleDesignTokens}
-            className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 rounded-md transition-all"
-            title="Tokens Globales del Sistema de Diseño"
-          >
-            <Palette className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Comments Notes */}
-          <button
-            onClick={onToggleComments}
-            className={'p-1.5 rounded-md transition-all ' + (
-              isCommentsActive
-                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
-            )}
-            title="Modo Comentarios y Notas"
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
-          </button>
-
-          {/* 8px Alignment Grid */}
-          <button
-            onClick={onToggleGrid}
-            className={'p-1.5 rounded-md transition-all ' + (
-              isGridActive
-                ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
-            )}
-            title="Alternar rejilla de alineación de 8px"
-          >
-            <Grid className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Canvas Precision Rulers Toggle */}
-          {onToggleRulers && (
+        {/* Right: AI Generator Button + Undo/Redo + Auto-save indicator */}
+        <div className="flex items-center gap-2">
+          {/* AI Generator Button in Secondary Bar */}
+          {onOpenAiScreenGenerator && (
             <button
-              onClick={onToggleRulers}
-              className={'p-1.5 rounded-md transition-all ' + (
-                showRulers
-                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+              onClick={onOpenAiScreenGenerator}
+              className="flex items-center gap-1 px-2.5 py-0.5 text-xs font-bold rounded-md bg-gradient-to-r from-indigo-600/30 to-pink-600/30 hover:from-indigo-600/50 hover:to-pink-600/50 text-white border border-indigo-500/40 transition-all shadow-xs"
+              title="Generar pantalla completa con IA"
+            >
+              <Wand2 className="w-3 h-3 text-pink-400" />
+              <span>Generar con IA</span>
+            </button>
+          )}
+
+          {/* Undo & Redo History */}
+          <div className="flex items-center bg-slate-900 p-0.5 rounded border border-slate-800">
+            <button
+              disabled={!canUndo}
+              onClick={onUndo}
+              className={'p-1 rounded transition-colors ' + (
+                canUndo ? 'text-slate-300 hover:text-white hover:bg-slate-800' : 'text-slate-600 cursor-not-allowed'
               )}
-              title="Alternar Reglas Graduadas del Lienzo"
+              title="Deshacer (Ctrl+Z)"
             >
-              <Ruler className="w-3.5 h-3.5" />
+              <Undo2 className="w-3 h-3" />
             </button>
-          )}
-
-          {/* Global Theme Swapper (Dark / Light) */}
-          {onToggleThemeMode && (
             <button
-              onClick={onToggleThemeMode}
-              className="p-1.5 text-slate-400 hover:text-amber-300 hover:bg-slate-800/40 rounded-md transition-all"
-              title={currentThemeMode === 'dark' ? 'Cambiar a Modo Claro (Light Theme)' : 'Cambiar a Modo Oscuro (Dark Theme)'}
+              disabled={!canRedo}
+              onClick={onRedo}
+              className={'p-1 rounded transition-colors ' + (
+                canRedo ? 'text-slate-300 hover:text-white hover:bg-slate-800' : 'text-slate-600 cursor-not-allowed'
+              )}
+              title="Rehacer (Ctrl+Y)"
             >
-              {currentThemeMode === 'dark' ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-indigo-400" />}
+              <Redo2 className="w-3 h-3" />
             </button>
-          )}
+          </div>
 
-          {/* Capture PNG */}
-          <button
-            onClick={onExportPng}
-            className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-800/40 rounded-md transition-all"
-            title="Capturar y exportar mockup como imagen PNG"
-          >
-            <Camera className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Flow View Overview Mode */}
-          <button
-            onClick={onToggleFlowView}
-            className={'p-1.5 rounded-md transition-all ' + (
-              isFlowViewOpen
-                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                : 'text-slate-400 hover:text-purple-400 hover:bg-slate-800/40'
-            )}
-            title="Vista de Mapa de Flujo Multi-Pantalla (Flow View)"
-          >
-            <Network className="w-3.5 h-3.5" />
-          </button>
+          {/* Auto-save status dot */}
+          <div className="hidden lg:flex items-center gap-1 text-[10px] text-slate-400 font-mono pl-1 border-l border-slate-800">
+            <span className={'w-1.5 h-1.5 rounded-full ' + (isSaving ? 'bg-amber-400 animate-ping' : 'bg-emerald-400')} />
+            <span className="text-[10px] text-slate-400">{isSaving ? 'Guardando...' : 'Guardado'}</span>
+          </div>
         </div>
 
-        {/* Live Interactive Testing Mode Toggle */}
-        <button
-          onClick={() => setIsPreviewMode(!isPreviewMode)}
-          className={'flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg transition-all ' + (
-            isPreviewMode
-              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-xs'
-              : 'bg-slate-900/60 hover:bg-slate-800/80 text-slate-300 border border-slate-800/50'
-          )}
-          title="Alternar entre modo Edición e Interactivo"
-        >
-          <Play className={'w-3 h-3 ' + (isPreviewMode ? 'fill-emerald-400' : '')} />
-          <span>{isPreviewMode ? 'Interactivo' : 'Diseño'}</span>
-        </button>
-
-        {/* Full Screen Presentation Mode */}
-        {onOpenPresentation && (
-          <button
-            onClick={onOpenPresentation}
-            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-900/60 hover:bg-slate-800/80 text-slate-300 hover:text-white border border-slate-800/50 transition-all"
-            title="Modo Presentación a Pantalla Completa (Figma Presentation)"
-          >
-            <Maximize2 className="w-3 h-3 text-cyan-400" />
-            <span className="hidden 2xl:inline">Presentar</span>
-          </button>
-        )}
-      </div>
-
-      {/* Action Buttons: Sound Lab, AI Bridge, Export/Import */}
-      <div className="flex items-center gap-1.5">
-        {/* Save Version Snapshot button */}
-        {onSaveSnapshot && (
-          <button
-            onClick={onSaveSnapshot}
-            className="p-1.5 sm:px-2.5 sm:py-1 text-xs font-medium rounded-lg transition-colors border bg-slate-900/60 text-emerald-400 hover:text-emerald-300 hover:bg-slate-800/60 border-slate-800/50 flex items-center gap-1"
-            title="Guardar punto de restauración en la memoria local"
-          >
-            <Save className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="hidden sm:inline">Snapshot</span>
-          </button>
-        )}
-
-        {/* Sound Studio Toggle */}
-        <button
-          onClick={onToggleSoundLab}
-          className={'p-1.5 sm:px-2.5 sm:py-1 text-xs font-medium rounded-lg transition-colors border ' + (
-            isSoundLabOpen
-              ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
-              : 'bg-slate-900/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border-slate-800/50'
-          )}
-          title="Estudio de Sonidos UI & Sintetizador"
-        >
-          <Volume2 className="w-3.5 h-3.5 sm:hidden" />
-          <span className="hidden sm:inline">Sonido</span>
-        </button>
-
-        {/* Animation Studio Toggle */}
-        {onToggleAnimationStudio && (
-          <button
-            onClick={onToggleAnimationStudio}
-            className="p-1.5 sm:px-2.5 sm:py-1 text-xs font-medium rounded-lg transition-colors border bg-slate-900/60 text-pink-400 hover:text-pink-300 hover:bg-slate-800/60 border-slate-800/50 flex items-center gap-1"
-            title="Estudio de Animaciones CSS & Profundidad"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-pink-400" />
-            <span className="hidden sm:inline">Animación</span>
-          </button>
-        )}
-
-        {/* Vector Studio Toggle (Figma & Illustrator tools) */}
-        {onToggleVectorStudio && (
-          <button
-            onClick={onToggleVectorStudio}
-            className="p-1.5 sm:px-2.5 sm:py-1 text-xs font-medium rounded-lg transition-colors border bg-slate-900/60 text-indigo-400 hover:text-indigo-300 hover:bg-slate-800/60 border-slate-800/50 flex items-center gap-1"
-            title="Estudio Vectorial: Redes Vectoriales, Creador de Formas y Persona Píxel"
-          >
-            <PenTool className="w-3.5 h-3.5 text-indigo-400" />
-            <span className="hidden sm:inline">Vectores</span>
-          </button>
-        )}
-
-        {/* AI Agent Bridge Toggle */}
-        <button
-          onClick={onToggleAiPanel}
-          className={'flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg transition-colors border ' + (
-            isAiPanelOpen
-              ? 'bg-indigo-600/20 text-indigo-300 border-indigo-500/40'
-              : 'bg-slate-900/60 text-slate-300 hover:text-white hover:bg-slate-800/60 border-slate-800/50'
-          )}
-        >
-          <Bot className="w-3 h-3 text-indigo-400" />
-          <span className="hidden sm:inline">IA</span>
-        </button>
-
-        <div className="h-4 w-px bg-slate-800/80 mx-0.5" />
-
-        {/* Hidden inputs for imports */}
-        <input 
-          type="file" 
-          ref={fileInputRef} 
-          accept=".zip" 
-          className="hidden" 
-          onChange={handleFileChange}
-        />
-        <input 
-          type="file" 
-          ref={forgeInputRef} 
-          accept=".forge,.json" 
-          className="hidden" 
-          onChange={handleForgeChange}
-        />
-
-        {/* Import .forge Project */}
-        {onImportForgeFile && (
-          <button
-            onClick={() => forgeInputRef.current?.click()}
-            className="p-1.5 sm:px-2.5 sm:py-1 text-xs font-medium bg-slate-900/60 hover:bg-slate-800/60 text-slate-400 hover:text-slate-200 rounded-lg border border-slate-800/50 transition-colors flex items-center gap-1"
-            title="Cargar Proyecto .forge guardado"
-          >
-            <Upload className="w-3 h-3" />
-            <span className="hidden md:inline">Abrir .forge</span>
-          </button>
-        )}
-
-        {/* Export .forge Project */}
-        {onExportForgeFile && (
-          <button
-            onClick={onExportForgeFile}
-            className="p-1.5 sm:px-2.5 sm:py-1 text-xs font-medium bg-slate-900/60 hover:bg-slate-800/60 text-indigo-300 hover:text-white rounded-lg border border-slate-800/50 transition-colors flex items-center gap-1"
-            title="Exportar archivo de proyecto editable (.forge)"
-          >
-            <Save className="w-3 h-3 text-indigo-400" />
-            <span className="hidden md:inline">.forge</span>
-          </button>
-        )}
-
-        {/* Export React + Vite Project */}
-        {onExportReactProject && (
-          <button
-            onClick={onExportReactProject}
-            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-slate-850 hover:bg-slate-800 text-cyan-300 border border-cyan-500/30 rounded-lg shadow-sm transition-colors"
-            title="Exportar Proyecto React + Vite completo con Tailwind y componentes"
-          >
-            <Code2 className="w-3 h-3 text-cyan-400" />
-            <span className="hidden sm:inline">React + Vite</span>
-          </button>
-        )}
-
-        <button
-          onClick={onExportZip}
-          className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg shadow-sm transition-colors"
-          title="Descargar ZIP ejecutable offline con sonidos y código"
-        >
-          <Download className="w-3 h-3" />
-          <span>ZIP</span>
-        </button>
       </div>
     </header>
   );
