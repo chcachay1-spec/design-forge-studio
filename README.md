@@ -83,7 +83,20 @@ Organizados en 6 categorías anatómicas con soporte Drag-and-Drop:
 * **Estudio de Animación y Profundidad:** Editor de keyframes CSS y control de profundidad (`Z-Index` y reordenamiento de capas al frente / al fondo).
 * **Exportador de Assets PNG a 3x DPI:** Exportación aislada de cualquier componente con transparencia y nitidez retina.
 
-### 11. 🚀 Handoff & Exportación para Desarrolladores
+### 11. 🎬 Fondos de Video Animados (WebM / MP4) & Interacción por Proximidad
+* **Soporte de Video de Fondo:** Carga directa de videos locales (`.mp4`, `.webm`) o URLs remotas para cualquier cuadro, tarjeta o contenedor.
+* **Filtros en Tiempo Real:** Control deslizante de opacidad ($0\%$ a $100\%$) y desenfoque óptico *Glassmorphism* (`0px`, `2px`, `6px`, `12px`).
+* **Interacción Inteligente por Hover / Proximidad:**
+  * *Silencioso continuo:* Modo estándar para ambientación sutil.
+  * *🔊 Activar audio al pasar mouse:* El video corre silenciado y activa el sonido únicamente al pasar el cursor sobre el elemento, silenciándose al salir.
+  * *⏯️ Pausar animación/audio al salir:* El video permanece en pausa estática y solo se reproduce con sonido mientras el usuario mantiene el puntero encima.
+
+### 12. 📺 Reproductor de YouTube Integrado (IFrame Embed)
+* **Embebido en Cualquier Contenedor:** Soporta URLs en formato estándar (`watch?v=...`), enlaces cortos (`youtu.be/...`) y URLs embed.
+* **Transformación de Media Player:** Si se asigna a un componente de reproductor multimedia, se convierte automáticamente en una pantalla de video en vivo.
+* **Presets de Prueba:** Accesos rápidos con un solo clic a *Lofi Beats*, *UI Demo* y *Chill Music*.
+
+### 13. 🚀 Handoff & Exportación para Desarrolladores
 * **Exportación React + Vite + Tailwind CSS:** Descarga el código fuente completo listo para producción (`npm install && npm run dev`).
 * **Inspector de Código en Vivo:** Genera y copia snippets en **Tailwind CSS**, **CSS Puro** o **React JSX semántico**.
 * **Tokens de Diseño Globales:** Modal de tokens centralizados con propagación en cascada a todos los componentes.
