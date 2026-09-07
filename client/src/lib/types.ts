@@ -150,17 +150,22 @@ export interface CustomSynthParams {
   waveform: 'sine' | 'square' | 'sawtooth' | 'triangle';
   startFreq: number; // in Hz
   endFreq: number; // in Hz
-  duration: number; // in seconds (e.g. 0.05 to 1.5)
+  duration: number; // in seconds (e.g. 0.03 to 1.5)
   ramp: 'exponential' | 'linear';
   gain: number; // 0 to 1
   name?: string;
   notes?: number[]; // optional arpeggio chord freqs
+  attack?: number; // attack fade-in time in seconds
+  decay?: number; // decay fade-out time in seconds
+  trimStart?: number; // start trim in seconds
+  trimEnd?: number; // end trim in seconds
 }
 
 export interface CustomSoundDefinition {
   id: string;
   name: string;
   type: 'synth' | 'audio_file';
+  category?: 'Botones' | 'Notificaciones' | 'Éxito' | 'Error' | 'Transición' | 'Retro';
   description?: string;
   synthParams?: CustomSynthParams;
   audioDataUrl?: string; // base64 / dataUrl for imported sound files

@@ -174,6 +174,10 @@ class AudioEngine {
       masterGain.gain.setValueAtTime(volume * (params.gain || 0.8), now);
       masterGain.connect(this.ctx.destination);
 
+      const totalDur = Math.min(2.0, Math.max(0.02, params.duration));
+      const attack = params.attack !== undefined ? Math.min(params.attack, totalDur * 0.4) : Math.min(0.02, totalDur * 0.2);
+      const decay = params.decay !== undefined ? Math.min(params.decay, totalDur - attack) : totalDur - attack;
+
       if (params.notes && params.notes.length > 0) {
         // Multi-note arpeggio chord
         params.notes.forEach((freq, i) => {
@@ -181,35 +185,40 @@ class AudioEngine {
           const osc = this.ctx.createOscillator();
           const gain = this.ctx.createGain();
           osc.type = params.waveform;
-          osc.frequency.setValueAtTime(freq, now + i * 0.05);
-          gain.gain.setValueAtTime(0, now + i * 0.05);
-          gain.gain.linearRampToValueAtTime(0.3, now + i * 0.05 + 0.015);
-          gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.05 + params.duration);
+          osc.frequency.setValueAtTime(freq, now + i * 0.04);
+          gain.gain.setValueAtTime(0.0001, now + i * 0.04);
+          gain.gain.linearRampToValueAtTime(0.3, now + i * 0.04 + attack);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.04 + totalDur);
           osc.connect(gain);
           gain.connect(masterGain);
-          osc.start(now + i * 0.05);
-          osc.stop(now + i * 0.05 + params.duration + 0.05);
+          osc.start(now + i * 0.04);
+          osc.stop(now + i * 0.04 + totalDur + 0.04);
         });
       } else {
-        // Single frequency sweep
+        // Single frequency sweep with attack & decay
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = params.waveform;
         osc.frequency.setValueAtTime(params.startFreq, now);
 
         if (params.ramp === 'exponential') {
-          osc.frequency.exponentialRampToValueAtTime(Math.max(20, params.endFreq), now + params.duration);
+          osc.frequency.exponentialRampToValueAtTime(Math.max(20, params.endFreq), now + totalDur);
         } else {
-          osc.frequency.linearRampToValueAtTime(params.endFreq, now + params.duration);
+          osc.frequency.linearRampToValueAtTime(params.endFreq, now + totalDur);
         }
 
-        gain.gain.setValueAtTime(0.8, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + params.duration);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(0.85, now + attack);
+        if (params.ramp === 'exponential') {
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + attack + decay);
+        } else {
+          gain.gain.linearRampToValueAtTime(0.0001, now + attack + decay);
+        }
 
         osc.connect(gain);
         gain.connect(masterGain);
         osc.start(now);
-        osc.stop(now + params.duration + 0.02);
+        osc.stop(now + totalDur + 0.02);
       }
     } catch (e) {
       console.warn("Synth play error:", e);
