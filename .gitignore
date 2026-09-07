@@ -1,0 +1,9 @@
+node_modules/
+dist/
+dist-ssr/
+.vite/
+.vercel/
+*.local
+.env*.local
+client/dist/
+client/node_modules/

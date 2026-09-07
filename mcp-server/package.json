@@ -1,0 +1,10 @@
+﻿{
+  "name": "designforge-mcp-server",
+  "version": "1.0.0",
+  "description": "Offline Design & Sound Bridge MCP Server for DesignForge",
+  "main": "index.js",
+  "type": "module",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.0"
+  }
+}
