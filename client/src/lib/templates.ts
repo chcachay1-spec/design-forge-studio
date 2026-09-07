@@ -3,8 +3,13 @@ import type { ScreenDefinition } from './types';
 export interface ProjectTemplate {
   id: string;
   name: string;
-  category: 'Fintech' | 'E-Commerce' | 'SaaS & Web' | 'Social & Chat' | 'Salud & Fitness' | 'Landing & Portfolio';
+  category: 'Fintech' | 'E-Commerce' | 'SaaS & Web' | 'Social & Chat' | 'Salud & Fitness' | 'Landing & Portfolio' | 'Gaming & Media' | 'Design Systems';
   platform: 'mobile' | 'web';
+  tier: 'free' | 'pro';
+  price?: string;
+  rating?: number;
+  downloads?: string;
+  author?: string;
   description: string;
   icon: string;
   tags: string[];
@@ -21,9 +26,14 @@ export const OFFICIAL_TEMPLATES: ProjectTemplate[] = [
     name: 'NeoBank & Crypto Pro',
     category: 'Fintech',
     platform: 'mobile',
+    tier: 'pro',
+    price: '$19 Pro Kit',
+    rating: 4.95,
+    downloads: '2.4k',
+    author: 'DesignForge Pro Studio',
     description: 'Banca digital de alta fidelidad con balance en vivo, tarjeta virtual, transferencias y analíticas.',
     icon: '💳',
-    tags: ['Fintech', 'Crypto', 'Banca Móvil'],
+    tags: ['Fintech', 'Crypto', 'Banca Móvil', 'Pro Kit'],
     screens: [
       {
         id: 'screen-fintech-home',
@@ -154,9 +164,14 @@ export const OFFICIAL_TEMPLATES: ProjectTemplate[] = [
     name: 'Urban Kicks Store',
     category: 'E-Commerce',
     platform: 'mobile',
+    tier: 'free',
+    price: '$0 Free',
+    rating: 4.8,
+    downloads: '3.1k',
+    author: 'DesignForge Community',
     description: 'Catálogo de calzado deportivo con buscador, tabs de categoría, tarjetas de producto y checkout confeti.',
     icon: '👟',
-    tags: ['E-Commerce', 'Tienda', 'Moda', 'Mobile'],
+    tags: ['E-Commerce', 'Tienda', 'Moda', 'Free'],
     screens: [
       {
         id: 'screen-ecom-home',
@@ -279,9 +294,14 @@ export const OFFICIAL_TEMPLATES: ProjectTemplate[] = [
     name: 'Pulse Social Feed',
     category: 'Social & Chat',
     platform: 'mobile',
+    tier: 'free',
+    price: '$0 Free',
+    rating: 4.9,
+    downloads: '4.2k',
+    author: 'DesignForge Community',
     description: 'Red social estilo Instagram con barra de historias, tarjeta de post, botones de interacción y comentarios.',
     icon: '📸',
-    tags: ['Social', 'Feed', 'Historias', 'Mobile'],
+    tags: ['Social', 'Feed', 'Historias', 'Free'],
     screens: [
       {
         id: 'screen-social-home',
@@ -418,9 +438,14 @@ export const OFFICIAL_TEMPLATES: ProjectTemplate[] = [
     name: 'FitPulse Tracker',
     category: 'Salud & Fitness',
     platform: 'mobile',
+    tier: 'free',
+    price: '$0 Free',
+    rating: 4.7,
+    downloads: '1.8k',
+    author: 'DesignForge Community',
     description: 'Seguimiento de entrenamientos, conteo de calorías, meta de pasos y rutinas de cardio.',
     icon: '⚡',
-    tags: ['Fitness', 'Salud', 'Tracker', 'Gym'],
+    tags: ['Fitness', 'Salud', 'Tracker', 'Free'],
     screens: [
       {
         id: 'screen-fit-home',
@@ -494,12 +519,17 @@ export const OFFICIAL_TEMPLATES: ProjectTemplate[] = [
   // ==========================================
   {
     id: 'template-food-delivery',
-    name: 'BiteDrop Food Delivery',
+    name: 'BiteDrop Food Delivery Pro',
     category: 'E-Commerce',
     platform: 'mobile',
+    tier: 'pro',
+    price: '$22 Pro Kit',
+    rating: 4.92,
+    downloads: '1.5k',
+    author: 'DesignForge Pro Studio',
     description: 'App de pedidos de comida con menú de platos, tiempos estimados de entrega y botón de orden.',
     icon: '🍔',
-    tags: ['Delivery', 'Comida', 'Restaurante', 'Mobile'],
+    tags: ['Delivery', 'Comida', 'Restaurante', 'Pro Kit'],
     screens: [
       {
         id: 'screen-food-home',
@@ -591,9 +621,14 @@ export const OFFICIAL_TEMPLATES: ProjectTemplate[] = [
     name: 'CloudMetrics SaaS Dashboard',
     category: 'SaaS & Web',
     platform: 'web',
+    tier: 'free',
+    price: '$0 Free',
+    rating: 4.85,
+    downloads: '5.1k',
+    author: 'DesignForge Community',
     description: 'Suite completa de telemetría y métricas SaaS con KPIs de ingresos, switches y tabla de transacciones.',
     icon: '📊',
-    tags: ['SaaS', 'Dashboard', 'Analytics', 'Web'],
+    tags: ['SaaS', 'Dashboard', 'Analytics', 'Free'],
     screens: [
       {
         id: 'screen-saas-home',
@@ -668,12 +703,17 @@ export const OFFICIAL_TEMPLATES: ProjectTemplate[] = [
   // ==========================================
   {
     id: 'template-ai-prompt-studio',
-    name: 'NeuroPrompt AI Studio',
+    name: 'NeuroPrompt AI Studio Pro',
     category: 'SaaS & Web',
     platform: 'web',
+    tier: 'pro',
+    price: '$24 Pro Kit',
+    rating: 4.98,
+    downloads: '3.6k',
+    author: 'DesignForge Pro Studio',
     description: 'Entorno conversacional tipo ChatGPT / Claude con barra de prompts flotante, selección de modelo y respuestas.',
     icon: '🤖',
-    tags: ['IA', 'Chatbot', 'LLM', 'Web'],
+    tags: ['IA', 'Chatbot', 'LLM', 'Pro Kit'],
     screens: [
       {
         id: 'screen-ai-home',
@@ -772,9 +812,14 @@ export const OFFICIAL_TEMPLATES: ProjectTemplate[] = [
     name: 'Apex Launchpad',
     category: 'Landing & Portfolio',
     platform: 'web',
+    tier: 'free',
+    price: '$0 Free',
+    rating: 4.8,
+    downloads: '3.9k',
+    author: 'DesignForge Community',
     description: 'Landing page moderna con Hero section, badges de lanzamiento, llamada a la acción (CTA) y características.',
     icon: '🚀',
-    tags: ['Landing Page', 'Startup', 'SaaS', 'Marketing'],
+    tags: ['Landing', 'Startup', 'SaaS', 'Free'],
     screens: [
       {
         id: 'screen-landing-home',
@@ -841,6 +886,368 @@ export const OFFICIAL_TEMPLATES: ProjectTemplate[] = [
       },
     ],
   },
+
+  // ==========================================
+  // 9. PRO: WEB3 & CRYPTO DEFI STAKING (FIGMA UI8 TOP SELLER)
+  // ==========================================
+  {
+    id: 'template-defi-staking-pro',
+    name: 'ApexDeFi Web3 & Staking Multi-Chain',
+    category: 'Fintech',
+    platform: 'mobile',
+    tier: 'pro',
+    price: '$29 Pro Kit',
+    rating: 4.98,
+    downloads: '1.4k',
+    author: 'DesignForge Pro Studio',
+    description: 'Billetera Web3 multi-cadena con balance total bloqueado (TVL), selector de red, swap de tokens con slippage del 0.1% y rendimiento APY líquido.',
+    icon: '🪙',
+    tags: ['Web3', 'DeFi', 'Crypto', 'Swap', 'Pro Kit'],
+    screens: [
+      {
+        id: 'screen-defi-pro-home',
+        name: 'DeFi Portfolio & Swap',
+        rootNode: {
+          id: 'root-defi-pro-home',
+          name: 'DeFi Root',
+          type: 'container',
+          styles: {
+            backgroundColor: '#070913',
+            padding: '20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '14px',
+            width: '100%',
+          },
+          children: [
+            {
+              id: 'defi-nav',
+              name: 'Barra Wallet',
+              type: 'navbar',
+              content: '⚡ ApexDeFi • Mainnet Multi-Chain',
+              styles: { backgroundColor: '#101426', borderRadius: '16px', padding: '12px 16px', borderColor: '#1e2648' },
+            },
+            {
+              id: 'defi-portfolio-card',
+              name: 'Tarjeta Balance Total',
+              type: 'card',
+              styles: {
+                backgroundColor: '#131833',
+                borderRadius: '20px',
+                padding: '18px',
+                borderWidth: '1px',
+                borderColor: '#3730a3',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+              },
+              children: [
+                {
+                  id: 'defi-p-label',
+                  name: 'Etiqueta Balance',
+                  type: 'text',
+                  content: 'VALOR TOTAL BLOQUEADO (TVL)',
+                  styles: { fontSize: '10px', color: '#a5b4fc', fontWeight: '700', fontFamily: 'monospace' },
+                },
+                {
+                  id: 'defi-p-amount',
+                  name: 'Monto Total',
+                  type: 'text',
+                  content: '$84,920.45 USD',
+                  styles: { fontSize: '26px', fontWeight: '900', color: '#ffffff' },
+                },
+                {
+                  id: 'defi-badge-apy',
+                  name: 'Badge Rendimiento',
+                  type: 'badge',
+                  content: '📈 +24.8% APY Staking Líquido',
+                  styles: { backgroundColor: '#14532d', color: '#86efac', padding: '4px 10px', borderRadius: '8px', width: 'fit-content' },
+                },
+              ],
+            },
+            {
+              id: 'defi-btn-swap',
+              name: 'Botón Swap Instantáneo',
+              type: 'button',
+              content: '🔄 Swap ETH ➔ USDT (0% Fees)',
+              styles: { backgroundColor: '#4f46e5', color: '#ffffff', padding: '14px', borderRadius: '14px', fontWeight: '800' },
+              action: { type: 'confetti' },
+              sounds: { onClick: 'chime' },
+            },
+            {
+              id: 'defi-tabbar',
+              name: 'Barra Inferior Web3',
+              type: 'tabbar',
+              styles: { backgroundColor: '#101426', padding: '12px', borderRadius: '18px' },
+            },
+          ],
+        },
+      },
+    ],
+  },
+
+  // ==========================================
+  // 10. PRO: HI-FI MUSIC PLAYER (APPLE MUSIC / SPOTIFY STYLE)
+  // ==========================================
+  {
+    id: 'template-music-player-pro',
+    name: 'SonicStream Hi-Fi Music Player',
+    category: 'Gaming & Media',
+    platform: 'mobile',
+    tier: 'pro',
+    price: '$19 Pro Kit',
+    rating: 4.95,
+    downloads: '980',
+    author: 'DesignForge Pro Studio',
+    description: 'Reproductor musical de alta gama: carátula neón retroiluminada, barra de progreso con scrubber, control de volumen táctil y ecualizador.',
+    icon: '🎵',
+    tags: ['Música', 'Streaming', 'Audio', 'Pro Kit'],
+    screens: [
+      {
+        id: 'screen-music-pro-home',
+        name: 'Reproductor Hi-Fi',
+        rootNode: {
+          id: 'root-music-pro-home',
+          name: 'Player Root',
+          type: 'container',
+          styles: {
+            backgroundColor: '#0a0612',
+            padding: '20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            width: '100%',
+          },
+          children: [
+            {
+              id: 'mus-nav',
+              name: 'Cabecera Reproductor',
+              type: 'navbar',
+              content: 'SonicStream Hi-Res Lossless',
+              styles: { backgroundColor: '#190e2b', borderRadius: '16px', padding: '12px' },
+            },
+            {
+              id: 'mus-disc-card',
+              name: 'Carátula del Álbum',
+              type: 'card',
+              styles: {
+                backgroundColor: '#1f1038',
+                borderRadius: '24px',
+                padding: '24px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '10px',
+                borderWidth: '1px',
+                borderColor: '#6b21a8',
+              },
+              children: [
+                {
+                  id: 'mus-album-art',
+                  name: 'Carátula Art',
+                  type: 'text',
+                  content: '💿 NEON HORIZONS • VOL. 4',
+                  styles: { fontSize: '13px', fontWeight: '800', color: '#e9d5ff', letterSpacing: '2px' },
+                },
+                {
+                  id: 'mus-track-title',
+                  name: 'Título Canción',
+                  type: 'text',
+                  content: 'Midnight Resonance',
+                  styles: { fontSize: '20px', fontWeight: '800', color: '#ffffff' },
+                },
+                {
+                  id: 'mus-artist',
+                  name: 'Artista',
+                  type: 'text',
+                  content: 'Kavinsky & Daft Waves',
+                  styles: { fontSize: '13px', color: '#c084fc' },
+                },
+              ],
+            },
+            {
+              id: 'mus-progress-bar',
+              name: 'Barra de Progreso',
+              type: 'progress',
+              content: '02:45 / 04:12',
+              value: 65,
+              styles: { backgroundColor: '#190e2b', padding: '14px', borderRadius: '16px' },
+            },
+            {
+              id: 'mus-btn-play',
+              name: 'Controles Play/Pause',
+              type: 'button',
+              content: '⏸️ Pausar Reproducción',
+              styles: { backgroundColor: '#9333ea', color: '#ffffff', padding: '14px', borderRadius: '16px', fontWeight: '800' },
+              sounds: { onClick: 'pop' },
+            },
+          ],
+        },
+      },
+    ],
+  },
+
+  // ==========================================
+  // 11. PRO: LUXURY PROPTECH & VACATION RENTALS (AIRBNB STYLE)
+  // ==========================================
+  {
+    id: 'template-haven-luxury-pro',
+    name: 'Haven Luxury Real Estate & PropTech',
+    category: 'E-Commerce',
+    platform: 'mobile',
+    tier: 'pro',
+    price: '$24 Pro Kit',
+    rating: 4.93,
+    downloads: '1.6k',
+    author: 'DesignForge Pro Studio',
+    description: 'Plataforma de villas de lujo estilo Airbnb/Zillow: buscador de destinos, carrusel de fotografías, insignia de superanfitrión y reserva inmediata.',
+    icon: '🏡',
+    tags: ['Real Estate', 'Airbnb', 'PropTech', 'Pro Kit'],
+    screens: [
+      {
+        id: 'screen-haven-pro-home',
+        name: 'Explorar Propiedades',
+        rootNode: {
+          id: 'root-haven-pro-home',
+          name: 'Haven Root',
+          type: 'container',
+          styles: {
+            backgroundColor: '#0c0e12',
+            padding: '20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            width: '100%',
+          },
+          children: [
+            {
+              id: 'haven-nav',
+              name: 'Barra Haven',
+              type: 'navbar',
+              content: 'Haven Private Mansions',
+              styles: { backgroundColor: '#161a22', borderRadius: '16px', padding: '12px 16px' },
+            },
+            {
+              id: 'haven-villa-card',
+              name: 'Tarjeta Villa Destacada',
+              type: 'card',
+              styles: {
+                backgroundColor: '#171c26',
+                borderRadius: '22px',
+                padding: '18px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+                borderWidth: '1px',
+                borderColor: '#2b3345',
+              },
+              children: [
+                {
+                  id: 'haven-v-name',
+                  name: 'Nombre Villa',
+                  type: 'text',
+                  content: 'Villa Obsidian • Costa Amalfitana',
+                  styles: { fontSize: '16px', fontWeight: '800', color: '#ffffff' },
+                },
+                {
+                  id: 'haven-v-price',
+                  name: 'Precio por Noche',
+                  type: 'text',
+                  content: '$1,250 USD / noche',
+                  styles: { fontSize: '18px', fontWeight: '800', color: '#38bdf8' },
+                },
+                {
+                  id: 'haven-btn-book',
+                  name: 'Reservar Villa',
+                  type: 'button',
+                  content: '📅 Reservar Fechas Disponibles',
+                  styles: { backgroundColor: '#0284c7', color: '#ffffff', padding: '12px', borderRadius: '12px', fontWeight: '700' },
+                  action: { type: 'modal', modalTitle: 'Reserva Confirmada', modalContent: 'Tus fechas en Villa Obsidian han sido bloqueadas.' },
+                  sounds: { onClick: 'chime' },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ],
+  },
+
+  // ==========================================
+  // 12. PRO: DESIGN SYSTEM MASTER (MATERIAL 3 + APPLE HIG TOKENS)
+  // ==========================================
+  {
+    id: 'template-design-system-master-pro',
+    name: 'Material 3 & Apple HIG Design System Master',
+    category: 'Design Systems',
+    platform: 'web',
+    tier: 'pro',
+    price: '$34 Master Kit',
+    rating: 5.0,
+    downloads: '3.8k',
+    author: 'DesignForge Pro Studio',
+    description: 'El kit de sistemas de diseño definitivo para equipos y agencias: botones primarios con micro-glow, selector de estado, paleta de tokens y componentes atómicos listos.',
+    icon: '🎨',
+    tags: ['Design System', 'Material 3', 'Apple HIG', 'Tokens', 'Pro Kit'],
+    screens: [
+      {
+        id: 'screen-ds-pro-home',
+        name: 'Componentes Atómicos',
+        rootNode: {
+          id: 'root-ds-pro-home',
+          name: 'DS Root',
+          type: 'container',
+          styles: {
+            backgroundColor: '#070b14',
+            padding: '28px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '18px',
+            width: '100%',
+          },
+          children: [
+            {
+              id: 'ds-nav',
+              name: 'Barra Design System',
+              type: 'navbar',
+              content: 'DesignForge Core Tokens & Atomics v3.0',
+              styles: { backgroundColor: '#101a30', padding: '16px', borderRadius: '16px' },
+            },
+            {
+              id: 'ds-card-components',
+              name: 'Showcase de Componentes',
+              type: 'card',
+              styles: {
+                backgroundColor: '#101a30',
+                borderRadius: '20px',
+                padding: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+              },
+              children: [
+                {
+                  id: 'ds-segmented',
+                  name: 'Selector de Estado',
+                  type: 'segmented',
+                  options: ['Botones', 'Entradas', 'Alertas', 'Feedback'],
+                  styles: { backgroundColor: '#070b14', padding: '4px', borderRadius: '12px' },
+                },
+                {
+                  id: 'ds-btn-sample',
+                  name: 'Botón Primario Glow',
+                  type: 'button',
+                  content: '✦ Componente Primario Interactivo',
+                  styles: { backgroundColor: '#3b82f6', color: '#ffffff', padding: '14px', borderRadius: '14px', fontWeight: '800' },
+                  sounds: { onClick: 'chime' },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ],
+  },
 ];
 
 // Helper to load user custom templates from localStorage
@@ -879,6 +1286,23 @@ export const deleteCustomTemplate = (templateId: string): ProjectTemplate[] => {
   } catch (err) {
     console.error('Error deleting custom template:', err);
     return [];
+  }
+};
+
+// Helper to check and toggle User Pro Status
+export const isUserProActive = (): boolean => {
+  try {
+    return localStorage.getItem('designforge_pro_active') === 'true';
+  } catch {
+    return false;
+  }
+};
+
+export const setUserProActive = (active: boolean): void => {
+  try {
+    localStorage.setItem('designforge_pro_active', active ? 'true' : 'false');
+  } catch (err) {
+    console.error(err);
   }
 };
 
