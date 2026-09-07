@@ -2,6 +2,8 @@
 
 [![Production Deployment](https://img.shields.io/badge/Vercel-Deployed-success?logo=vercel)](https://design-forge-app.vercel.app)
 [![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-blue?logo=github)](https://github.com/chcachay1-spec/design-forge-studio)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Support on Ko-fi](https://img.shields.io/badge/Ko--fi-Support_Project-ff5e5b?logo=kofi&logoColor=white)](https://ko-fi.com/cacc25)
 [![Offline Ready](https://img.shields.io/badge/Offline-100%25_Ready-purple)](https://design-forge-app.vercel.app)
 [![100% Free](https://img.shields.io/badge/Exportaciones-100%25_Gratis-brightgreen)](https://design-forge-app.vercel.app)
 
@@ -9,7 +11,8 @@
 
 * 🌐 **Producción activa:** [https://design-forge-app.vercel.app](https://design-forge-app.vercel.app)
 * 📦 **Exportación 100% gratuita:** Proyectos completos React + Vite + Tailwind CSS, archivos `.forge` nativos, assets PNG a 3x DPI y bundles ZIP autónomos offline.
-* 💜 **Modelo de donación voluntaria:** Sin suscripciones ni pagos obligatorios. Al exportar un proyecto, se muestra una invitación a apoyar con una donación opcional para impulsar el desarrollo continuo.
+* ☕ **Apoyar el proyecto:** [https://ko-fi.com/cacc25](https://ko-fi.com/cacc25) (donaciones 100% voluntarias para mantener el desarrollo activo).
+* 💜 **Modelo de donación voluntaria:** Sin suscripciones ni pagos obligatorios. Al exportar un proyecto, se muestra una invitación opcional para impulsar el proyecto.
 
 ---
 
