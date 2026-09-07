@@ -11,6 +11,8 @@ import { SoundLab } from './components/SoundLab';
 import { AiBridge } from './components/AiBridge';
 import { DesignTokensModal } from './components/DesignTokensModal';
 import { TemplatesModal } from './components/TemplatesModal';
+import { ExportPaywallModal } from './components/ExportPaywallModal';
+import { loadUserLicense, canUserExport, recordExportUsed, type UserLicense } from './lib/license';
 import { FlowView } from './components/FlowView';
 import { PresentationModal } from './components/PresentationModal';
 import { AnimationStudioModal } from './components/AnimationStudioModal';
@@ -62,6 +64,9 @@ export function App() {
 
   // Templates Modal, Grid & Flow State
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+  const [pendingExportAction, setPendingExportAction] = useState<'react' | 'zip' | null>(null);
+  const [userLicense, setUserLicense] = useState<UserLicense>(() => loadUserLicense());
   const [isGridActive, setIsGridActive] = useState(false);
   const [isFlowViewOpen, setIsFlowViewOpen] = useState(false);
   const [isPresentationOpen, setIsPresentationOpen] = useState(false);
@@ -351,6 +356,16 @@ export function App() {
 
   // Export Complete React + Vite + Tailwind Project as ZIP
   const handleExportReactProject = async () => {
+    const currentLic = loadUserLicense();
+    setUserLicense(currentLic);
+
+    if (!canUserExport(currentLic)) {
+      soundEngine.playProceduralSound('pop');
+      setPendingExportAction('react');
+      setIsPaywallOpen(true);
+      return;
+    }
+
     try {
       soundEngine.playProceduralSound('chime');
       setToastMessage('Generando proyecto React + Vite...');
@@ -361,6 +376,10 @@ export function App() {
       link.download = `designforge-react-vite-project.zip`;
       link.click();
       URL.revokeObjectURL(url);
+
+      const updatedLic = recordExportUsed(currentLic);
+      setUserLicense(updatedLic);
+
       setToastMessage('¡Proyecto React + Vite exportado con éxito!');
       setTimeout(() => setToastMessage(null), 3000);
     } catch (err) {
@@ -1689,9 +1708,21 @@ export function App() {
 
   // Export ZIP handler
   const handleExportZip = async () => {
+    const currentLic = loadUserLicense();
+    setUserLicense(currentLic);
+
+    if (!canUserExport(currentLic)) {
+      soundEngine.playProceduralSound('pop');
+      setPendingExportAction('zip');
+      setIsPaywallOpen(true);
+      return;
+    }
+
     try {
       soundEngine.playProceduralSound('chime');
       await exportProjectZip(nodes, theme);
+      const updatedLic = recordExportUsed(currentLic);
+      setUserLicense(updatedLic);
     } catch (e) {
       alert('Error exporting project ZIP: ' + String(e));
     }
@@ -1950,6 +1981,8 @@ export function App() {
         onToggleFlowView={() => setIsFlowViewOpen(!isFlowViewOpen)}
         onOpenPresentation={() => setIsPresentationOpen(true)}
         onExportReactProject={handleExportReactProject}
+        userLicense={userLicense}
+        onOpenPaywall={() => setIsPaywallOpen(true)}
         onToggleAnimationStudio={() => setIsAnimationStudioOpen(true)}
         onToggleVectorStudio={() => setIsVectorStudioOpen(true)}
         onSaveSnapshot={handleSaveSnapshot}
@@ -2120,6 +2153,29 @@ export function App() {
           onClose={() => setIsTemplatesOpen(false)}
           onApplyTemplate={handleApplyTemplate}
           currentScreens={screens}
+        />
+
+        {/* Paywall Modal for Project Code & Bundle Export ($5 & $10 Plans) */}
+        <ExportPaywallModal
+          isOpen={isPaywallOpen}
+          onClose={() => {
+            setIsPaywallOpen(false);
+            setPendingExportAction(null);
+          }}
+          onUnlockSuccess={(newLic) => {
+            setUserLicense(newLic);
+            setIsPaywallOpen(false);
+            setToastMessage('¡Licencia activada con éxito!');
+            setTimeout(() => setToastMessage(null), 2500);
+
+            // If user had a pending export, execute it now
+            if (pendingExportAction === 'react') {
+              setTimeout(() => handleExportReactProject(), 300);
+            } else if (pendingExportAction === 'zip') {
+              setTimeout(() => handleExportZip(), 300);
+            }
+            setPendingExportAction(null);
+          }}
         />
 
         {/* AI Full Screen & Wireframe Generator Modal */}

@@ -13,9 +13,7 @@ import {
   Check, 
   BookmarkCheck,
   Crown,
-  Sparkles,
   Star,
-  Lock,
   ShieldCheck
 } from 'lucide-react';
 import { 
@@ -24,7 +22,6 @@ import {
   saveCustomTemplate, 
   deleteCustomTemplate, 
   isUserProActive,
-  setUserProActive,
   type ProjectTemplate 
 } from '../lib/templates';
 import { soundEngine } from '../lib/audio-engine';
@@ -37,7 +34,7 @@ interface TemplatesModalProps {
   currentScreens?: ScreenDefinition[];
 }
 
-type FilterTab = 'all' | 'free' | 'pro' | 'mobile' | 'web' | 'custom';
+type FilterTab = 'all' | 'mobile' | 'web' | 'custom';
 
 export const TemplatesModal: React.FC<TemplatesModalProps> = ({
   isOpen,
@@ -50,10 +47,7 @@ export const TemplatesModal: React.FC<TemplatesModalProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [isProUser, setIsProUserState] = useState(false);
   
-  // Pro Template Purchase / Unlock Modal
-  const [proModalTemplate, setProModalTemplate] = useState<ProjectTemplate | null>(null);
-  const [licenseKeyInput, setLicenseKeyInput] = useState('');
-  const [licenseError, setLicenseError] = useState(false);
+
   
   // Custom template creation state
   const [isCreating, setIsCreating] = useState(false);
@@ -72,7 +66,6 @@ export const TemplatesModal: React.FC<TemplatesModalProps> = ({
       setIsProUserState(isUserProActive());
       setIsCreating(false);
       setSavedSuccess(false);
-      setProModalTemplate(null);
     }
   }, [isOpen]);
 
@@ -83,8 +76,6 @@ export const TemplatesModal: React.FC<TemplatesModalProps> = ({
 
   const filteredTemplates = allTemplates.filter(tmpl => {
     // Filter tabs
-    if (activeTab === 'free' && tmpl.tier !== 'free') return false;
-    if (activeTab === 'pro' && tmpl.tier !== 'pro') return false;
     if (activeTab === 'mobile' && tmpl.platform !== 'mobile') return false;
     if (activeTab === 'web' && tmpl.platform !== 'web') return false;
     if (activeTab === 'custom' && !tmpl.isCustom) return false;
@@ -103,40 +94,12 @@ export const TemplatesModal: React.FC<TemplatesModalProps> = ({
   });
 
   const handleApply = (tmpl: ProjectTemplate) => {
-    // If it's a PRO template and user isn't Pro, open Figma-style unlock modal
-    if (tmpl.tier === 'pro' && !isProUser && !tmpl.isCustom) {
-      soundEngine.playProceduralSound('pop');
-      setProModalTemplate(tmpl);
-      return;
-    }
-
     soundEngine.playProceduralSound('chime');
     onApplyTemplate(tmpl);
     onClose();
   };
 
-  const handleUnlockPro = () => {
-    setUserProActive(true);
-    setIsProUserState(true);
-    soundEngine.playProceduralSound('chime');
 
-    if (proModalTemplate) {
-      onApplyTemplate(proModalTemplate);
-      setProModalTemplate(null);
-      onClose();
-    }
-  };
-
-  const handleRedeemKey = (e: React.FormEvent) => {
-    e.preventDefault();
-    const clean = licenseKeyInput.trim().toUpperCase();
-    if (clean === 'FORGEPRO2026' || clean === 'FORGE-PRO-VIP' || clean.startsWith('FORGE-')) {
-      handleUnlockPro();
-    } else {
-      setLicenseError(true);
-      setTimeout(() => setLicenseError(false), 2500);
-    }
-  };
 
   const handleSaveCurrentAsTemplate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -245,7 +208,7 @@ export const TemplatesModal: React.FC<TemplatesModalProps> = ({
                 ) : (
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-950/60 text-amber-300 border border-amber-500/30 flex items-center gap-1">
                     <Crown className="w-3 h-3 text-amber-400" />
-                    <span>FREE & PRO KITS</span>
+                    <span>100% GRATIS</span>
                   </span>
                 )}
               </div>
@@ -398,28 +361,6 @@ export const TemplatesModal: React.FC<TemplatesModalProps> = ({
               Todas ({allTemplates.length})
             </button>
             <button
-              onClick={() => setActiveTab('free')}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 ${
-                activeTab === 'free'
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 shadow-[0_0_10px_rgba(52,211,153,0.2)] font-semibold'
-                  : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
-              }`}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              <span>Gratis ({allTemplates.filter(t => t.tier === 'free').length})</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('pro')}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 ${
-                activeTab === 'pro'
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-400/40 shadow-[0_0_10px_rgba(245,158,11,0.2)] font-semibold'
-                  : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
-              }`}
-            >
-              <Crown className="w-3.5 h-3.5 text-amber-400" />
-              <span>💎 Premium Pro ({allTemplates.filter(t => t.tier === 'pro').length})</span>
-            </button>
-            <button
               onClick={() => setActiveTab('mobile')}
               className={`px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 ${
                 activeTab === 'mobile'
@@ -469,7 +410,6 @@ export const TemplatesModal: React.FC<TemplatesModalProps> = ({
         {/* TEMPLATES GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 overflow-y-auto pr-1 flex-1 min-h-[300px] max-h-[520px]">
           {filteredTemplates.map(tmpl => {
-            const isProLocked = tmpl.tier === 'pro' && !isProUser && !tmpl.isCustom;
             
             return (
               <div
@@ -558,24 +498,10 @@ export const TemplatesModal: React.FC<TemplatesModalProps> = ({
                 <button
                   type="button"
                   onClick={() => handleApply(tmpl)}
-                  className={
-                    'mt-4 w-full py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-md ' +
-                    (isProLocked
-                      ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-200 border border-amber-500/40 hover:border-amber-400 hover:shadow-[0_0_15px_rgba(245,158,11,0.3)]'
-                      : 'bg-cyan-500/15 hover:bg-cyan-500/30 text-cyan-200 hover:text-white border border-cyan-400/40 hover:border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.2)]')
-                  }
+                  className="mt-4 w-full py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-md bg-cyan-500/15 hover:bg-cyan-500/30 text-cyan-200 hover:text-white border border-cyan-400/40 hover:border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.2)] active:scale-95"
                 >
-                  {isProLocked ? (
-                    <>
-                      <Lock className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Desbloquear Kit ({tmpl.price || '$19'})</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Usar Plantilla {tmpl.tier === 'pro' && '★'}</span>
-                      <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform" />
-                    </>
-                  )}
+                  <span>Usar Plantilla</span>
+                  <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform" />
                 </button>
               </div>
             );
@@ -599,96 +525,7 @@ export const TemplatesModal: React.FC<TemplatesModalProps> = ({
         </div>
       </div>
 
-      {/* FIGMA / UI8 STYLE PRO CHECKOUT & UNLOCK MODAL */}
-      {proModalTemplate && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-lg z-60 flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-150">
-          <div className="neo-glass-panel border-amber-500/40 rounded-3xl max-w-md w-full p-6 shadow-[0_30px_90px_rgba(0,0,0,0.95),0_0_40px_rgba(245,158,11,0.25)] space-y-5 relative">
-            <button
-              onClick={() => setProModalTemplate(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-3xl shadow-[0_0_20px_rgba(245,158,11,0.3)]">
-                {proModalTemplate.icon}
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-500/40 font-bold">
-                    FIGMA PRO UI KIT
-                  </span>
-                  <span className="text-sm font-extrabold text-white">
-                    {proModalTemplate.price || '$19 USD'}
-                  </span>
-                </div>
-                <h3 className="text-base font-bold text-white mt-0.5">
-                  {proModalTemplate.name}
-                </h3>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-300 leading-relaxed">
-              {proModalTemplate.description}
-            </p>
-
-            {/* Feature Checklist */}
-            <div className="bg-black/50 p-3.5 rounded-2xl border border-white/[0.08] space-y-2 text-xs">
-              <div className="flex items-center gap-2 text-slate-200">
-                <Check className="w-4 h-4 text-emerald-400 flex-none" />
-                <span>Pantallas interactivas completas con navegación y modales</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-200">
-                <Check className="w-4 h-4 text-emerald-400 flex-none" />
-                <span>Exportación a código React + Vite + Tailwind 100% limpio</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-200">
-                <Check className="w-4 h-4 text-emerald-400 flex-none" />
-                <span>Efectos de sonido procedurales y hápticos WebAudio</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-200">
-                <Check className="w-4 h-4 text-emerald-400 flex-none" />
-                <span>Licencia comercial ilimitada para clientes y SaaS</span>
-              </div>
-            </div>
-
-            {/* Quick Demo Unlock for Testers/Users */}
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={handleUnlockPro}
-                className="w-full py-3 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 text-slate-950 font-black text-xs rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.4)] hover:brightness-110 transition-all flex items-center justify-center gap-2"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>Desbloquear UI Kit y Cargar en Lienzo</span>
-              </button>
-
-              {/* Redeem License Key Form */}
-              <form onSubmit={handleRedeemKey} className="flex gap-2 pt-1">
-                <input
-                  type="text"
-                  placeholder="¿Tienes clave de licencia? (ej: FORGEPRO2026)"
-                  value={licenseKeyInput}
-                  onChange={(e) => setLicenseKeyInput(e.target.value)}
-                  className="flex-1 bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
-                />
-                <button
-                  type="submit"
-                  className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold border border-white/15 transition-colors"
-                >
-                  Canjear
-                </button>
-              </form>
-              {licenseError && (
-                <p className="text-[11px] text-rose-400 font-mono text-center">
-                  Clave no reconocida. Puedes usar la clave VIP: FORGEPRO2026
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      
     </div>
   );
 };

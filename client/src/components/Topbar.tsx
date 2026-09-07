@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import type { DeviceMode, ScreenDefinition } from '../lib/types';
 import { DesignForgeLogo } from './DesignForgeBrand';
+import type { UserLicense } from '../lib/license';
 
 interface TopbarProps {
   deviceMode: DeviceMode;
@@ -45,6 +46,8 @@ interface TopbarProps {
   setZoom: React.Dispatch<React.SetStateAction<number>>;
   onExportZip: () => void;
   onExportReactProject?: () => void;
+  userLicense?: UserLicense;
+  onOpenPaywall?: () => void;
   onImportZip: (file: File) => void;
   onToggleAiPanel: () => void;
   isAiPanelOpen: boolean;
@@ -132,6 +135,8 @@ export const Topbar: React.FC<TopbarProps> = ({
   onToggleFlowView,
   onOpenPresentation,
   onExportReactProject,
+  userLicense,
+  onOpenPaywall,
   onToggleAnimationStudio,
   onToggleVectorStudio,
   onSaveSnapshot,
@@ -192,8 +197,31 @@ export const Topbar: React.FC<TopbarProps> = ({
         {/* Left: Brand + Professional Dropdown Menus (Figma style) */}
         <div className="flex items-center gap-2">
           {/* Official DesignForge Logo & Title */}
-          <div className="mr-3 pl-0.5">
+          <div className="mr-3 pl-0.5 flex items-center gap-2">
             <DesignForgeLogo showStudioBadge={false} />
+            {onOpenPaywall && userLicense && (
+              <button
+                onClick={onOpenPaywall}
+                className={
+                  'hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-wide transition-all border ' +
+                  (userLicense.tier === 'studio'
+                    ? 'bg-indigo-950/80 text-indigo-300 border-indigo-500/40 shadow-[0_0_10px_rgba(99,102,241,0.3)] hover:border-indigo-400'
+                    : userLicense.tier === 'starter'
+                    ? 'bg-cyan-950/80 text-cyan-300 border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.3)] hover:border-cyan-400'
+                    : 'bg-emerald-950/60 text-emerald-300 border-emerald-500/30 hover:border-emerald-400')
+                }
+                title="Planes de Exportación $5 y $10"
+              >
+                <Sparkles className="w-3 h-3 text-amber-400" />
+                <span>
+                  {userLicense.tier === 'studio' 
+                    ? 'STUDIO PRO' 
+                    : userLicense.tier === 'starter' 
+                    ? `STARTER (${Math.max(0, userLicense.maxExports - userLicense.exportsUsed)} left)`
+                    : 'PLAN FREE'}
+                </span>
+              </button>
+            )}
           </div>
 
           {/* 1. Menú Proyecto / Archivo */}
