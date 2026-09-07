@@ -12,7 +12,7 @@ import { AiBridge } from './components/AiBridge';
 import { DesignTokensModal } from './components/DesignTokensModal';
 import { TemplatesModal } from './components/TemplatesModal';
 import { ExportPaywallModal } from './components/ExportPaywallModal';
-import { loadUserLicense, canUserExport, recordExportUsed, type UserLicense } from './lib/license';
+import { loadUserLicense, recordExportUsed, type UserLicense } from './lib/license';
 import { FlowView } from './components/FlowView';
 import { PresentationModal } from './components/PresentationModal';
 import { AnimationStudioModal } from './components/AnimationStudioModal';
@@ -356,16 +356,6 @@ export function App() {
 
   // Export Complete React + Vite + Tailwind Project as ZIP
   const handleExportReactProject = async () => {
-    const currentLic = loadUserLicense();
-    setUserLicense(currentLic);
-
-    if (!canUserExport(currentLic)) {
-      soundEngine.playProceduralSound('pop');
-      setPendingExportAction('react');
-      setIsPaywallOpen(true);
-      return;
-    }
-
     try {
       soundEngine.playProceduralSound('chime');
       setToastMessage('Generando proyecto React + Vite...');
@@ -377,6 +367,7 @@ export function App() {
       link.click();
       URL.revokeObjectURL(url);
 
+      const currentLic = loadUserLicense();
       const updatedLic = recordExportUsed(currentLic);
       setUserLicense(updatedLic);
 
@@ -920,6 +911,56 @@ export function App() {
           width: '100%',
         },
         sounds: { onClick: 'click' },
+      };
+    } else if (type === 'calendar') {
+      defaultNode = {
+        id: newId,
+        name: 'Calendario Mensual Interactivo',
+        type: 'calendar',
+        content: 'Septiembre 2026',
+        styles: {
+          backgroundColor: '#090e1a',
+          padding: '16px',
+          borderRadius: '20px',
+          borderWidth: '1px',
+          borderColor: '#1e293b',
+          width: '100%',
+        },
+        sounds: { onClick: 'chime' },
+      };
+    } else if (type === 'counter') {
+      defaultNode = {
+        id: newId,
+        name: 'Contador Numérico Stepper',
+        type: 'counter',
+        content: 'Unidades:',
+        value: 1,
+        styles: {
+          backgroundColor: '#0f172a',
+          padding: '10px 14px',
+          borderRadius: '14px',
+          borderWidth: '1px',
+          borderColor: '#334155',
+          width: '100%',
+        },
+        sounds: { onClick: 'pop' },
+      };
+    } else if (type === 'countdown') {
+      defaultNode = {
+        id: newId,
+        name: 'Cuenta Regresiva HUD',
+        type: 'countdown',
+        content: 'LANZAMIENTO VIP EN VIVO',
+        secondaryContent: '⚡ Código promocional disponible al expirar',
+        styles: {
+          backgroundColor: '#0f172a',
+          padding: '16px',
+          borderRadius: '20px',
+          borderWidth: '1px',
+          borderColor: '#4338ca',
+          width: '100%',
+        },
+        sounds: { onClick: 'whoosh' },
       };
     } else if (type === 'datepicker') {
       defaultNode = {
@@ -1649,6 +1690,68 @@ export function App() {
     setActiveScreenId(newScreenId);
   };
 
+  // Rename screen
+  const handleRenameScreen = (screenId: string, newName: string) => {
+    setPastScreens(prev => [...prev.slice(-25), screens]);
+    setFutureScreens([]);
+    setScreens(prev => prev.map(s => s.id === screenId ? { ...s, name: newName } : s));
+    soundEngine.playProceduralSound('pop');
+    setToastMessage(`Pantalla renombrada a "${newName}"`);
+    setTimeout(() => setToastMessage(null), 2000);
+  };
+
+  // Delete screen (supports deleting any screen while keeping at least 1)
+  const handleDeleteScreen = (screenId: string) => {
+    if (screens.length <= 1) {
+      alert('El proyecto debe contener al menos 1 pantalla activa.');
+      return;
+    }
+    const confirmed = window.confirm('¿Estás seguro de que deseas eliminar esta pantalla y todos sus componentes?');
+    if (!confirmed) return;
+
+    setPastScreens(prev => [...prev.slice(-25), screens]);
+    setFutureScreens([]);
+
+    const remainingScreens = screens.filter(s => s.id !== screenId);
+    setScreens(remainingScreens);
+
+    // If active screen was deleted, switch to the first remaining screen
+    if (activeScreenId === screenId) {
+      setActiveScreenId(remainingScreens[0].id);
+      setSelectedNodeId(null);
+    }
+    soundEngine.playProceduralSound('pop');
+    setToastMessage('Pantalla eliminada del proyecto.');
+    setTimeout(() => setToastMessage(null), 2000);
+  };
+
+  // Duplicate screen
+  const handleDuplicateScreen = (screenId: string) => {
+    const target = screens.find(s => s.id === screenId);
+    if (!target) return;
+
+    setPastScreens(prev => [...prev.slice(-25), screens]);
+    setFutureScreens([]);
+
+    const newScreenId = `screen-${Date.now().toString().slice(-4)}`;
+    const cloned = JSON.parse(JSON.stringify(target)) as ScreenDefinition;
+    cloned.id = newScreenId;
+    cloned.name = `${target.name} (Copia)`;
+
+    // Re-generate root ID
+    const reId = (node: DesignNode) => {
+      node.id = `node-${Math.random().toString(36).substr(2, 7)}`;
+      if (node.children) node.children.forEach(reId);
+    };
+    reId(cloned.rootNode);
+
+    setScreens(prev => [...prev, cloned]);
+    setActiveScreenId(newScreenId);
+    soundEngine.playProceduralSound('chime');
+    setToastMessage(`Pantalla duplicada: "${cloned.name}"`);
+    setTimeout(() => setToastMessage(null), 2000);
+  };
+
   // Propagate global design system tokens to all nodes in all screens
   const handlePropagateThemeToAllNodes = (newTheme: ProjectTheme) => {
     const propagateToTree = (node: DesignNode): DesignNode => {
@@ -1708,24 +1811,35 @@ export function App() {
 
   // Export ZIP handler
   const handleExportZip = async () => {
-    const currentLic = loadUserLicense();
-    setUserLicense(currentLic);
-
-    if (!canUserExport(currentLic)) {
-      soundEngine.playProceduralSound('pop');
-      setPendingExportAction('zip');
-      setIsPaywallOpen(true);
-      return;
-    }
-
     try {
       soundEngine.playProceduralSound('chime');
       await exportProjectZip(nodes, theme);
+      const currentLic = loadUserLicense();
       const updatedLic = recordExportUsed(currentLic);
       setUserLicense(updatedLic);
     } catch (e) {
       alert('Error exporting project ZIP: ' + String(e));
     }
+  };
+
+  // Show donation modal before export (export is always free)
+  const handleRequestExportReact = () => {
+    setPendingExportAction('react');
+    setIsPaywallOpen(true);
+  };
+
+  const handleRequestExportZip = () => {
+    setPendingExportAction('zip');
+    setIsPaywallOpen(true);
+  };
+
+  const handleDonationProceedExport = () => {
+    if (pendingExportAction === 'react') {
+      handleExportReactProject();
+    } else if (pendingExportAction === 'zip') {
+      handleExportZip();
+    }
+    setPendingExportAction(null);
   };
 
   // Import ZIP handler
@@ -1952,7 +2066,7 @@ export function App() {
         setDeviceMode={setDeviceMode}
         zoom={zoom}
         setZoom={setZoom}
-        onExportZip={handleExportZip}
+        onExportZip={handleRequestExportZip}
         onImportZip={handleImportZip}
         onToggleAiPanel={() => setIsAiPanelOpen(!isAiPanelOpen)}
         isAiPanelOpen={isAiPanelOpen}
@@ -1964,6 +2078,9 @@ export function App() {
         activeScreenId={activeScreenId}
         onSelectScreen={setActiveScreenId}
         onAddScreen={handleAddScreen}
+        onRenameScreen={handleRenameScreen}
+        onDeleteScreen={handleDeleteScreen}
+        onDuplicateScreen={handleDuplicateScreen}
         isDrawingActive={isDrawingActive}
         onToggleDrawing={() => setIsDrawingActive(!isDrawingActive)}
         onToggleDesignTokens={() => setIsDesignTokensOpen(true)}
@@ -1980,7 +2097,7 @@ export function App() {
         isFlowViewOpen={isFlowViewOpen}
         onToggleFlowView={() => setIsFlowViewOpen(!isFlowViewOpen)}
         onOpenPresentation={() => setIsPresentationOpen(true)}
-        onExportReactProject={handleExportReactProject}
+        onExportReactProject={handleRequestExportReact}
         userLicense={userLicense}
         onOpenPaywall={() => setIsPaywallOpen(true)}
         onToggleAnimationStudio={() => setIsAnimationStudioOpen(true)}
@@ -2155,27 +2272,15 @@ export function App() {
           currentScreens={screens}
         />
 
-        {/* Paywall Modal for Project Code & Bundle Export ($5 & $10 Plans) */}
+        {/* Donation Modal — voluntary donation before free export */}
         <ExportPaywallModal
           isOpen={isPaywallOpen}
           onClose={() => {
             setIsPaywallOpen(false);
             setPendingExportAction(null);
           }}
-          onUnlockSuccess={(newLic) => {
-            setUserLicense(newLic);
-            setIsPaywallOpen(false);
-            setToastMessage('¡Licencia activada con éxito!');
-            setTimeout(() => setToastMessage(null), 2500);
-
-            // If user had a pending export, execute it now
-            if (pendingExportAction === 'react') {
-              setTimeout(() => handleExportReactProject(), 300);
-            } else if (pendingExportAction === 'zip') {
-              setTimeout(() => handleExportZip(), 300);
-            }
-            setPendingExportAction(null);
-          }}
+          onProceedExport={handleDonationProceedExport}
+          exportType={pendingExportAction}
         />
 
         {/* AI Full Screen & Wireframe Generator Modal */}

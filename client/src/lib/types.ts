@@ -46,7 +46,10 @@ export interface DesignNode {
     | 'table'
     | 'media_player'
     | 'divider'
-    | 'vector';
+    | 'vector'
+    | 'calendar'
+    | 'counter'
+    | 'countdown';
   content?: string;
   secondaryContent?: string;
   placeholder?: string;
@@ -62,6 +65,29 @@ export interface DesignNode {
     fill?: string;
     stroke?: string;
     strokeWidth?: number;
+  };
+  calendarData?: {
+    currentMonth?: string; // '2026-09'
+    selectedDay?: number;
+    tasks?: Array<{
+      day: number;
+      title: string;
+      time?: string;
+      color?: string;
+      alertMessage?: string;
+      modalContent?: string;
+      screenTargetId?: string;
+    }>;
+  };
+  counterData?: {
+    min?: number;
+    max?: number;
+    step?: number;
+  };
+  countdownData?: {
+    targetIso?: string;
+    label?: string;
+    finishedMessage?: string;
   };
   isMasterComponent?: boolean;
   masterComponentId?: string;

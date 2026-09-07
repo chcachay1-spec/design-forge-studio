@@ -1,27 +1,30 @@
-export type LicenseTier = 'free' | 'starter' | 'studio';
+export type LicenseTier = 'free' | 'donor';
 
 export interface UserLicense {
   tier: LicenseTier;
-  key?: string;
   exportsUsed: number;
-  maxExports: number; // 1 for free trial, 10 for starter ($5), Infinity (999999) for studio ($10)
-  purchasedAt?: string;
+  maxExports: number; // Always Infinity (999999) — no limits
+  hasDonated?: boolean;
+  donatedAt?: string;
 }
 
 const STORAGE_KEY = 'designforge_user_license';
 
-// Default free license with 1 courtesy export
+// Default free license — unlimited exports, always
 export const getDefaultLicense = (): UserLicense => ({
   tier: 'free',
   exportsUsed: 0,
-  maxExports: 1,
+  maxExports: 999999,
 });
 
 export const loadUserLicense = (): UserLicense => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return getDefaultLicense();
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    // Migration: ensure maxExports is always unlimited
+    parsed.maxExports = 999999;
+    return parsed;
   } catch (e) {
     console.error('Error loading license:', e);
     return getDefaultLicense();
@@ -36,9 +39,9 @@ export const saveUserLicense = (license: UserLicense): void => {
   }
 };
 
-export const canUserExport = (license: UserLicense): boolean => {
-  if (license.tier === 'studio') return true;
-  return license.exportsUsed < license.maxExports;
+// Exports are always allowed — no restrictions
+export const canUserExport = (_license: UserLicense): boolean => {
+  return true;
 };
 
 export const recordExportUsed = (license: UserLicense): UserLicense => {
@@ -50,67 +53,27 @@ export const recordExportUsed = (license: UserLicense): UserLicense => {
   return updated;
 };
 
-// Validates license codes (e.g. from Gumroad / Lemon Squeezy or VIP keys)
+// Mark user as donor (called after voluntary donation)
+export const markAsDonor = (): UserLicense => {
+  const current = loadUserLicense();
+  const updated: UserLicense = {
+    ...current,
+    tier: 'donor',
+    hasDonated: true,
+    donatedAt: new Date().toISOString(),
+  };
+  saveUserLicense(updated);
+  return updated;
+};
+
+// Legacy key activation — kept for backward compatibility, but all exports are free
 export const activateLicenseKey = (rawKey: string): { success: boolean; tier?: LicenseTier; message: string } => {
   const key = rawKey.trim().toUpperCase();
-
   if (!key) {
-    return { success: false, message: 'Por favor ingresa una clave de licencia.' };
+    return { success: false, message: 'No se proporcionó clave.' };
   }
-
-  // Studio ($10) unlimited keys
-  if (
-    key === 'FORGEPRO2026' ||
-    key === 'FORGE-STUDIO-VIP' ||
-    key === 'FORGE-PRO-VIP' ||
-    key.startsWith('FORGE-STUDIO-') ||
-    key.startsWith('STUDIO-')
-  ) {
-    const newLicense: UserLicense = {
-      tier: 'studio',
-      key,
-      exportsUsed: 0,
-      maxExports: 999999,
-      purchasedAt: new Date().toISOString(),
-    };
-    saveUserLicense(newLicense);
-    return { success: true, tier: 'studio', message: '¡Plan Studio Pro ($10) activado! Exportaciones ilimitadas.' };
-  }
-
-  // Starter ($5) keys (10 exports)
-  if (
-    key === 'FORGE-STARTER-10' ||
-    key === 'STARTER5' ||
-    key.startsWith('FORGE-STARTER-') ||
-    key.startsWith('FORGE-5-') ||
-    key.startsWith('STARTER-')
-  ) {
-    const newLicense: UserLicense = {
-      tier: 'starter',
-      key,
-      exportsUsed: 0,
-      maxExports: 10,
-      purchasedAt: new Date().toISOString(),
-    };
-    saveUserLicense(newLicense);
-    return { success: true, tier: 'starter', message: '¡Plan Starter ($5) activado! 10 exportaciones disponibles.' };
-  }
-
-  // Generic FORGE- key defaults to Starter or Studio
-  if (key.startsWith('FORGE-')) {
-    const newLicense: UserLicense = {
-      tier: 'studio',
-      key,
-      exportsUsed: 0,
-      maxExports: 999999,
-      purchasedAt: new Date().toISOString(),
-    };
-    saveUserLicense(newLicense);
-    return { success: true, tier: 'studio', message: '¡Licencia Pro activada con éxito!' };
-  }
-
-  return { 
-    success: false, 
-    message: 'Clave no reconocida. Utiliza tu clave de Lemon Squeezy / Gumroad o la demo FORGEPRO2026.' 
-  };
+  // Any key now just marks as donor
+  const updated = markAsDonor();
+  saveUserLicense(updated);
+  return { success: true, tier: 'donor', message: '¡Gracias por tu apoyo! Todas las funciones ya son gratuitas.' };
 };

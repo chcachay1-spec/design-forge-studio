@@ -17,6 +17,10 @@ import {
   ChevronDown,
   ChevronRight,
   Calendar,
+  Clock,
+
+  Plus,
+  Minus,
   UploadCloud,
   AlertTriangle,
   Play,
@@ -817,6 +821,226 @@ export const Canvas: React.FC<CanvasProps> = ({
           {selectionBadge}
           <span>{node.content || 'Seleccionar categoría...'}</span>
           <ChevronDown size={14} className="text-slate-400" />
+        </div>
+      );
+    }
+
+    // ==========================================
+    // CALENDARIO MENSUAL COMPLETO INTERACTIVO
+    // ==========================================
+    if (node.type === 'calendar') {
+      const monthTitle = node.content || 'Septiembre 2026';
+      const days = [
+        { day: 31, isPrev: true },
+        { day: 1 }, { day: 2 }, { day: 3 }, { day: 4 }, { day: 5 }, { day: 6 },
+        { day: 7, isToday: true, hasTask: true, taskType: 'Reunión de Diseño', taskColor: '#6366f1' },
+        { day: 8, hasTask: true, taskType: 'Lanzamiento v3.0 (Urgente)', taskColor: '#f43f5e' },
+        { day: 9 }, { day: 10 }, { day: 11 }, { day: 12 }, { day: 13 },
+        { day: 14, hasTask: true, taskType: 'Revisión de Métricas', taskColor: '#10b981' },
+        { day: 15, isSelected: true },
+        { day: 16 }, { day: 17 }, { day: 18 }, { day: 19 }, { day: 20 },
+        { day: 21 }, { day: 22 }, { day: 23 }, { day: 24, hasTask: true, taskType: 'Pago de Nómina', taskColor: '#f59e0b' },
+        { day: 25 }, { day: 26 }, { day: 27 }, { day: 28 }, { day: 29 }, { day: 30 }
+      ];
+
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' p-3.5 bg-slate-900/90 border border-slate-700/80 rounded-2xl select-none shadow-lg flex flex-col gap-2.5 backdrop-blur-md'}
+        >
+          {selectionBadge}
+          {/* Header del Calendario */}
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-2">
+              <Calendar size={15} className="text-cyan-400" />
+              <span className="font-bold text-xs text-white tracking-wide">{monthTitle}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <button 
+                type="button" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  soundEngine.playProceduralSound('pop');
+                  if (onExecuteAction) onExecuteAction({ type: 'alert', alertMessage: 'Navegando al mes anterior (Agosto 2026)' });
+                }}
+                className="w-5 h-5 rounded hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors text-[10px]"
+              >
+                ‹
+              </button>
+              <button 
+                type="button" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  soundEngine.playProceduralSound('pop');
+                  if (onExecuteAction) onExecuteAction({ type: 'alert', alertMessage: 'Navegando al próximo mes (Octubre 2026)' });
+                }}
+                className="w-5 h-5 rounded hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors text-[10px]"
+              >
+                ›
+              </button>
+            </div>
+          </div>
+
+          {/* Días de la Semana */}
+          <div className="grid grid-cols-7 text-center text-[10px] font-mono text-slate-400 font-semibold border-b border-white/[0.06] pb-1">
+            <span>LU</span><span>MA</span><span>MI</span><span>JU</span><span>VI</span><span>SA</span><span>DO</span>
+          </div>
+
+          {/* Cuadrícula de Días del Mes */}
+          <div className="grid grid-cols-7 gap-1 text-center text-xs">
+            {days.map((item, idx) => {
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={(e) => {
+                    if (isPreviewMode) {
+                      e.stopPropagation();
+                      soundEngine.playProceduralSound('switch');
+                      if (item.hasTask && onExecuteAction) {
+                        onExecuteAction({
+                          type: 'modal',
+                          modalTitle: `Tarea Programada (${item.day} Septiembre)`,
+                          modalContent: `Evento agendado: "${item.taskType}". Hora: 10:00 AM - 11:30 AM con notificación activa.`
+                        });
+                      } else if (onExecuteAction) {
+                        onExecuteAction({
+                          type: 'alert',
+                          alertMessage: `Fecha seleccionada: ${item.day} de Septiembre 2026. Sin tareas pendientes.`
+                        });
+                      }
+                    }
+                  }}
+                  className={`relative h-7 rounded-lg flex flex-col items-center justify-center font-mono text-[11px] transition-all ${
+                    item.isPrev 
+                      ? 'text-slate-600' 
+                      : item.isSelected 
+                      ? 'bg-cyan-500 text-slate-950 font-bold shadow-[0_0_12px_rgba(6,182,212,0.5)]' 
+                      : item.isToday 
+                      ? 'bg-indigo-600/30 text-indigo-200 border border-indigo-500/50 font-bold' 
+                      : 'text-slate-300 hover:bg-white/10'
+                  }`}
+                >
+                  <span>{item.day}</span>
+                  {item.hasTask && (
+                    <span 
+                      className="absolute bottom-0.5 w-1 h-1 rounded-full shadow-[0_0_4px_currentColor]" 
+                      style={{ backgroundColor: item.taskColor || '#22d3ee' }} 
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Leyenda de Tareas */}
+          <div className="pt-1.5 border-t border-white/[0.06] flex items-center justify-between text-[10px] text-slate-400">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+              <span>Tareas y Alertas programadas</span>
+            </span>
+            <span className="text-cyan-400 font-mono">3 activas</span>
+          </div>
+        </div>
+      );
+    }
+
+    // ==========================================
+    // CONTADOR NUMÉRICO STEPPER (+ / -)
+    // ==========================================
+    if (node.type === 'counter') {
+      const countVal = node.value ?? 1;
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' inline-flex items-center justify-between p-2 bg-slate-900 border border-slate-700/80 rounded-xl select-none shadow-sm gap-3'}
+        >
+          {selectionBadge}
+          <span className="text-xs font-medium text-slate-300 pl-1">{node.content || 'Cantidad:'}</span>
+          <div className="flex items-center bg-black/60 rounded-lg border border-white/10 p-0.5 shadow-inner">
+            <button
+              type="button"
+              onClick={(e) => {
+                if (isPreviewMode) {
+                  e.stopPropagation();
+                  soundEngine.playProceduralSound('pop');
+                  if (onExecuteAction) onExecuteAction({ type: 'alert', alertMessage: `Contador reducido a: ${Math.max(0, countVal - 1)}` });
+                }
+              }}
+              className="w-6 h-6 rounded-md hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors active:scale-95"
+            >
+              <Minus size={12} />
+            </button>
+            <span className="w-8 text-center font-mono text-xs font-bold text-cyan-300">
+              {countVal}
+            </span>
+            <button
+              type="button"
+              onClick={(e) => {
+                if (isPreviewMode) {
+                  e.stopPropagation();
+                  soundEngine.playProceduralSound('pop');
+                  if (onExecuteAction) onExecuteAction({ type: 'alert', alertMessage: `Contador incrementado a: ${countVal + 1}` });
+                }
+              }}
+              className="w-6 h-6 rounded-md hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors active:scale-95"
+            >
+              <Plus size={12} />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // ==========================================
+    // TEMPORIZADOR DE CUENTA REGRESIVA (COUNTDOWN)
+    // ==========================================
+    if (node.type === 'countdown') {
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          style={inlineStyles}
+          className={baseClass + ' p-3.5 bg-gradient-to-r from-slate-900/90 to-indigo-950/60 border border-indigo-500/40 rounded-2xl select-none shadow-lg flex flex-col items-center gap-2 backdrop-blur-md'}
+        >
+          {selectionBadge}
+          <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-indigo-300 uppercase tracking-wider">
+            <Clock size={12} className="text-cyan-400" />
+            <span>{node.content || 'OFERTA FLASH DE LANZAMIENTO'}</span>
+          </div>
+
+          <div className="flex items-center gap-2 text-center">
+            <div className="flex flex-col items-center bg-black/60 px-2.5 py-1 rounded-xl border border-white/10">
+              <span className="text-base font-black font-mono text-cyan-400">03</span>
+              <span className="text-[9px] text-slate-400 font-mono uppercase">Días</span>
+            </div>
+            <span className="text-slate-500 font-bold">:</span>
+            <div className="flex flex-col items-center bg-black/60 px-2.5 py-1 rounded-xl border border-white/10">
+              <span className="text-base font-black font-mono text-indigo-400">14</span>
+              <span className="text-[9px] text-slate-400 font-mono uppercase">Horas</span>
+            </div>
+            <span className="text-slate-500 font-bold">:</span>
+            <div className="flex flex-col items-center bg-black/60 px-2.5 py-1 rounded-xl border border-white/10">
+              <span className="text-base font-black font-mono text-indigo-300">28</span>
+              <span className="text-[9px] text-slate-400 font-mono uppercase">Min</span>
+            </div>
+            <span className="text-slate-500 font-bold">:</span>
+            <div className="flex flex-col items-center bg-black/60 px-2.5 py-1 rounded-xl border border-white/10">
+              <span className="text-base font-black font-mono text-pink-400">45</span>
+              <span className="text-[9px] text-slate-400 font-mono uppercase">Seg</span>
+            </div>
+          </div>
+
+          <div className="text-[10px] text-slate-400 font-mono">
+            {node.secondaryContent || '⚡ Descuento del 50% al expirar'}
+          </div>
         </div>
       );
     }

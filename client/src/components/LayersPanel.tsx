@@ -22,6 +22,8 @@ import {
   CheckSquare,
   CircleDot,
   Calendar,
+  Clock,
+  PlusCircle,
   Pipette,
   UploadCloud,
   Tag,
@@ -41,7 +43,6 @@ import {
   Table,
   PlaySquare,
   Link,
-  PlusCircle
 } from 'lucide-react';
 import type { DesignNode } from '../lib/types';
 import { soundEngine } from '../lib/audio-engine';
@@ -102,6 +103,12 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
         return <CircleDot className="w-3.5 h-3.5 text-indigo-400" />;
       case 'select':
         return <ChevronsUpDown className="w-3.5 h-3.5 text-indigo-400" />;
+      case 'calendar':
+        return <Calendar className="w-3.5 h-3.5 text-cyan-400" />;
+      case 'counter':
+        return <PlusCircle className="w-3.5 h-3.5 text-indigo-400" />;
+      case 'countdown':
+        return <Clock className="w-3.5 h-3.5 text-amber-400" />;
       case 'datepicker':
         return <Calendar className="w-3.5 h-3.5 text-indigo-400" />;
       case 'colorpicker':
@@ -327,6 +334,9 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
       { type: 'switch', label: 'Switch Toggle', icon: <ToggleLeft className="w-3.5 h-3.5 text-cyan-400" /> },
       { type: 'select', label: 'Menú Dropdown', icon: <ChevronsUpDown className="w-3.5 h-3.5 text-indigo-400" /> },
       { type: 'slider', label: 'Slider Rango', icon: <Sliders className="w-3.5 h-3.5 text-amber-400" /> },
+      { type: 'calendar', label: 'Calendario Tareas', icon: <Calendar className="w-3.5 h-3.5 text-cyan-400" /> },
+      { type: 'counter', label: 'Contador Stepper', icon: <PlusCircle className="w-3.5 h-3.5 text-indigo-400" /> },
+      { type: 'countdown', label: 'Cuenta Regresiva', icon: <Clock className="w-3.5 h-3.5 text-amber-400" /> },
       { type: 'datepicker', label: 'Selector Fecha', icon: <Calendar className="w-3.5 h-3.5 text-indigo-400" /> },
       { type: 'colorpicker', label: 'Selector Color', icon: <Pipette className="w-3.5 h-3.5 text-pink-400" /> },
       { type: 'file_uploader', label: 'Cargador Files', icon: <UploadCloud className="w-3.5 h-3.5 text-emerald-400" /> },

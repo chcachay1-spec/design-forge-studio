@@ -33,8 +33,12 @@ import {
   ChevronDown,
   FolderOpen,
   Eye,
-  Sliders
-} from 'lucide-react';
+  Sliders,
+  Copy,
+
+  Edit2,
+  X,
+  Heart} from 'lucide-react';
 import type { DeviceMode, ScreenDefinition } from '../lib/types';
 import { DesignForgeLogo } from './DesignForgeBrand';
 import type { UserLicense } from '../lib/license';
@@ -60,6 +64,9 @@ interface TopbarProps {
   activeScreenId: string;
   onSelectScreen: (screenId: string) => void;
   onAddScreen: () => void;
+  onRenameScreen?: (screenId: string, newName: string) => void;
+  onDeleteScreen?: (screenId: string) => void;
+  onDuplicateScreen?: (screenId: string) => void;
   // Freehand Drawing Mode
   isDrawingActive: boolean;
   onToggleDrawing: () => void;
@@ -118,6 +125,9 @@ export const Topbar: React.FC<TopbarProps> = ({
   activeScreenId,
   onSelectScreen,
   onAddScreen,
+  onRenameScreen,
+  onDeleteScreen,
+  onDuplicateScreen,
   isDrawingActive,
   onToggleDrawing,
   onToggleDesignTokens,
@@ -151,6 +161,8 @@ export const Topbar: React.FC<TopbarProps> = ({
 }) => {
   // Dropdown states
   const [openDropdown, setOpenDropdown] = useState<'project' | 'view' | 'studios' | 'export' | null>(null);
+  const [editingScreenId, setEditingScreenId] = useState<string | null>(null);
+  const [editScreenName, setEditScreenName] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const forgeInputRef = useRef<HTMLInputElement>(null);
@@ -203,22 +215,18 @@ export const Topbar: React.FC<TopbarProps> = ({
               <button
                 onClick={onOpenPaywall}
                 className={
-                  'hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-wide transition-all border ' +
-                  (userLicense.tier === 'studio'
-                    ? 'bg-indigo-950/80 text-indigo-300 border-indigo-500/40 shadow-[0_0_10px_rgba(99,102,241,0.3)] hover:border-indigo-400'
-                    : userLicense.tier === 'starter'
-                    ? 'bg-cyan-950/80 text-cyan-300 border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.3)] hover:border-cyan-400'
-                    : 'bg-emerald-950/60 text-emerald-300 border-emerald-500/30 hover:border-emerald-400')
+                  'hidden sm:flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-wide transition-all border ' +
+                  (userLicense.tier === 'donor'
+                    ? 'bg-pink-950/60 text-pink-300 border-pink-500/40 shadow-[0_0_10px_rgba(236,72,153,0.25)] hover:border-pink-400'
+                    : 'bg-slate-900/60 text-slate-300 border-slate-600/40 hover:border-pink-400/60 hover:text-pink-300')
                 }
-                title="Planes de Exportación $5 y $10"
+                title="Apoyar DesignForge con una donación voluntaria"
               >
-                <Sparkles className="w-3 h-3 text-amber-400" />
+                <Heart className="w-3 h-3 text-pink-400" />
                 <span>
-                  {userLicense.tier === 'studio' 
-                    ? 'STUDIO PRO' 
-                    : userLicense.tier === 'starter' 
-                    ? `STARTER (${Math.max(0, userLicense.maxExports - userLicense.exportsUsed)} left)`
-                    : 'PLAN FREE'}
+                  {userLicense.tier === 'donor' 
+                    ? 'DONADOR 💜' 
+                    : 'APOYAR'}
                 </span>
               </button>
             )}
@@ -659,19 +667,106 @@ export const Topbar: React.FC<TopbarProps> = ({
         <div className="flex items-center gap-1.5 overflow-x-auto max-w-xl py-0.5 scrollbar-none">
           <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mr-1 hidden sm:inline font-mono">PANTALLAS:</span>
 
-          {screens.map(s => (
-            <button
-              key={s.id}
-              onClick={() => onSelectScreen(s.id)}
-              className={'px-3 py-1 rounded-md transition-all flex items-center gap-1.5 shrink-0 text-xs font-medium ' + (
-                activeScreenId === s.id
-                  ? 'bg-indigo-600/25 text-white font-semibold shadow-[0_0_12px_rgba(99,102,241,0.25)] border border-indigo-500/40'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent'
-              )}
-            >
-              <span>{s.name}</span>
-            </button>
-          ))}
+          {screens.map(s => {
+            const isActive = activeScreenId === s.id;
+            const isEditing = editingScreenId === s.id;
+
+            return (
+              <div
+                key={s.id}
+                className={'group px-2 py-0.5 rounded-md transition-all flex items-center gap-1 shrink-0 text-xs font-medium border ' + (
+                  isActive
+                    ? 'bg-indigo-600/25 text-white font-semibold shadow-[0_0_12px_rgba(99,102,241,0.25)] border-indigo-500/40'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 border-transparent'
+                )}
+              >
+                {isEditing ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (editScreenName.trim() && onRenameScreen) {
+                        onRenameScreen(s.id, editScreenName.trim());
+                      }
+                      setEditingScreenId(null);
+                    }}
+                    className="flex items-center gap-1"
+                  >
+                    <input
+                      type="text"
+                      autoFocus
+                      value={editScreenName}
+                      onChange={(e) => setEditScreenName(e.target.value)}
+                      onBlur={() => {
+                        if (editScreenName.trim() && onRenameScreen) {
+                          onRenameScreen(s.id, editScreenName.trim());
+                        }
+                        setEditingScreenId(null);
+                      }}
+                      className="bg-black/80 border border-indigo-400 rounded px-1.5 py-0.5 text-xs text-white outline-none w-28"
+                    />
+                  </form>
+                ) : (
+                  <button
+                    onClick={() => onSelectScreen(s.id)}
+                    onDoubleClick={() => {
+                      setEditingScreenId(s.id);
+                      setEditScreenName(s.name);
+                    }}
+                    className="flex items-center gap-1.5 cursor-pointer"
+                    title="Doble clic para renombrar"
+                  >
+                    <span>{s.name}</span>
+                  </button>
+                )}
+
+                {/* Edit, Duplicate & Delete buttons on hover or when active */}
+                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ml-1">
+                  {onRenameScreen && !isEditing && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingScreenId(s.id);
+                        setEditScreenName(s.name);
+                      }}
+                      className="p-0.5 text-slate-500 hover:text-cyan-300 rounded hover:bg-white/10"
+                      title="Renombrar pantalla"
+                    >
+                      <Edit2 className="w-2.5 h-2.5" />
+                    </button>
+                  )}
+
+                  {onDuplicateScreen && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDuplicateScreen(s.id);
+                      }}
+                      className="p-0.5 text-slate-500 hover:text-indigo-300 rounded hover:bg-white/10"
+                      title="Duplicar pantalla"
+                    >
+                      <Copy className="w-2.5 h-2.5" />
+                    </button>
+                  )}
+
+                  {onDeleteScreen && screens.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteScreen(s.id);
+                      }}
+                      className="p-0.5 text-slate-500 hover:text-rose-400 rounded hover:bg-rose-500/10"
+                      title="Eliminar pantalla"
+                    >
+                      <X className="w-2.5 h-2.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
 
           <button
             onClick={onAddScreen}
