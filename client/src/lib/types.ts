@@ -69,6 +69,10 @@ export interface DesignNode {
   styles: {
     backgroundColor?: string;
     backgroundGradient?: string;
+    backgroundImage?: string;
+    backgroundSize?: 'cover' | 'contain' | 'auto' | string;
+    backgroundPosition?: 'center' | 'top' | 'bottom' | 'left' | 'right' | string;
+    backgroundRepeat?: 'no-repeat' | 'repeat' | string;
     color?: string;
     borderRadius?: string;
     padding?: string;

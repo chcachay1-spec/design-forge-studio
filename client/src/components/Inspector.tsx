@@ -996,6 +996,91 @@ export const Inspector: React.FC<InspectorProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Background Image / Asset Importer for ANY Box, Card, Container or Button */}
+          <div className="space-y-1.5 pt-2 border-t border-slate-800/80">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-medium text-slate-300 flex items-center gap-1.5">
+                <ImageIcon className="w-3.5 h-3.5 text-pink-400" />
+                <span>Asset / Imagen de Fondo</span>
+              </label>
+              {styles.backgroundImage && (
+                <button
+                  type="button"
+                  onClick={() => onUpdateStyle(selectedNode.id, 'backgroundImage', '')}
+                  className="text-[10px] text-slate-500 hover:text-rose-400 transition-colors"
+                >
+                  Quitar imagen
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex gap-1.5">
+                <input
+                  type="text"
+                  placeholder="URL de imagen externa o pega data:..."
+                  value={styles.backgroundImage || ''}
+                  onChange={(e) => onUpdateStyle(selectedNode.id, 'backgroundImage', e.target.value)}
+                  className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none font-mono"
+                />
+                <label className="py-1 px-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors shrink-0 shadow">
+                  <Upload className="w-3 h-3" />
+                  <span>Cargar PNG / JPG</span>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = (event) => {
+                        const dataUrl = event.target?.result as string;
+                        onUpdateStyle(selectedNode.id, 'backgroundImage', dataUrl);
+                        soundEngine.playProceduralSound('chime');
+                      };
+                      reader.readAsDataURL(file);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+              </div>
+
+              {/* Background Fit Controls */}
+              {styles.backgroundImage && (
+                <div className="grid grid-cols-3 gap-1.5 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => onUpdateStyle(selectedNode.id, 'backgroundSize', 'cover')}
+                    className={'py-1 text-[10px] rounded border font-medium ' + (
+                      styles.backgroundSize === 'cover' || !styles.backgroundSize ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'
+                    )}
+                  >
+                    Cover (Cubrir)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onUpdateStyle(selectedNode.id, 'backgroundSize', 'contain')}
+                    className={'py-1 text-[10px] rounded border font-medium ' + (
+                      styles.backgroundSize === 'contain' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'
+                    )}
+                  >
+                    Contain (Ajustar)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onUpdateStyle(selectedNode.id, 'backgroundSize', 'auto')}
+                    className={'py-1 text-[10px] rounded border font-medium ' + (
+                      styles.backgroundSize === 'auto' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'
+                    )}
+                  >
+                    Auto (Real)
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Geometry, Border Radius & Borders */}

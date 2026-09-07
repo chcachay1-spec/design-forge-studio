@@ -151,9 +151,18 @@ export const Canvas: React.FC<CanvasProps> = ({
       }
     };
 
+    const bgImageVal = node.styles.backgroundImage 
+      ? (node.styles.backgroundImage.startsWith('url(') || node.styles.backgroundImage.startsWith('linear-gradient(') 
+          ? node.styles.backgroundImage 
+          : `url("${node.styles.backgroundImage}")`)
+      : (node.styles.backgroundGradient || undefined);
+
     const inlineStyles: React.CSSProperties = {
       backgroundColor: node.styles.backgroundColor,
-      backgroundImage: node.styles.backgroundGradient || undefined,
+      backgroundImage: bgImageVal,
+      backgroundSize: (node.styles.backgroundSize as any) || (node.styles.backgroundImage ? 'cover' : undefined),
+      backgroundPosition: (node.styles.backgroundPosition as any) || (node.styles.backgroundImage ? 'center' : undefined),
+      backgroundRepeat: (node.styles.backgroundRepeat as any) || 'no-repeat',
       color: node.styles.color,
       borderRadius: node.styles.borderRadius,
       padding: node.styles.padding,
