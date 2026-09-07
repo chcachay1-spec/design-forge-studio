@@ -234,6 +234,22 @@ export const Canvas: React.FC<CanvasProps> = ({
       </div>
     );
 
+    // Animated Background Video Overlay
+    const videoBackgroundOverlay = node.styles.backgroundVideo ? (
+      <video
+        src={node.styles.backgroundVideo}
+        autoPlay
+        loop
+        muted
+        playsInline
+        style={{
+          opacity: node.styles.backgroundVideoOpacity ? Number(node.styles.backgroundVideoOpacity) : 1,
+          filter: node.styles.backgroundVideoBlur ? `blur(${node.styles.backgroundVideoBlur})` : undefined,
+        }}
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none rounded-[inherit] z-0"
+      />
+    ) : null;
+
     if (node.type === 'button') {
       // Dynamic Lucide Icon
       const IconComponent = node.iconName && (LucideIcons as any)[node.iconName]
@@ -247,11 +263,14 @@ export const Canvas: React.FC<CanvasProps> = ({
           onClick={handleNodeClick}
           onMouseEnter={handleNodeMouseEnter}
           style={inlineStyles}
-          className={baseClass + ' select-none active:scale-[0.98] inline-flex items-center justify-center gap-2'}
+          className={baseClass + ' select-none active:scale-[0.98] inline-flex items-center justify-center gap-2 overflow-hidden'}
         >
           {selectionBadge}
-          {IconComponent && <IconComponent size={16} />}
-          <span>{node.content}</span>
+          {videoBackgroundOverlay}
+          <span className="relative z-10 flex items-center gap-2">
+            {IconComponent && <IconComponent size={16} />}
+            <span>{node.content}</span>
+          </span>
         </button>
       );
     }
@@ -1200,23 +1219,24 @@ export const Canvas: React.FC<CanvasProps> = ({
       );
     }
 
-    return (
-      <div
-        key={node.id}
-        id={node.id}
-        onClick={handleNodeClick}
-        onMouseEnter={handleNodeMouseEnter}
-        onDragOver={(e) => handleDragOver(e, node.id)}
-        onDragLeave={handleDragLeave}
-        onDrop={(e) => handleDrop(e, node.id)}
-        style={inlineStyles}
-        className={baseClass}
-      >
-        {selectionBadge}
-        {node.content}
-        {node.children && node.children.map(child => renderNode(child))}
-      </div>
-    );
+      return (
+        <div
+          key={node.id}
+          id={node.id}
+          onClick={handleNodeClick}
+          onMouseEnter={handleNodeMouseEnter}
+          onDragOver={(e) => handleDragOver(e, node.id)}
+          onDragLeave={handleDragLeave}
+          onDrop={(e) => handleDrop(e, node.id)}
+          style={inlineStyles}
+          className={baseClass + (node.styles.backgroundVideo ? ' overflow-hidden' : '')}
+        >
+          {selectionBadge}
+          {videoBackgroundOverlay}
+          {node.content && <span className="relative z-10">{node.content}</span>}
+          {node.children && node.children.map(child => renderNode(child))}
+        </div>
+      );
   };
 
   return (

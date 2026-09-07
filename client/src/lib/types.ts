@@ -73,6 +73,9 @@ export interface DesignNode {
     backgroundSize?: 'cover' | 'contain' | 'auto' | string;
     backgroundPosition?: 'center' | 'top' | 'bottom' | 'left' | 'right' | string;
     backgroundRepeat?: 'no-repeat' | 'repeat' | string;
+    backgroundVideo?: string;
+    backgroundVideoOpacity?: string;
+    backgroundVideoBlur?: string;
     color?: string;
     borderRadius?: string;
     padding?: string;

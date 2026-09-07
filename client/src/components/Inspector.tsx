@@ -29,7 +29,8 @@ import {
   Smile,
   PenTool,
   Upload,
-  Camera
+  Camera,
+  Film
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import type { DesignNode, ScreenDefinition, CustomAnimationDefinition } from '../lib/types';
@@ -1077,6 +1078,118 @@ export const Inspector: React.FC<InspectorProps> = ({
                   >
                     Auto (Real)
                   </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Animated Background Video (WebM / MP4) */}
+          <div className="space-y-1.5 pt-2 border-t border-slate-800/80">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-medium text-slate-300 flex items-center gap-1.5">
+                <Film className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Video de Fondo Animado</span>
+                <span className="text-[9px] bg-cyan-500/20 text-cyan-300 px-1 py-0.2 rounded font-mono">WebM/MP4</span>
+              </label>
+              {styles.backgroundVideo && (
+                <button
+                  type="button"
+                  onClick={() => onUpdateStyle(selectedNode.id, 'backgroundVideo', '')}
+                  className="text-[10px] text-slate-500 hover:text-rose-400 transition-colors"
+                >
+                  Quitar video
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex gap-1.5">
+                <input
+                  type="text"
+                  placeholder="URL video (ej: https://...video.mp4 o .webm)"
+                  value={styles.backgroundVideo || ''}
+                  onChange={(e) => onUpdateStyle(selectedNode.id, 'backgroundVideo', e.target.value)}
+                  className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none font-mono"
+                />
+                <label className="py-1 px-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors shrink-0 shadow">
+                  <Upload className="w-3 h-3" />
+                  <span>Subir Video</span>
+                  <input
+                    type="file"
+                    accept="video/mp4,video/webm,video/ogg,video/quicktime"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = (event) => {
+                        const dataUrl = event.target?.result as string;
+                        onUpdateStyle(selectedNode.id, 'backgroundVideo', dataUrl);
+                        soundEngine.playProceduralSound('chime');
+                      };
+                      reader.readAsDataURL(file);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+              </div>
+
+              {/* Sample background video clips button */}
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] text-slate-500">Presets:</span>
+                {[
+                  { name: 'Ondas Cyber', url: 'https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-4192-large.mp4' },
+                  { name: 'Partículas', url: 'https://assets.mixkit.co/videos/preview/mixkit-abstract-animation-of-bright-cyan-lights-42526-large.mp4' }
+                ].map((sample, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      onUpdateStyle(selectedNode.id, 'backgroundVideo', sample.url);
+                      soundEngine.playProceduralSound('pop');
+                    }}
+                    className="text-[9px] px-1.5 py-0.5 rounded bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-cyan-300 border border-slate-800 transition-colors"
+                  >
+                    {sample.name}
+                  </button>
+                ))}
+              </div>
+
+              {/* Video Opacity and Blur Controls */}
+              {styles.backgroundVideo && (
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[10px] text-slate-400">
+                      <span>Opacidad Video</span>
+                      <span className="font-mono text-cyan-400">{Math.round((Number(styles.backgroundVideoOpacity ?? '1')) * 100)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0.1"
+                      max="1"
+                      step="0.05"
+                      value={styles.backgroundVideoOpacity ?? '1'}
+                      onChange={(e) => onUpdateStyle(selectedNode.id, 'backgroundVideoOpacity', e.target.value)}
+                      className="w-full accent-cyan-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[10px] text-slate-400">
+                      <span>Desenfoque (Blur)</span>
+                      <span className="font-mono text-cyan-400">{styles.backgroundVideoBlur || '0px'}</span>
+                    </div>
+                    <select
+                      value={styles.backgroundVideoBlur || '0px'}
+                      onChange={(e) => onUpdateStyle(selectedNode.id, 'backgroundVideoBlur', e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded px-1.5 py-1 text-[11px] text-white focus:outline-none"
+                    >
+                      <option value="0px">Sin desenfoque (Nítido)</option>
+                      <option value="2px">Suave (2px)</option>
+                      <option value="6px">Medio (6px)</option>
+                      <option value="12px">Fuerte (12px)</option>
+                    </select>
+                  </div>
                 </div>
               )}
             </div>
