@@ -25,6 +25,13 @@ import {
   ExternalLink
 } from 'lucide-react';
 
+function extractYouTubeId(url?: string): string | null {
+  if (!url) return null;
+  const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+  const match = url.match(regExp);
+  return match ? match[1] : null;
+}
+
 interface CanvasProps {
   nodes: DesignNode[];
   selectedNodeId: string | null;
@@ -145,9 +152,30 @@ export const Canvas: React.FC<CanvasProps> = ({
       }
     };
 
-    const handleNodeMouseEnter = () => {
+    const handleNodeMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
       if (node.sounds?.onHover) {
         soundEngine.playProceduralSound(node.sounds.onHover);
+      }
+      if (node.styles.backgroundVideo && node.styles.videoHoverBehavior && node.styles.videoHoverBehavior !== 'none') {
+        const vid = e.currentTarget.querySelector('video');
+        if (vid) {
+          vid.muted = false;
+          vid.play().catch(() => {});
+        }
+      }
+    };
+
+    const handleNodeMouseLeave = (e: React.MouseEvent<HTMLElement>) => {
+      if (node.styles.backgroundVideo && node.styles.videoHoverBehavior && node.styles.videoHoverBehavior !== 'none') {
+        const vid = e.currentTarget.querySelector('video');
+        if (vid) {
+          if (node.styles.videoHoverBehavior === 'unmute_on_hover') {
+            vid.muted = true;
+          } else if (node.styles.videoHoverBehavior === 'play_pause_on_hover') {
+            vid.pause();
+            vid.muted = true;
+          }
+        }
       }
     };
 
@@ -235,10 +263,11 @@ export const Canvas: React.FC<CanvasProps> = ({
     );
 
     // Animated Background Video Overlay
+    const isPlayOnHover = node.styles.videoHoverBehavior === 'play_pause_on_hover';
     const videoBackgroundOverlay = node.styles.backgroundVideo ? (
       <video
         src={node.styles.backgroundVideo}
-        autoPlay
+        autoPlay={!isPlayOnHover}
         loop
         muted
         playsInline
@@ -248,6 +277,20 @@ export const Canvas: React.FC<CanvasProps> = ({
         }}
         className="absolute inset-0 w-full h-full object-cover pointer-events-none rounded-[inherit] z-0"
       />
+    ) : null;
+
+    // YouTube Embed Component
+    const youtubeId = extractYouTubeId(node.styles.youtubeUrl);
+    const youtubeEmbed = youtubeId ? (
+      <div className="relative w-full h-full min-h-[160px] rounded-[inherit] overflow-hidden z-10">
+        <iframe
+          className="w-full h-full min-h-[160px] border-0 rounded-[inherit]"
+          src={`https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1`}
+          title="YouTube video player"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
     ) : null;
 
     if (node.type === 'button') {
@@ -1169,22 +1212,39 @@ export const Canvas: React.FC<CanvasProps> = ({
           key={node.id}
           id={node.id}
           onClick={handleNodeClick}
+          onMouseEnter={handleNodeMouseEnter}
+          onMouseLeave={handleNodeMouseLeave}
           style={inlineStyles}
           className={baseClass + ' p-3 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col gap-2.5 select-none shadow-lg'}
         >
           {selectionBadge}
-          <div className="w-full h-24 rounded-xl bg-slate-950 flex items-center justify-center border border-slate-800">
-            <button className="w-10 h-10 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-lg transition-transform active:scale-90">
-              <Play size={18} className="fill-current ml-0.5" />
-            </button>
-          </div>
+          {youtubeId ? (
+            <div className="w-full aspect-video rounded-xl overflow-hidden bg-black shadow-inner">
+              <iframe
+                className="w-full h-full border-0"
+                src={`https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1`}
+                title="YouTube player"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          ) : (
+            <div className="w-full h-24 rounded-xl bg-slate-950 flex items-center justify-center border border-slate-800 relative overflow-hidden">
+              {videoBackgroundOverlay}
+              <button className="w-10 h-10 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-lg transition-transform active:scale-90 relative z-10">
+                <Play size={18} className="fill-current ml-0.5" />
+              </button>
+            </div>
+          )}
           <div className="flex items-center justify-between text-xs text-slate-300">
-            <span className="font-semibold truncate">{node.content || 'Pista de Sonido / Audio UI'}</span>
-            <span className="text-[10px] font-mono text-indigo-400">01:24 / 03:40</span>
+            <span className="font-semibold truncate">{node.content || (youtubeId ? 'Video de YouTube' : 'Pista de Sonido / Audio UI')}</span>
+            <span className="text-[10px] font-mono text-indigo-400">{youtubeId ? 'En vivo' : '01:24 / 03:40'}</span>
           </div>
-          <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-            <div className="w-2/5 h-full bg-indigo-500 rounded-full" />
-          </div>
+          {!youtubeId && (
+            <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div className="w-2/5 h-full bg-indigo-500 rounded-full" />
+            </div>
+          )}
         </div>
       );
     }
@@ -1197,6 +1257,7 @@ export const Canvas: React.FC<CanvasProps> = ({
           id={node.id}
           onClick={handleNodeClick}
           onMouseEnter={handleNodeMouseEnter}
+          onMouseLeave={handleNodeMouseLeave}
           style={inlineStyles}
           className={baseClass + ' flex items-center justify-center overflow-hidden'}
         >
@@ -1225,15 +1286,17 @@ export const Canvas: React.FC<CanvasProps> = ({
           id={node.id}
           onClick={handleNodeClick}
           onMouseEnter={handleNodeMouseEnter}
+          onMouseLeave={handleNodeMouseLeave}
           onDragOver={(e) => handleDragOver(e, node.id)}
           onDragLeave={handleDragLeave}
           onDrop={(e) => handleDrop(e, node.id)}
           style={inlineStyles}
-          className={baseClass + (node.styles.backgroundVideo ? ' overflow-hidden' : '')}
+          className={baseClass + (node.styles.backgroundVideo || youtubeEmbed ? ' overflow-hidden' : '')}
         >
           {selectionBadge}
           {videoBackgroundOverlay}
-          {node.content && <span className="relative z-10">{node.content}</span>}
+          {youtubeEmbed}
+          {node.content && !youtubeEmbed && <span className="relative z-10">{node.content}</span>}
           {node.children && node.children.map(child => renderNode(child))}
         </div>
       );

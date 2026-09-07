@@ -76,6 +76,8 @@ export interface DesignNode {
     backgroundVideo?: string;
     backgroundVideoOpacity?: string;
     backgroundVideoBlur?: string;
+    youtubeUrl?: string;
+    videoHoverBehavior?: 'none' | 'unmute_on_hover' | 'play_pause_on_hover';
     color?: string;
     borderRadius?: string;
     padding?: string;

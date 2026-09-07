@@ -1155,43 +1155,118 @@ export const Inspector: React.FC<InspectorProps> = ({
                 ))}
               </div>
 
-              {/* Video Opacity and Blur Controls */}
+              {/* Video Opacity, Blur & Hover Controls */}
               {styles.backgroundVideo && (
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between text-[10px] text-slate-400">
-                      <span>Opacidad Video</span>
-                      <span className="font-mono text-cyan-400">{Math.round((Number(styles.backgroundVideoOpacity ?? '1')) * 100)}%</span>
+                <>
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-[10px] text-slate-400">
+                        <span>Opacidad Video</span>
+                        <span className="font-mono text-cyan-400">{Math.round((Number(styles.backgroundVideoOpacity ?? '1')) * 100)}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0.1"
+                        max="1"
+                        step="0.05"
+                        value={styles.backgroundVideoOpacity ?? '1'}
+                        onChange={(e) => onUpdateStyle(selectedNode.id, 'backgroundVideoOpacity', e.target.value)}
+                        className="w-full accent-cyan-500"
+                      />
                     </div>
-                    <input
-                      type="range"
-                      min="0.1"
-                      max="1"
-                      step="0.05"
-                      value={styles.backgroundVideoOpacity ?? '1'}
-                      onChange={(e) => onUpdateStyle(selectedNode.id, 'backgroundVideoOpacity', e.target.value)}
-                      className="w-full accent-cyan-500"
-                    />
+
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-[10px] text-slate-400">
+                        <span>Desenfoque (Blur)</span>
+                        <span className="font-mono text-cyan-400">{styles.backgroundVideoBlur || '0px'}</span>
+                      </div>
+                      <select
+                        value={styles.backgroundVideoBlur || '0px'}
+                        onChange={(e) => onUpdateStyle(selectedNode.id, 'backgroundVideoBlur', e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded px-1.5 py-1 text-[11px] text-white focus:outline-none"
+                      >
+                        <option value="0px">Sin desenfoque (Nítido)</option>
+                        <option value="2px">Suave (2px)</option>
+                        <option value="6px">Medio (6px)</option>
+                        <option value="12px">Fuerte (12px)</option>
+                      </select>
+                    </div>
                   </div>
 
-                  <div className="space-y-1">
+                  {/* Hover / Proximity Behavior for Video */}
+                  <div className="space-y-1 pt-1.5 border-t border-slate-800/60">
                     <div className="flex items-center justify-between text-[10px] text-slate-400">
-                      <span>Desenfoque (Blur)</span>
-                      <span className="font-mono text-cyan-400">{styles.backgroundVideoBlur || '0px'}</span>
+                      <span>Interacción Hover / Proximidad:</span>
                     </div>
                     <select
-                      value={styles.backgroundVideoBlur || '0px'}
-                      onChange={(e) => onUpdateStyle(selectedNode.id, 'backgroundVideoBlur', e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded px-1.5 py-1 text-[11px] text-white focus:outline-none"
+                      value={styles.videoHoverBehavior || 'none'}
+                      onChange={(e) => onUpdateStyle(selectedNode.id, 'videoHoverBehavior', e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-[11px] text-cyan-300 focus:outline-none"
                     >
-                      <option value="0px">Sin desenfoque (Nítido)</option>
-                      <option value="2px">Suave (2px)</option>
-                      <option value="6px">Medio (6px)</option>
-                      <option value="12px">Fuerte (12px)</option>
+                      <option value="none">Silencioso continuo (Normal)</option>
+                      <option value="unmute_on_hover">🔊 Activar audio al pasar mouse (Silenciar al salir)</option>
+                      <option value="play_pause_on_hover">⏯️ Pausar animación/audio al salir (Play al pasar mouse)</option>
                     </select>
                   </div>
-                </div>
+                </>
               )}
+            </div>
+          </div>
+
+          {/* YouTube Video Player Embed */}
+          <div className="space-y-1.5 pt-2 border-t border-slate-800/80">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-medium text-slate-300 flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5 fill-rose-500" viewBox="0 0 24 24">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+                <span>Video de YouTube (Embed)</span>
+                <span className="text-[9px] bg-rose-500/20 text-rose-300 px-1 py-0.2 rounded font-mono">IFrame</span>
+              </label>
+              {styles.youtubeUrl && (
+                <button
+                  type="button"
+                  onClick={() => onUpdateStyle(selectedNode.id, 'youtubeUrl', '')}
+                  className="text-[10px] text-slate-500 hover:text-rose-400 transition-colors"
+                >
+                  Quitar video
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <input
+                type="text"
+                placeholder="URL YouTube (ej: https://www.youtube.com/watch?v=...)"
+                value={styles.youtubeUrl || ''}
+                onChange={(e) => onUpdateStyle(selectedNode.id, 'youtubeUrl', e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none font-mono"
+              />
+
+              {/* Sample YouTube presets */}
+              <div className="flex items-center gap-1 flex-wrap">
+                <span className="text-[10px] text-slate-500">Demos:</span>
+                {[
+                  { name: 'Lofi Beats', url: 'https://www.youtube.com/watch?v=jfKfPfyJRdk' },
+                  { name: 'UI Demo', url: 'https://www.youtube.com/watch?v=ScMzIvxBSi4' },
+                  { name: 'Chill Music', url: 'https://www.youtube.com/watch?v=5qap5aO4i9A' }
+                ].map((sample, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      onUpdateStyle(selectedNode.id, 'youtubeUrl', sample.url);
+                      soundEngine.playProceduralSound('pop');
+                    }}
+                    className="text-[9px] px-1.5 py-0.5 rounded bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-rose-300 border border-slate-800 transition-colors"
+                  >
+                    {sample.name}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-slate-500">
+                Pega cualquier enlace de YouTube para reproducir el video dentro de este elemento en el lienzo o modo prueba.
+              </p>
             </div>
           </div>
         </div>
