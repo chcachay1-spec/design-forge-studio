@@ -36,6 +36,7 @@ import {
   Sliders
 } from 'lucide-react';
 import type { DeviceMode, ScreenDefinition } from '../lib/types';
+import { DesignForgeLogo } from './DesignForgeBrand';
 
 interface TopbarProps {
   deviceMode: DeviceMode;
@@ -190,17 +191,9 @@ export const Topbar: React.FC<TopbarProps> = ({
         
         {/* Left: Brand + Professional Dropdown Menus (Figma style) */}
         <div className="flex items-center gap-2">
-          {/* Brand Icon & HUD Title */}
-          <div className="flex items-center gap-2 font-bold text-white text-xs mr-2 group cursor-pointer">
-            <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-cyan-500 via-indigo-500 to-pink-500 flex items-center justify-center shadow-[0_0_16px_rgba(6,182,212,0.45)] border border-white/25 group-hover:scale-105 transition-transform">
-              <Sparkles className="w-3.5 h-3.5 text-white" />
-            </div>
-            <span className="hidden sm:inline tracking-tight font-extrabold text-[13px] bg-gradient-to-r from-white via-slate-100 to-cyan-300 bg-clip-text text-transparent">
-              DesignForge
-            </span>
-            <span className="neo-hud-badge hidden lg:inline-block">
-              STUDIO v2.5
-            </span>
+          {/* Official DesignForge Logo & Title */}
+          <div className="mr-3 pl-0.5">
+            <DesignForgeLogo showStudioBadge={false} />
           </div>
 
           {/* 1. Menú Proyecto / Archivo */}
