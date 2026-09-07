@@ -81,11 +81,17 @@ export const Inspector: React.FC<InspectorProps> = ({
 }) => {
   if (!selectedNode) {
     return (
-      <aside className="w-80 bg-slate-950/80 backdrop-blur-md border-l border-slate-800/60 p-6 flex flex-col items-center justify-center text-center text-slate-500 select-none">
-        <Layers className="w-8 h-8 text-slate-700 mb-2.5 opacity-60" />
-        <h3 className="text-xs font-semibold text-slate-400">Sin selección</h3>
-        <p className="text-[11px] text-slate-500 mt-1 max-w-[200px] leading-relaxed">
-          Haz clic en cualquier elemento en el lienzo para ajustar sus propiedades.
+      <aside className="w-80 neo-glass-panel border-y-0 border-r-0 rounded-none p-6 flex flex-col items-center justify-center text-center text-slate-500 select-none z-20">
+        <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-3 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+          <Layers className="w-6 h-6 text-cyan-400 opacity-80" />
+        </div>
+        <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-widest mb-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee] animate-pulse" />
+          <span>HUD 02 // STANDBY</span>
+        </div>
+        <h3 className="text-xs font-semibold text-slate-200">Sin Nodo Seleccionado</h3>
+        <p className="text-[11px] text-slate-400 mt-1.5 max-w-[210px] leading-relaxed">
+          Haz clic en cualquier elemento en el lienzo para ajustar telemetría, estilos y acciones.
         </p>
       </aside>
     );
@@ -131,14 +137,14 @@ export const Inspector: React.FC<InspectorProps> = ({
   };
 
   return (
-    <aside className="w-80 bg-slate-950/80 backdrop-blur-md border-l border-slate-800/60 flex flex-col h-full text-slate-300 select-none overflow-y-auto">
+    <aside className="w-80 neo-glass-panel border-y-0 border-r-0 rounded-none flex flex-col h-full text-slate-300 select-none overflow-y-auto z-20 shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
       {/* Element Header */}
-      <div className="h-11 px-3.5 border-b border-slate-800/50 flex items-center justify-between bg-slate-950/40 sticky top-0 backdrop-blur-md z-10">
+      <div className="h-11 px-3.5 border-b border-white/[0.08] flex items-center justify-between bg-black/40 sticky top-0 backdrop-blur-xl z-20">
         <div className="flex items-center gap-2 truncate">
-          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-indigo-400 border border-slate-800 uppercase">
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-cyan-950/60 text-cyan-300 border border-cyan-500/30 uppercase shadow-[0_0_8px_rgba(6,182,212,0.2)]">
             {selectedNode.type}
           </span>
-          <h2 className="text-xs font-semibold text-slate-200 truncate max-w-[140px]">
+          <h2 className="text-xs font-semibold text-white truncate max-w-[140px] tracking-wide">
             {selectedNode.name}
           </h2>
         </div>
@@ -148,7 +154,7 @@ export const Inspector: React.FC<InspectorProps> = ({
           {onExportNodePng && (
             <button
               onClick={() => onExportNodePng(selectedNode.id, selectedNode.name)}
-              className="p-1 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-md transition-colors"
+              className="p-1.5 text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10 rounded-lg transition-colors border border-transparent hover:border-cyan-400/30"
               title="Exportar este elemento como asset PNG aislado"
             >
               <Camera className="w-3.5 h-3.5" />
@@ -157,7 +163,7 @@ export const Inspector: React.FC<InspectorProps> = ({
           {selectedNode.id !== 'app-root' && selectedNode.id !== 'app-root-details' && (
             <button
               onClick={() => onDeleteNode(selectedNode.id)}
-              className="p-1 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-md transition-colors"
+              className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors border border-transparent hover:border-rose-500/30"
               title="Eliminar elemento"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -167,24 +173,24 @@ export const Inspector: React.FC<InspectorProps> = ({
       </div>
 
       {/* Main Tab Switcher: Design vs Dev Mode (Handoff) */}
-      <div className="flex border-b border-slate-800/50 bg-slate-900/30 p-1">
+      <div className="flex border-b border-white/[0.06] bg-black/30 p-1.5 gap-1">
         <button
           onClick={() => setActiveTab('design')}
-          className={'flex-1 py-1 text-[11px] font-medium rounded-md flex items-center justify-center gap-1.5 transition-all ' + (
+          className={'flex-1 py-1.5 text-[11px] font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all ' + (
             activeTab === 'design' 
-              ? 'bg-slate-800 text-white shadow-xs' 
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 shadow-[0_0_12px_rgba(6,182,212,0.25)] font-semibold' 
+              : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03] border border-transparent'
           )}
         >
           <Sliders className="w-3 h-3" />
-          <span>Diseño</span>
+          <span>Propiedades</span>
         </button>
         <button
           onClick={() => setActiveTab('dev')}
-          className={'flex-1 py-1 text-[11px] font-medium rounded-md flex items-center justify-center gap-1.5 transition-all ' + (
+          className={'flex-1 py-1.5 text-[11px] font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all ' + (
             activeTab === 'dev' 
-              ? 'bg-slate-800 text-white shadow-xs' 
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-400/40 shadow-[0_0_12px_rgba(99,102,241,0.25)] font-semibold' 
+              : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03] border border-transparent'
           )}
         >
           <Code2 className="w-3 h-3" />

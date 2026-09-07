@@ -258,10 +258,11 @@ export const Canvas: React.FC<CanvasProps> = ({
 
     // Tag badge showing node name, action badge, and sound in edit mode
     const selectionBadge = !isPreviewMode && isSelected && (
-      <div className="absolute -top-6 left-0 bg-indigo-600 text-white text-[10px] font-mono px-2 py-0.5 rounded shadow z-20 flex items-center gap-1.5 pointer-events-none whitespace-nowrap">
-        <span>{node.name}</span>
+      <div className="absolute -top-6 left-0 bg-indigo-600/90 backdrop-blur-md border border-indigo-400/50 text-white text-[10px] font-mono px-2 py-0.5 rounded-md shadow-[0_0_12px_rgba(99,102,241,0.5)] z-20 flex items-center gap-1.5 pointer-events-none whitespace-nowrap">
+        <span className="w-1.5 h-1.5 rounded-full bg-cyan-300 animate-pulse" />
+        <span className="font-semibold tracking-wide">{node.name}</span>
         {node.action && node.action.type !== 'none' && (
-          <span className="bg-indigo-900 px-1 rounded text-[9px] text-indigo-200">
+          <span className="bg-indigo-950/80 border border-indigo-400/40 px-1 rounded text-[9px] text-cyan-300 font-mono">
             {node.action.type === 'navigate' ? '🔀 ' + node.action.targetScreenId : node.action.type === 'modal' ? '🪟 Modal' : node.action.type === 'confetti' ? '🎉 Confeti' : node.action.type === 'copy_clipboard' ? '📋 Copiar' : '⚡ Acción'}
           </span>
         )}
@@ -1311,17 +1312,13 @@ export const Canvas: React.FC<CanvasProps> = ({
 
   return (
     <div 
-      className="flex-1 bg-slate-950 relative overflow-auto flex items-center justify-center p-12 select-none"
+      className="flex-1 neo-canvas-grid relative overflow-auto flex items-center justify-center p-12 select-none"
       onClick={() => onSelectNode(null)}
       onMouseMove={(e) => {
         const rect = e.currentTarget.getBoundingClientRect();
         setCursorPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
       }}
       onMouseLeave={() => setCursorPos(undefined)}
-      style={{
-        backgroundImage: 'radial-gradient(#334155 1px, transparent 1px)',
-        backgroundSize: '24px 24px',
-      }}
     >
       {/* Precision Graduated Rulers & Guides */}
       {showRulers && <CanvasRulers zoom={zoom} cursorPos={cursorPos} />}
@@ -1352,12 +1349,15 @@ export const Canvas: React.FC<CanvasProps> = ({
         }}
         className="flex flex-col items-center relative z-10"
       >
-        {/* Device Header label */}
-        <div className="mb-2 text-xs font-mono text-slate-500 font-medium tracking-wide">
-          {currentDevice.name}
+        {/* Device Header label with HUD Telemetry */}
+        <div className="mb-2 neo-hud-badge flex items-center gap-1.5 shadow-[0_0_12px_rgba(6,182,212,0.2)]">
+          <span className="neo-hud-dot bg-cyan-400 text-cyan-400" />
+          <span className="font-bold tracking-wider">{currentDevice.name.toUpperCase()}</span>
+          <span className="opacity-50">•</span>
+          <span className="opacity-80 font-mono">{currentDevice.width} × {currentDevice.height}</span>
         </div>
 
-        {/* Device Frame */}
+        {/* Device Frame with Chiseled Titanium Edge & Atmospheric Glow */}
         <div
           id="device-mockup-frame"
           style={{
@@ -1365,7 +1365,7 @@ export const Canvas: React.FC<CanvasProps> = ({
             height: currentDevice.height,
             borderRadius: currentDevice.radius,
           }}
-          className="bg-slate-950 border-[5px] border-slate-800/80 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] relative overflow-hidden flex flex-col transition-all duration-300 ring-1 ring-white/5"
+          className="bg-[#030712] border-[5px] border-slate-800/90 shadow-[0_30px_90px_-20px_rgba(0,0,0,0.95),0_0_35px_rgba(99,102,241,0.14)] relative overflow-hidden flex flex-col transition-all duration-300 ring-1 ring-white/15"
         >
           {/* 8px Alignment Grid Overlay */}
           {isGridActive && (

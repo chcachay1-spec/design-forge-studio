@@ -48,42 +48,42 @@ export const ClaudeDesignPillBar: React.FC<ClaudeDesignPillBarProps> = ({
     <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2 select-none">
       {/* Contextual AI Comment Prompt Card (Claude Design style for targeted node) */}
       {activeMode === 'comment' && selectedNode && showCommentPopover && (
-        <div className="bg-slate-900/95 backdrop-blur-md border border-indigo-500/40 shadow-2xl rounded-2xl p-3 w-80 mb-1 animate-in fade-in slide-in-from-bottom-2 duration-150">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-            <div className="flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-              <span className="text-xs font-semibold text-white">Editar con IA</span>
-              <span className="text-[10px] font-mono bg-indigo-950 text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-800/60 truncate max-w-[120px]">
+        <div className="neo-glass-panel border-cyan-500/30 shadow-[0_20px_50px_rgba(0,0,0,0.9),0_0_30px_rgba(6,182,212,0.25)] rounded-2xl p-3.5 w-84 mb-1 animate-in fade-in slide-in-from-bottom-2 duration-150">
+          <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.08]">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee] animate-pulse" />
+              <span className="text-xs font-semibold text-white tracking-wide">RETOQUE CON IA</span>
+              <span className="text-[10px] font-mono bg-cyan-950/60 text-cyan-300 px-2 py-0.5 rounded-md border border-cyan-500/30 truncate max-w-[120px]">
                 {selectedNode.name}
               </span>
             </div>
             <button
               onClick={() => setShowCommentPopover(false)}
-              className="text-slate-400 hover:text-white p-0.5 rounded"
+              className="text-slate-400 hover:text-white p-1 rounded-md hover:bg-white/[0.05] transition-colors"
             >
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
-          <form onSubmit={handleSendElementAi} className="mt-2 space-y-2">
+          <form onSubmit={handleSendElementAi} className="mt-2.5 space-y-2.5">
             <textarea
               rows={2}
               autoFocus
               value={commentPrompt}
               onChange={(e) => setCommentPrompt(e.target.value)}
               placeholder='Ej: "Haz este botón verde degradado con bordes redondeados y sombra suave", "Cambia el texto a Comprar Ahora"'
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-none"
+              className="w-full bg-black/50 border border-white/[0.08] focus:border-cyan-400/50 rounded-xl p-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-400/30 resize-none transition-all"
             />
             <div className="flex items-center justify-between pt-1">
-              <span className="text-[10px] text-slate-400">Modifica solo este elemento</span>
+              <span className="text-[10px] text-slate-400 font-mono">MODIFICAR NODO ACTIVO</span>
               <button
                 type="submit"
                 disabled={isAiLoading || !commentPrompt.trim()}
-                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-md flex items-center gap-1.5 transition-colors"
+                className="px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/50 hover:border-cyan-400 text-cyan-200 disabled:opacity-40 rounded-xl text-xs font-semibold shadow-[0_0_15px_rgba(6,182,212,0.3)] flex items-center gap-1.5 transition-all"
               >
                 {isAiLoading ? (
-                  <Wand2 className="w-3 h-3 animate-spin" />
+                  <Wand2 className="w-3 h-3 animate-spin text-cyan-300" />
                 ) : (
-                  <Sparkles className="w-3 h-3" />
+                  <Sparkles className="w-3 h-3 text-cyan-300" />
                 )}
                 <span>Aplicar IA</span>
               </button>
@@ -94,10 +94,10 @@ export const ClaudeDesignPillBar: React.FC<ClaudeDesignPillBarProps> = ({
 
       {/* Contextual Manual Edit Tool Ribbon (When in Edit mode and an element is selected) */}
       {activeMode === 'edit' && selectedNode && (
-        <div className="bg-slate-900/90 backdrop-blur-md border border-slate-700/80 shadow-2xl rounded-xl px-3 py-1.5 flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-150">
-          <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-300 pr-2 border-r border-slate-800">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="truncate max-w-[110px]">{selectedNode.name}</span>
+        <div className="neo-glass-panel border-white/[0.1] shadow-[0_15px_35px_rgba(0,0,0,0.85)] rounded-xl px-3 py-1.5 flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-150">
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-300 pr-2.5 border-r border-white/[0.08]">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse" />
+            <span className="truncate max-w-[110px] font-mono">{selectedNode.name}</span>
           </div>
 
           {/* Quick Launch Vector Studio (Tools from report) */}
@@ -106,10 +106,10 @@ export const ClaudeDesignPillBar: React.FC<ClaudeDesignPillBarProps> = ({
               soundEngine.playProceduralSound('pop');
               onOpenVectorStudio();
             }}
-            className="flex items-center gap-1.5 px-2.5 py-1 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/40 rounded-lg text-xs font-medium transition-all"
+            className="flex items-center gap-1.5 px-2.5 py-1 bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-200 border border-cyan-400/40 rounded-lg text-xs font-medium transition-all shadow-[0_0_10px_rgba(6,182,212,0.2)]"
             title="Abrir Redes Vectoriales, Creador de Formas y Persona Píxel"
           >
-            <PenTool className="w-3.5 h-3.5 text-indigo-400" />
+            <PenTool className="w-3.5 h-3.5 text-cyan-300" />
             <span>Herramientas Vectoriales</span>
           </button>
 
@@ -119,7 +119,7 @@ export const ClaudeDesignPillBar: React.FC<ClaudeDesignPillBarProps> = ({
               onModeChange('comment');
               setShowCommentPopover(true);
             }}
-            className="flex items-center gap-1 px-2 py-1 text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 px-2 py-1 text-xs text-slate-300 hover:text-white bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] rounded-lg transition-colors"
             title="Pedir cambio con IA sobre este elemento"
           >
             <Sparkles className="w-3 h-3 text-amber-400" />
@@ -131,14 +131,14 @@ export const ClaudeDesignPillBar: React.FC<ClaudeDesignPillBarProps> = ({
       {/* Floating Pill Dock Bar (Exact replicate of user's Claude Design toolbar: Cursor | Comment | Edit) */}
       <nav 
         aria-label="Modos de lienzo Claude Design" 
-        className="bg-slate-900/90 hover:bg-slate-900 backdrop-blur-xl border border-slate-700/80 rounded-full px-2 py-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.6)] flex items-center gap-1 transition-all"
+        className="neo-glass-panel rounded-full px-2 py-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.85),0_0_25px_rgba(6,182,212,0.15)] flex items-center gap-1.5 transition-all border-white/[0.12]"
       >
         {/* Pointer / Select Tool */}
         <button
           onClick={() => handleModeClick('select')}
           className={
-            'p-1.5 rounded-full transition-all flex items-center justify-center ' +
-            (activeMode === 'select' ? 'bg-slate-800 text-white shadow-xs' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50')
+            'p-2 rounded-full transition-all flex items-center justify-center ' +
+            (activeMode === 'select' ? 'bg-white/[0.12] text-white shadow-[0_0_12px_rgba(255,255,255,0.2)] border border-white/20' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] border border-transparent')
           }
           title="Modo Selección (Navegación normal)"
         >
@@ -150,11 +150,11 @@ export const ClaudeDesignPillBar: React.FC<ClaudeDesignPillBarProps> = ({
           onClick={() => handleModeClick('comment')}
           className={
             'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all ' +
-            (activeMode === 'comment' ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/50 shadow-xs' : 'text-slate-300 hover:text-white hover:bg-slate-800/60')
+            (activeMode === 'comment' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 shadow-[0_0_15px_rgba(6,182,212,0.3)] font-semibold' : 'text-slate-300 hover:text-white hover:bg-white/[0.05] border border-transparent')
           }
           title="Modo Comment: Haz clic en un elemento para cambiarlo con IA sin tener que leer todo el código"
         >
-          <MessageSquarePlus className="w-3.5 h-3.5 text-indigo-400" />
+          <MessageSquarePlus className="w-3.5 h-3.5 text-cyan-400" />
           <span>Comment</span>
         </button>
 
@@ -163,7 +163,7 @@ export const ClaudeDesignPillBar: React.FC<ClaudeDesignPillBarProps> = ({
           onClick={() => handleModeClick('edit')}
           className={
             'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all ' +
-            (activeMode === 'edit' ? 'bg-emerald-600/30 text-emerald-300 border border-emerald-500/50 shadow-xs' : 'text-slate-300 hover:text-white hover:bg-slate-800/60')
+            (activeMode === 'edit' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-[0_0_15px_rgba(52,211,153,0.3)] font-semibold' : 'text-slate-300 hover:text-white hover:bg-white/[0.05] border border-transparent')
           }
           title="Modo Edit: Edición manual avanzada con Redes Vectoriales, Buscatrazos, Shaper Tool y Persona Píxel"
         >

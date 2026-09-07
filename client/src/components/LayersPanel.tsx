@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { 
-  FolderTree, 
   Layers, 
   Square, 
   Type, 
@@ -237,20 +236,20 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
         onDrop={(e) => handleLayerDrop(e, node.id)}
       >
         {isOver && dropPosition === 'before' && (
-          <div className="absolute top-0 left-0 right-0 h-0.5 bg-indigo-500 z-30 shadow-[0_0_8px_#6366f1]" />
+          <div className="absolute top-0 left-0 right-0 h-0.5 bg-cyan-400 z-30 shadow-[0_0_10px_#22d3ee]" />
         )}
         {isOver && dropPosition === 'after' && (
-          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500 z-30 shadow-[0_0_8px_#6366f1]" />
+          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-cyan-400 z-30 shadow-[0_0_10px_#22d3ee]" />
         )}
 
         <div
           onClick={() => onSelectNode(node)}
           style={{ paddingLeft: `${depth * 12 + 10}px` }}
-          className={`h-7 pr-2.5 flex items-center justify-between text-xs cursor-pointer rounded-md mx-1 transition-all ${
+          className={`h-7 pr-2.5 flex items-center justify-between text-xs cursor-pointer rounded-lg mx-1.5 transition-all ${
             isSelected
-              ? 'bg-indigo-600/15 text-white font-medium border-l-2 border-indigo-500'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border-l-2 border-transparent'
-          } ${isOver && dropPosition === 'inside' ? 'ring-1 ring-inset ring-indigo-400/50 bg-indigo-900/20' : ''}`}
+              ? 'neo-glass-panel-subtle text-white font-medium border-l-2 border-cyan-400 shadow-[inset_0_0_12px_rgba(6,182,212,0.15)]'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03] border-l-2 border-transparent'
+          } ${isOver && dropPosition === 'inside' ? 'ring-1 ring-inset ring-cyan-400/50 bg-cyan-900/20' : ''}`}
         >
           <div className="flex items-center gap-1.5 truncate">
             <GripVertical className="w-2.5 h-2.5 text-slate-600 opacity-0 group-hover:opacity-100 cursor-grab" />
@@ -372,71 +371,76 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
   };
 
   return (
-    <aside className="w-64 bg-slate-950/80 backdrop-blur-md border-r border-slate-800/60 flex flex-col h-full select-none text-slate-300">
-      {/* Top Header */}
-      <div className="h-10 px-3 border-b border-slate-800/50 flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-          <FolderTree className="w-3 h-3 text-indigo-400" />
-          <span>Capas & Componentes</span>
+    <aside className="w-64 neo-glass-panel border-y-0 border-l-0 rounded-none flex flex-col h-full select-none text-slate-300 z-20 shadow-[10px_0_30px_rgba(0,0,0,0.5)]">
+      {/* Top Header - HUD Telemetry */}
+      <div className="h-10 px-3.5 border-b border-white/[0.06] flex items-center justify-between bg-white/[0.02]">
+        <div className="flex items-center gap-2 text-[10px] font-semibold text-slate-300 uppercase tracking-wider font-mono">
+          <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee] animate-pulse" />
+          <span className="text-cyan-400 font-bold tracking-widest">HUD 01</span>
+          <span className="text-slate-600">/</span>
+          <span className="text-slate-200 font-sans font-semibold">Capas & Nodos</span>
         </div>
+        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-950/60 text-cyan-300 border border-cyan-500/30 shadow-[0_0_8px_rgba(6,182,212,0.2)]">
+          {nodes.length} NODOS
+        </span>
       </div>
 
       {/* Design System Category Selector (Material & Carbon Standard) */}
-      <div className="p-2 border-b border-slate-800/50 bg-slate-900/20 space-y-1.5">
-        <div className="flex items-center justify-between text-[10px] font-medium text-slate-500 uppercase tracking-wider px-1">
-          <span>Sistemas de Diseño</span>
-          <span className="text-[9px] text-indigo-400 font-mono">40+ Elementos</span>
+      <div className="p-2.5 border-b border-white/[0.06] bg-white/[0.015] space-y-2">
+        <div className="flex items-center justify-between text-[10px] font-medium text-slate-400 uppercase tracking-wider px-1 font-mono">
+          <span>CATÁLOGO MÓDULOS</span>
+          <span className="text-[9px] text-cyan-400 font-mono bg-cyan-950/40 px-1.5 py-0.5 rounded border border-cyan-500/20">40+ MÓDULOS</span>
         </div>
 
         {/* Categories Bar */}
-        <div className="grid grid-cols-4 gap-0.5 bg-slate-900/60 p-0.5 rounded-lg border border-slate-800/50 text-[10px]">
+        <div className="grid grid-cols-4 gap-1 bg-black/40 p-1 rounded-xl border border-white/[0.06] text-[10px]">
           <button
             onClick={() => setActiveCategory('action')}
-            className={`py-1 rounded-md font-medium text-center transition-all ${activeCategory === 'action' ? 'bg-slate-800 text-white shadow-xs font-semibold' : 'text-slate-400 hover:text-slate-200'}`}
+            className={`py-1 rounded-lg font-medium text-center transition-all ${activeCategory === 'action' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 shadow-[0_0_10px_rgba(6,182,212,0.25)] font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03] border border-transparent'}`}
             title="1. Elementos de Acción y Comando"
           >
             Acción
           </button>
           <button
             onClick={() => setActiveCategory('forms')}
-            className={`py-1 rounded-md font-medium text-center transition-all ${activeCategory === 'forms' ? 'bg-slate-800 text-white shadow-xs font-semibold' : 'text-slate-400 hover:text-slate-200'}`}
+            className={`py-1 rounded-lg font-medium text-center transition-all ${activeCategory === 'forms' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 shadow-[0_0_10px_rgba(6,182,212,0.25)] font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03] border border-transparent'}`}
             title="2. Formularios y Selección"
           >
             Inputs
           </button>
           <button
             onClick={() => setActiveCategory('containers')}
-            className={`py-1 rounded-md font-medium text-center transition-all ${activeCategory === 'containers' ? 'bg-slate-800 text-white shadow-xs font-semibold' : 'text-slate-400 hover:text-slate-200'}`}
+            className={`py-1 rounded-lg font-medium text-center transition-all ${activeCategory === 'containers' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 shadow-[0_0_10px_rgba(6,182,212,0.25)] font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03] border border-transparent'}`}
             title="3. Contenedores y Estructura"
           >
             Cajas
           </button>
           <button
             onClick={() => setActiveCategory('nav')}
-            className={`py-1 rounded-md font-medium text-center transition-all ${activeCategory === 'nav' ? 'bg-slate-800 text-white shadow-xs font-semibold' : 'text-slate-400 hover:text-slate-200'}`}
+            className={`py-1 rounded-lg font-medium text-center transition-all ${activeCategory === 'nav' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 shadow-[0_0_10px_rgba(6,182,212,0.25)] font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03] border border-transparent'}`}
             title="4. Navegación y Ubicación"
           >
             Nav
           </button>
         </div>
-        <div className="grid grid-cols-3 gap-0.5 bg-slate-900/60 p-0.5 rounded-lg border border-slate-800/50 text-[10px]">
+        <div className="grid grid-cols-3 gap-1 bg-black/40 p-1 rounded-xl border border-white/[0.06] text-[10px]">
           <button
             onClick={() => setActiveCategory('feedback')}
-            className={`py-1 rounded-md font-medium text-center transition-all ${activeCategory === 'feedback' ? 'bg-slate-800 text-white shadow-xs font-semibold' : 'text-slate-400 hover:text-slate-200'}`}
+            className={`py-1 rounded-lg font-medium text-center transition-all ${activeCategory === 'feedback' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 shadow-[0_0_10px_rgba(6,182,212,0.25)] font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03] border border-transparent'}`}
             title="5. Estado, Alerta y Feedback"
           >
             Feedback
           </button>
           <button
             onClick={() => setActiveCategory('media')}
-            className={`py-1 rounded-md font-medium text-center transition-all ${activeCategory === 'media' ? 'bg-slate-800 text-white shadow-xs font-semibold' : 'text-slate-400 hover:text-slate-200'}`}
+            className={`py-1 rounded-lg font-medium text-center transition-all ${activeCategory === 'media' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 shadow-[0_0_10px_rgba(6,182,212,0.25)] font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03] border border-transparent'}`}
             title="6. Informativos y Multimedia"
           >
             Media
           </button>
           <button
             onClick={() => setActiveCategory('masters')}
-            className={`py-1 rounded-md font-medium text-center transition-all ${activeCategory === 'masters' ? 'bg-purple-600 text-white shadow-xs font-semibold' : 'text-purple-400 hover:text-white'}`}
+            className={`py-1 rounded-lg font-medium text-center transition-all ${activeCategory === 'masters' ? 'bg-purple-500/25 text-purple-300 border border-purple-400/40 shadow-[0_0_12px_rgba(168,85,247,0.3)] font-semibold' : 'text-purple-400 hover:text-purple-200 hover:bg-white/[0.03] border border-transparent'}`}
             title="Componentes Maestros Reutilizables"
           >
             ❖ Maestros
@@ -451,26 +455,26 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
                 <div
                   key={master.id}
                   onClick={() => onInstantiateMaster?.(master)}
-                  className="flex items-center justify-between p-2 bg-slate-900/80 hover:bg-purple-950/40 border border-slate-800 hover:border-purple-500/50 rounded-xl cursor-pointer transition-all"
+                  className="flex items-center justify-between p-2 neo-glass-card hover:border-purple-500/50 rounded-xl cursor-pointer transition-all group"
                 >
                   <div className="flex items-center gap-2 truncate">
                     <span className="text-purple-400 text-xs">❖</span>
                     <div className="truncate">
                       <div className="text-xs font-semibold text-white truncate">{master.name}</div>
-                      <div className="text-[10px] text-slate-500">{master.type}</div>
+                      <div className="text-[10px] text-slate-400 font-mono">{master.type}</div>
                     </div>
                   </div>
                   <button
                     type="button"
-                    className="text-[10px] bg-purple-600 hover:bg-purple-500 text-white px-2 py-0.5 rounded-md font-medium transition-colors"
+                    className="text-[10px] bg-purple-600/80 hover:bg-purple-500 text-white px-2 py-0.5 rounded-md font-medium border border-purple-400/30 transition-colors"
                   >
                     + Insertar
                   </button>
                 </div>
               ))
             ) : (
-              <div className="p-3 text-center text-slate-500 text-[11px]">
-                No hay componentes maestros. Pasa el cursor sobre una capa y haz clic en ❖ para guardarla como componente.
+              <div className="p-3 text-center text-slate-500 text-[11px] font-mono">
+                No hay componentes maestros. Pasa el cursor sobre una capa y haz clic en ❖ para guardarla.
               </div>
             )}
           </div>
@@ -478,17 +482,19 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
 
         {/* Category Component Items Grid */}
         {activeCategory !== 'masters' && (
-          <div className="grid grid-cols-2 gap-1 max-h-52 overflow-y-auto pr-0.5">
+          <div className="grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto pr-0.5">
             {PALETTE_CATEGORIES[activeCategory].map((comp) => (
               <div
                 key={comp.type}
                 draggable
                 onDragStart={(e) => handlePaletteDragStart(e, comp.type)}
                 onClick={() => onAddNode(comp.type, selectedNodeId || undefined)}
-                className="flex items-center gap-1.5 p-1.5 bg-slate-900/90 hover:bg-indigo-600/20 text-slate-300 hover:text-white rounded-lg border border-slate-800 hover:border-indigo-500/40 cursor-grab active:cursor-grabbing transition-all text-[11px]"
+                className="flex items-center gap-2 p-2 neo-glass-card hover:border-cyan-400/40 text-slate-300 hover:text-white rounded-lg cursor-grab active:cursor-grabbing transition-all text-[11px] group"
                 title={`Insertar ${comp.label}`}
               >
-                {comp.icon}
+                <div className="p-1 rounded bg-white/[0.03] border border-white/[0.05] group-hover:border-cyan-400/30 group-hover:bg-cyan-500/10 transition-colors">
+                  {comp.icon}
+                </div>
                 <span className="font-medium truncate">{comp.label}</span>
               </div>
             ))}

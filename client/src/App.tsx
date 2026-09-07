@@ -1914,7 +1914,7 @@ export function App() {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans">
+    <div className="h-screen w-screen flex flex-col bg-[#050811] text-slate-100 overflow-hidden font-sans select-none antialiased">
       {/* Topbar with Screen Switcher & Drawing Mode */}
       <Topbar
         deviceMode={deviceMode}
@@ -2130,10 +2130,10 @@ export function App() {
 
         {/* Interactive Modal Dialog (Interactive Testing Mode) */}
         {activeModal && (
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
-            <div className="bg-slate-950/95 border border-slate-800/80 rounded-2xl p-5 max-w-sm w-full shadow-2xl space-y-3">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
+            <div className="neo-glass-panel border-cyan-500/30 rounded-2xl p-5 max-w-sm w-full shadow-[0_25px_60px_rgba(0,0,0,0.9),0_0_30px_rgba(6,182,212,0.2)] space-y-3">
               <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                <span>🪟</span>
+                <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee] animate-pulse" />
                 <span>{activeModal.title}</span>
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
@@ -2145,7 +2145,7 @@ export function App() {
                     soundEngine.playProceduralSound('pop');
                     setActiveModal(null);
                   }}
-                  className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors"
+                  className="px-4 py-1.5 text-xs font-semibold bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 border border-cyan-400/40 rounded-xl transition-all shadow-[0_0_12px_rgba(6,182,212,0.25)]"
                 >
                   Entendido
                 </button>
@@ -2167,9 +2167,9 @@ export function App() {
 
         {/* Toast Notification Notification Overlay */}
         {toastMessage && (
-          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white text-xs font-semibold px-4 py-2 rounded-xl shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-3 duration-200">
-            <span>✓</span>
-            <span>{toastMessage}</span>
+          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 neo-glass-panel border-emerald-500/40 text-emerald-300 text-xs font-semibold px-4 py-2 rounded-xl shadow-[0_15px_35px_rgba(0,0,0,0.8),0_0_20px_rgba(16,185,129,0.3)] flex items-center gap-2.5 animate-in fade-in slide-in-from-top-3 duration-200 font-mono">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse" />
+            <span className="font-sans font-medium text-slate-100">{toastMessage}</span>
           </div>
         )}
       </div>
