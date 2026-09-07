@@ -1,65 +1,452 @@
-import React from 'react';
-import { LayoutTemplate, X, ArrowRight } from 'lucide-react';
-import { TEMPLATES, type ProjectTemplate } from '../lib/templates';
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  LayoutTemplate, 
+  X, 
+  ArrowRight, 
+  Plus, 
+  Trash2, 
+  Download, 
+  Upload, 
+  Search, 
+  Smartphone, 
+  Monitor, 
+  Check, 
+  BookmarkCheck
+} from 'lucide-react';
+import { 
+  OFFICIAL_TEMPLATES, 
+  loadCustomTemplates, 
+  saveCustomTemplate, 
+  deleteCustomTemplate, 
+  type ProjectTemplate 
+} from '../lib/templates';
 import { soundEngine } from '../lib/audio-engine';
+import type { ScreenDefinition } from '../lib/types';
 
 interface TemplatesModalProps {
   isOpen: boolean;
   onClose: () => void;
   onApplyTemplate: (template: ProjectTemplate) => void;
+  currentScreens?: ScreenDefinition[];
 }
+
+type PlatformFilter = 'all' | 'mobile' | 'web' | 'custom';
 
 export const TemplatesModal: React.FC<TemplatesModalProps> = ({
   isOpen,
   onClose,
   onApplyTemplate,
+  currentScreens = [],
 }) => {
+  const [customTemplates, setCustomTemplates] = useState<ProjectTemplate[]>([]);
+  const [platformFilter, setPlatformFilter] = useState<PlatformFilter>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Custom template creation state
+  const [isCreating, setIsCreating] = useState(false);
+  const [newTemplateName, setNewTemplateName] = useState('');
+  const [newTemplateDesc, setNewTemplateDesc] = useState('');
+  const [newTemplateCategory, setNewTemplateCategory] = useState<ProjectTemplate['category']>('Fintech');
+  const [newTemplatePlatform, setNewTemplatePlatform] = useState<'mobile' | 'web'>('mobile');
+  const [newTemplateIcon, setNewTemplateIcon] = useState('✨');
+  const [savedSuccess, setSavedSuccess] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setCustomTemplates(loadCustomTemplates());
+      setIsCreating(false);
+      setSavedSuccess(false);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
+  // Combine official templates with user created ones
+  const allTemplates = [...customTemplates, ...OFFICIAL_TEMPLATES];
+
+  const filteredTemplates = allTemplates.filter(tmpl => {
+    // Platform filter
+    if (platformFilter === 'mobile' && tmpl.platform !== 'mobile') return false;
+    if (platformFilter === 'web' && tmpl.platform !== 'web') return false;
+    if (platformFilter === 'custom' && !tmpl.isCustom) return false;
+
+    // Search query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchName = tmpl.name.toLowerCase().includes(q);
+      const matchDesc = tmpl.description.toLowerCase().includes(q);
+      const matchCat = tmpl.category.toLowerCase().includes(q);
+      const matchTags = tmpl.tags?.some(tag => tag.toLowerCase().includes(q));
+      return matchName || matchDesc || matchCat || matchTags;
+    }
+
+    return true;
+  });
+
+  const handleSaveCurrentAsTemplate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTemplateName.trim() || currentScreens.length === 0) return;
+
+    const newTmpl: ProjectTemplate = {
+      id: 'custom-template-' + Date.now(),
+      name: newTemplateName.trim(),
+      category: newTemplateCategory,
+      platform: newTemplatePlatform,
+      description: newTemplateDesc.trim() || 'Plantilla personalizada guardada por el usuario.',
+      icon: newTemplateIcon || '✨',
+      tags: ['Personalizada', newTemplateCategory, newTemplatePlatform],
+      isCustom: true,
+      screens: JSON.parse(JSON.stringify(currentScreens)),
+    };
+
+    const updated = saveCustomTemplate(newTmpl);
+    setCustomTemplates(updated);
+    soundEngine.playProceduralSound('chime');
+    setSavedSuccess(true);
+    setTimeout(() => {
+      setSavedSuccess(false);
+      setIsCreating(false);
+      setNewTemplateName('');
+      setNewTemplateDesc('');
+      setPlatformFilter('custom');
+    }, 1200);
+  };
+
+  const handleDeleteTemplate = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = deleteCustomTemplate(id);
+    setCustomTemplates(updated);
+    soundEngine.playProceduralSound('pop');
+  };
+
+  const handleExportTemplateJson = (tmpl: ProjectTemplate, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(tmpl, null, 2));
+    const a = document.createElement('a');
+    a.setAttribute('href', dataStr);
+    a.setAttribute('download', `${tmpl.name.toLowerCase().replace(/\s+/g, '-')}-template.json`);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    soundEngine.playProceduralSound('chime');
+  };
+
+  const handleImportJsonFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const parsed = JSON.parse(ev.target?.result as string) as ProjectTemplate;
+        if (parsed.name && parsed.screens && parsed.screens.length > 0) {
+          parsed.id = 'imported-template-' + Date.now();
+          parsed.isCustom = true;
+          const updated = saveCustomTemplate(parsed);
+          setCustomTemplates(updated);
+          setPlatformFilter('custom');
+          soundEngine.playProceduralSound('chime');
+        } else {
+          alert('El archivo no es una plantilla válida de DesignForge.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error al leer el archivo JSON de plantilla.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
-      <div className="bg-slate-950/95 border border-slate-800/80 rounded-2xl max-w-2xl w-full p-5 shadow-2xl space-y-4">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-indigo-400">
-              <LayoutTemplate className="w-4 h-4" />
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
+      <div className="neo-glass-panel border-cyan-500/30 rounded-2xl max-w-4xl w-full p-5 shadow-[0_25px_60px_rgba(0,0,0,0.95),0_0_30px_rgba(6,182,212,0.15)] flex flex-col max-h-[90vh] space-y-4">
+        
+        {/* Hidden File Input for Template Import */}
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          accept=".json" 
+          className="hidden" 
+          onChange={handleImportJsonFile} 
+        />
+
+        {/* Modal Header */}
+        <div className="flex items-center justify-between border-b border-white/[0.08] pb-3.5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.2)]">
+              <LayoutTemplate className="w-5 h-5 text-cyan-400" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-white">Plantillas de Proyecto</h2>
-              <p className="text-[11px] text-slate-400">Interfaces completas y listas para usar</p>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold text-white tracking-wide">Galería de Plantillas Pro</h2>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-950/60 text-cyan-300 border border-cyan-500/30">
+                  {allTemplates.length} DISPONIBLES
+                </span>
+              </div>
+              <p className="text-xs text-slate-400">
+                Interfaces listas para producción en Mobile & Web con código React y Tailwind.
+              </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1 text-slate-500 hover:text-slate-200 rounded-md hover:bg-slate-850 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
+
+          <div className="flex items-center gap-2">
+            {/* Save Current as Template CTA */}
+            <button
+              type="button"
+              onClick={() => setIsCreating(!isCreating)}
+              className="px-3 py-1.5 text-xs font-semibold bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 border border-cyan-400/40 rounded-xl transition-all flex items-center gap-1.5 shadow-[0_0_12px_rgba(6,182,212,0.2)]"
+            >
+              <Plus className="w-3.5 h-3.5 text-cyan-300" />
+              <span>{isCreating ? 'Ver Plantillas' : 'Guardar mi Diseño'}</span>
+            </button>
+
+            {/* Import JSON Template */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] rounded-xl transition-colors flex items-center gap-1.5"
+              title="Importar plantilla compartida en formato .json"
+            >
+              <Upload className="w-3.5 h-3.5 text-slate-400" />
+              <span className="hidden sm:inline">Importar</span>
+            </button>
+
+            <button
+              onClick={onClose}
+              className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/[0.06] transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
-        {/* Templates Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {TEMPLATES.map(tmpl => (
+        {/* CREATE TEMPLATE FORM DROPDOWN (Save Current Project) */}
+        {isCreating && (
+          <form onSubmit={handleSaveCurrentAsTemplate} className="neo-glass-card p-4 rounded-xl space-y-3 animate-in fade-in slide-in-from-top-2 duration-150 border-cyan-400/30">
+            <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
+              <span className="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+                <BookmarkCheck className="w-4 h-4 text-cyan-400" />
+                <span>Guardar Proyecto Activo como Plantilla Reutilizable</span>
+              </span>
+              <span className="text-[10px] text-slate-400 font-mono">
+                {currentScreens.length} PANTALLA(S)
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div className="space-y-1">
+                <label className="text-slate-400 text-[11px]">Nombre de la Plantilla:</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej: Travel Booking App"
+                  value={newTemplateName}
+                  onChange={(e) => setNewTemplateName(e.target.value)}
+                  className="w-full bg-black/50 border border-white/10 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-cyan-400"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-400 text-[11px]">Categoría:</label>
+                <select
+                  value={newTemplateCategory}
+                  onChange={(e) => setNewTemplateCategory(e.target.value as any)}
+                  className="w-full bg-black/50 border border-white/10 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-cyan-400"
+                >
+                  <option value="Fintech">Fintech & Crypto</option>
+                  <option value="E-Commerce">E-Commerce & Tiendas</option>
+                  <option value="SaaS & Web">SaaS & Dashboards</option>
+                  <option value="Social & Chat">Social & Mensajería</option>
+                  <option value="Salud & Fitness">Salud & Fitness</option>
+                  <option value="Landing & Portfolio">Landing & Portfolios</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-400 text-[11px]">Plataforma y Emoji:</label>
+                <div className="flex gap-2">
+                  <select
+                    value={newTemplatePlatform}
+                    onChange={(e) => setNewTemplatePlatform(e.target.value as any)}
+                    className="flex-1 bg-black/50 border border-white/10 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-cyan-400"
+                  >
+                    <option value="mobile">📱 Móvil</option>
+                    <option value="web">💻 Web</option>
+                  </select>
+                  <input
+                    type="text"
+                    maxLength={3}
+                    value={newTemplateIcon}
+                    onChange={(e) => setNewTemplateIcon(e.target.value)}
+                    className="w-12 text-center bg-black/50 border border-white/10 rounded-lg py-1.5 text-base"
+                    title="Icono Emoji"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-1 text-xs">
+              <label className="text-slate-400 text-[11px]">Breve Descripción:</label>
+              <input
+                type="text"
+                placeholder="Ej: Flujo completo de reservas con catálogo y tarjetas interactivas."
+                value={newTemplateDesc}
+                onChange={(e) => setNewTemplateDesc(e.target.value)}
+                className="w-full bg-black/50 border border-white/10 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-cyan-400"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setIsCreating(false)}
+                className="px-3 py-1.5 text-xs text-slate-400 hover:text-white rounded-lg"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-1.5 text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-xl transition-all shadow-[0_0_15px_rgba(6,182,212,0.4)] flex items-center gap-1.5"
+              >
+                {savedSuccess ? <Check className="w-3.5 h-3.5" /> : <BookmarkCheck className="w-3.5 h-3.5" />}
+                <span>{savedSuccess ? '¡Guardada!' : 'Guardar Plantilla'}</span>
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* FILTERS & SEARCH BAR */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          {/* Platform Tabs */}
+          <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/[0.06] text-xs w-full sm:w-auto overflow-x-auto">
+            <button
+              onClick={() => setPlatformFilter('all')}
+              className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                platformFilter === 'all'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 shadow-[0_0_10px_rgba(6,182,212,0.2)] font-semibold'
+                  : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+              }`}
+            >
+              Todas ({allTemplates.length})
+            </button>
+            <button
+              onClick={() => setPlatformFilter('mobile')}
+              className={`px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 ${
+                platformFilter === 'mobile'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 shadow-[0_0_10px_rgba(6,182,212,0.2)] font-semibold'
+                  : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+              }`}
+            >
+              <Smartphone className="w-3 h-3 text-cyan-400" />
+              <span>Mobile ({allTemplates.filter(t => t.platform === 'mobile').length})</span>
+            </button>
+            <button
+              onClick={() => setPlatformFilter('web')}
+              className={`px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 ${
+                platformFilter === 'web'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 shadow-[0_0_10px_rgba(6,182,212,0.2)] font-semibold'
+                  : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+              }`}
+            >
+              <Monitor className="w-3 h-3 text-indigo-400" />
+              <span>Web & SaaS ({allTemplates.filter(t => t.platform === 'web').length})</span>
+            </button>
+            <button
+              onClick={() => setPlatformFilter('custom')}
+              className={`px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 ${
+                platformFilter === 'custom'
+                  ? 'bg-purple-500/25 text-purple-300 border border-purple-400/40 shadow-[0_0_10px_rgba(168,85,247,0.25)] font-semibold'
+                  : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+              }`}
+            >
+              <span>⭐ Mis Plantillas ({customTemplates.length})</span>
+            </button>
+          </div>
+
+          {/* Search Input */}
+          <div className="relative w-full sm:w-64">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input
+              type="text"
+              placeholder="Buscar plantilla o tag..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-black/40 border border-white/[0.06] rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50"
+            />
+          </div>
+        </div>
+
+        {/* TEMPLATES GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 overflow-y-auto pr-1 flex-1 min-h-[300px] max-h-[520px]">
+          {filteredTemplates.map(tmpl => (
             <div
               key={tmpl.id}
-              className="p-4 bg-slate-950/60 border border-slate-800 rounded-2xl hover:border-indigo-500/60 transition-all flex flex-col justify-between group shadow"
+              className="neo-glass-card p-4 rounded-2xl hover:border-cyan-400/50 transition-all flex flex-col justify-between group shadow-lg relative"
             >
-              <div className="space-y-2.5">
-                <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-center text-xl shadow">
-                  {tmpl.icon}
+              <div className="space-y-3">
+                <div className="flex items-start justify-between">
+                  <div className="w-11 h-11 rounded-2xl bg-black/50 border border-white/10 flex items-center justify-center text-2xl shadow-inner group-hover:scale-105 transition-transform">
+                    {tmpl.icon}
+                  </div>
+                  
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.04] text-slate-300 border border-white/[0.08]">
+                      {tmpl.platform === 'mobile' ? '📱 Mobile' : '💻 Web'}
+                    </span>
+                    {tmpl.isCustom && (
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={(e) => handleExportTemplateJson(tmpl, e)}
+                          className="p-1 text-slate-400 hover:text-cyan-300 rounded hover:bg-white/[0.05] transition-colors"
+                          title="Descargar archivo JSON de esta plantilla"
+                        >
+                          <Download className="w-3 h-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => handleDeleteTemplate(tmpl.id, e)}
+                          className="p-1 text-slate-500 hover:text-rose-400 rounded hover:bg-rose-500/10 transition-colors"
+                          title="Eliminar plantilla"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
+
                 <div>
-                  <span className="text-[10px] font-semibold text-indigo-400 bg-indigo-950/60 px-2 py-0.5 rounded-full border border-indigo-500/20">
-                    {tmpl.category}
-                  </span>
-                  <h3 className="text-sm font-bold text-white mt-1 group-hover:text-indigo-300 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-semibold text-cyan-400 uppercase tracking-wider font-mono">
+                      {tmpl.category}
+                    </span>
+                    {tmpl.isCustom && (
+                      <span className="text-[9px] bg-purple-950/80 text-purple-300 px-1.5 rounded font-mono border border-purple-500/30">
+                        USUARIO
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="text-sm font-bold text-white mt-0.5 group-hover:text-cyan-300 transition-colors">
                     {tmpl.name}
                   </h3>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed line-clamp-2">
                     {tmpl.description}
                   </p>
                 </div>
+
+                {tmpl.tags && tmpl.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-0.5">
+                    {tmpl.tags.map(tag => (
+                      <span key={tag} className="text-[9px] font-mono bg-white/[0.03] text-slate-400 px-1.5 py-0.5 rounded border border-white/[0.04]">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <button
@@ -69,13 +456,29 @@ export const TemplatesModal: React.FC<TemplatesModalProps> = ({
                   onApplyTemplate(tmpl);
                   onClose();
                 }}
-                className="mt-4 w-full py-2 bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 hover:border-indigo-500 rounded-xl font-semibold text-xs transition-all flex items-center justify-center gap-1.5 shadow"
+                className="mt-4 w-full py-2 bg-cyan-500/15 hover:bg-cyan-500/30 text-cyan-200 hover:text-white border border-cyan-400/40 hover:border-cyan-400 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-[0_0_12px_rgba(6,182,212,0.2)] group-hover:shadow-[0_0_18px_rgba(6,182,212,0.35)]"
               >
                 <span>Usar Plantilla</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>
           ))}
+
+          {filteredTemplates.length === 0 && (
+            <div className="col-span-full p-12 text-center text-slate-500 space-y-2 font-mono text-xs">
+              <LayoutTemplate className="w-8 h-8 text-slate-600 mx-auto opacity-60" />
+              <p>No se encontraron plantillas en este filtro.</p>
+              {platformFilter === 'custom' && (
+                <button
+                  type="button"
+                  onClick={() => setIsCreating(true)}
+                  className="text-cyan-400 hover:underline font-sans"
+                >
+                  Haz clic aquí para guardar tu diseño actual como tu primera plantilla.
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -2119,6 +2119,7 @@ export function App() {
           isOpen={isTemplatesOpen}
           onClose={() => setIsTemplatesOpen(false)}
           onApplyTemplate={handleApplyTemplate}
+          currentScreens={screens}
         />
 
         {/* AI Full Screen & Wireframe Generator Modal */}
