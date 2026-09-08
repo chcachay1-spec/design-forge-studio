@@ -1681,8 +1681,9 @@ export const Canvas: React.FC<CanvasProps> = ({
             width: currentDevice.width,
             height: currentDevice.height,
             borderRadius: currentDevice.radius,
+            backgroundColor: nodes[0]?.styles?.backgroundColor || '#030712',
           }}
-          className="bg-[#030712] border-[5px] border-slate-800/90 shadow-[0_30px_90px_-20px_rgba(0,0,0,0.95),0_0_35px_rgba(99,102,241,0.14)] relative overflow-hidden flex flex-col transition-all duration-300 ring-1 ring-white/15"
+          className="border-[5px] border-slate-800/90 shadow-[0_30px_90px_-20px_rgba(0,0,0,0.95),0_0_35px_rgba(99,102,241,0.14)] relative overflow-hidden flex flex-col transition-all duration-300 ring-1 ring-white/15"
         >
           {/* 8px Alignment Grid Overlay */}
           {isGridActive && (

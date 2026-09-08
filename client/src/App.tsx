@@ -1928,6 +1928,69 @@ export function App() {
     }
   };
 
+  // Generate a brand new screen from Skill & Prompt (Claude Design Layout Generator)
+  const handleGenerateScreenFromSkill = (newScreen: ScreenDefinition, targetDeviceMode?: DeviceMode) => {
+    if (targetDeviceMode) {
+      setDeviceMode(targetDeviceMode);
+    }
+    setPastScreens(prev => [...prev.slice(-25), screens]);
+    setFutureScreens([]);
+    setScreens(prev => [...prev, newScreen]);
+    setActiveScreenId(newScreen.id);
+    setSelectedNodeId(null);
+    if (activeSkill) {
+      setTheme({
+        name: newScreen.name,
+        primaryColor: activeSkill.tokens.primaryColor,
+        secondaryColor: activeSkill.tokens.secondaryColor,
+        backgroundColor: activeSkill.tokens.backgroundColor,
+        cardColor: activeSkill.tokens.cardColor,
+        textColor: activeSkill.tokens.textColor,
+        mutedColor: activeSkill.tokens.mutedColor,
+        borderRadius: activeSkill.tokens.borderRadius,
+      });
+    }
+    setToastMessage(`✨ ¡Nuevo diseño "${newScreen.name}" generado y cargado en el lienzo!`);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  // Morph active screen with the newly generated layout from Skill & Prompt
+  const handleMorphActiveScreenFromSkill = (generatedRootNode: DesignNode, targetDeviceMode?: DeviceMode) => {
+    if (targetDeviceMode) {
+      setDeviceMode(targetDeviceMode);
+    }
+    setPastScreens(prev => [...prev.slice(-25), screens]);
+    setFutureScreens([]);
+    setScreens(prev => prev.map(s => {
+      if (s.id === (activeScreenId || prev[0]?.id)) {
+        return {
+          ...s,
+          name: generatedRootNode.name || s.name,
+          rootNode: {
+            ...generatedRootNode,
+            id: s.rootNode.id, // preserve root ID for stability
+          }
+        };
+      }
+      return s;
+    }));
+    setSelectedNodeId(null);
+    if (activeSkill) {
+      setTheme({
+        name: activeSkill.name,
+        primaryColor: activeSkill.tokens.primaryColor,
+        secondaryColor: activeSkill.tokens.secondaryColor,
+        backgroundColor: activeSkill.tokens.backgroundColor,
+        cardColor: activeSkill.tokens.cardColor,
+        textColor: activeSkill.tokens.textColor,
+        mutedColor: activeSkill.tokens.mutedColor,
+        borderRadius: activeSkill.tokens.borderRadius,
+      });
+    }
+    setToastMessage(`⚡ Pantalla activa reestructurada y rediseñada según el prompt.`);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
   // Collaboration Canvas Comments Handlers
   const handleAddComment = (newComment: CanvasComment) => {
     setComments(prev => [...prev, newComment]);
@@ -2450,6 +2513,9 @@ export function App() {
           onSaveSkill={handleSaveSkill}
           onDeleteSkill={handleDeleteSkill}
           onApplySkill={handleApplySkill}
+          onGenerateScreenFromSkill={handleGenerateScreenFromSkill}
+          onMorphActiveScreenFromSkill={handleMorphActiveScreenFromSkill}
+          deviceMode={deviceMode}
           selectedNode={selectedNode}
         />
 

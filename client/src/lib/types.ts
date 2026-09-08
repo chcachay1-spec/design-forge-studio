@@ -148,6 +148,7 @@ export interface DesignNode {
     animationDuration?: string;
     animationTiming?: string;
     animationIteration?: 'infinite' | '1' | '2' | '3';
+    [key: string]: any;
   };
   sounds?: {
     onClick?: string;
@@ -273,6 +274,8 @@ export interface SkillReference {
   content: string; // Data URL for images or text prompt
   extractedColors?: string[];
   role?: string;
+  aspectRatio?: number;
+  detectedFormat?: 'mobile' | 'tablet' | 'desktop';
 }
 
 export interface SkillDefinition {
