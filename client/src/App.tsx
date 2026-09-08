@@ -1326,7 +1326,16 @@ export function App() {
   // Delete node by ID (preserving root)
   const handleDeleteNode = (nodeId: string) => {
     if (!nodeId) return;
-    if (nodeId === currentScreen.rootNode.id || nodeId === 'app-root' || nodeId === 'app-root-details') {
+
+    // Safety guard: never delete any screen's root node
+    const isRootNode = 
+      screens.some(s => s.rootNode && s.rootNode.id === nodeId) ||
+      (currentScreen?.rootNode && currentScreen.rootNode.id === nodeId) ||
+      nodeId === 'app-root' ||
+      nodeId === 'app-root-details' ||
+      nodeId.startsWith('root-');
+
+    if (isRootNode) {
       setToastMessage('La ventana o pantalla principal no se puede eliminar.');
       soundEngine.playProceduralSound('switch');
       setTimeout(() => setToastMessage(null), 2500);
@@ -1336,7 +1345,9 @@ export function App() {
     soundEngine.playProceduralSound('switch');
 
     // Deselect if currently selected node is the deleted node or any of its descendants
-    if (selectedNodeId) {
+    if (selectedNodeId === nodeId) {
+      setSelectedNodeId(null);
+    } else if (selectedNodeId) {
       const isOrDescendantOf = (targetId: string, parentNodeId: string): boolean => {
         if (targetId === parentNodeId) return true;
         const parent = findNode(parentNodeId, nodes);
@@ -1356,22 +1367,18 @@ export function App() {
       }
     }
 
-    const deleteRecursive = (list: DesignNode[]): DesignNode[] => {
-      if (!list || !Array.isArray(list)) return [];
-      return list
-        .filter(n => n && n.id !== nodeId)
-        .map(n => {
-          if (n.children && Array.isArray(n.children)) {
-            return {
-              ...n,
-              children: deleteRecursive(n.children),
-            };
-          }
-          return n;
-        });
+    // Delete node from children recursively, preserving root node
+    const deleteFromChildren = (node: DesignNode): DesignNode => {
+      if (!node.children || !Array.isArray(node.children)) return node;
+      return {
+        ...node,
+        children: node.children
+          .filter(child => child && child.id !== nodeId)
+          .map(deleteFromChildren),
+      };
     };
 
-    setNodes(prev => deleteRecursive(prev));
+    setNodes(prev => prev.map(deleteFromChildren));
     setToastMessage('Elemento eliminado correctamente');
     setTimeout(() => setToastMessage(null), 2000);
   };
@@ -1765,6 +1772,7 @@ export function App() {
     soundEngine.playProceduralSound('chime');
     setScreens(prev => [...prev, newScreen]);
     setActiveScreenId(newScreenId);
+    setSelectedNodeId(null);
   };
 
   // Rename screen
@@ -1824,6 +1832,7 @@ export function App() {
 
     setScreens(prev => [...prev, cloned]);
     setActiveScreenId(newScreenId);
+    setSelectedNodeId(null);
     soundEngine.playProceduralSound('chime');
     setToastMessage(`Pantalla duplicada: "${cloned.name}"`);
     setTimeout(() => setToastMessage(null), 2000);

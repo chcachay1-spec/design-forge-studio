@@ -190,6 +190,7 @@ export const Inspector: React.FC<InspectorProps> = ({
           )}
           {selectedNode.id !== 'app-root' && 
            selectedNode.id !== 'app-root-details' && 
+           !selectedNode.id.startsWith('root-') &&
            !screens.some(s => s.rootNode && s.rootNode.id === selectedNode.id) && (
             <button
               onClick={() => onDeleteNode(selectedNode.id)}

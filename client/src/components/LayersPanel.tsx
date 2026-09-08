@@ -233,7 +233,7 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
     if (!node || !node.id) return null;
     const isSelected = selectedNodeId === node.id;
     const isOver = dropTargetId === node.id;
-    const isRoot = depth === 0 || node.id === 'app-root' || node.id === 'app-root-details';
+    const isRoot = depth === 0 || node.id === 'app-root' || node.id === 'app-root-details' || node.id.startsWith('root-');
 
     return (
       <div 
