@@ -4,7 +4,6 @@ import { soundEngine } from '../lib/audio-engine';
 import { DrawingLayer } from './DrawingLayer';
 import { CommentsLayer } from './CommentsLayer';
 import { CanvasRulers } from './CanvasRulers';
-import { DirectTransformOverlay, type ResizeHandle, type CornerRadiusHandle, type PaddingEdge } from './DirectTransformOverlay';
 import * as LucideIcons from 'lucide-react';
 import { 
   ChevronLeft, 
@@ -88,205 +87,11 @@ export const Canvas: React.FC<CanvasProps> = ({
   onDeleteComment,
   isGridActive,
   showRulers = true,
-  onUpdateStyle,
-  onUpdateMultipleStyles,
+  onUpdateStyle: _onUpdateStyle,
+  onUpdateMultipleStyles: _onUpdateMultipleStyles,
 }) => {
   const [dragOverNodeId, setDragOverNodeId] = useState<string | null>(null);
   const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | undefined>(undefined);
-  const [isTransformActive, setIsTransformActive] = useState(false);
-
-  // Direct Drag Transform State
-  const [activeTransform, setActiveTransform] = useState<{
-    type: 'resize' | 'radius' | 'padding';
-    handle?: ResizeHandle;
-    radiusHandle?: CornerRadiusHandle;
-    paddingEdge?: PaddingEdge;
-    nodeId: string;
-    startX: number;
-    startY: number;
-    initialWidth: number;
-    initialHeight: number;
-    initialRadius: number;
-    initialPadTop: number;
-    initialPadRight: number;
-    initialPadBottom: number;
-    initialPadLeft: number;
-  } | null>(null);
-
-  // Parse CSS pixel string to number helper
-  const parsePx = (val: any, fallback: number = 0): number => {
-    if (!val) return fallback;
-    const num = parseFloat(String(val));
-    return isNaN(num) ? fallback : num;
-  };
-
-  // Start Resizing node by dragging edge or corner
-  const handleStartResize = (node: DesignNode, handle: ResizeHandle, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const el = document.getElementById(node.id);
-    const rect = el ? el.getBoundingClientRect() : { width: 100, height: 40 };
-    
-    // Convert current zoom into account
-    const curWidth = parsePx(node.styles.width, rect.width / (zoom || 1));
-    const curHeight = parsePx(node.styles.height, rect.height / (zoom || 1));
-
-    setActiveTransform({
-      type: 'resize',
-      handle,
-      nodeId: node.id,
-      startX: e.clientX,
-      startY: e.clientY,
-      initialWidth: Math.round(curWidth),
-      initialHeight: Math.round(curHeight),
-      initialRadius: 0,
-      initialPadTop: 0,
-      initialPadRight: 0,
-      initialPadBottom: 0,
-      initialPadLeft: 0,
-    });
-    soundEngine.playProceduralSound('pop');
-  };
-
-  // Start Corner Radius adjustment by dragging corner handle
-  const handleStartRadius = (node: DesignNode, handle: CornerRadiusHandle, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const curRadius = parsePx(node.styles.borderRadius, 0);
-
-    setActiveTransform({
-      type: 'radius',
-      radiusHandle: handle,
-      nodeId: node.id,
-      startX: e.clientX,
-      startY: e.clientY,
-      initialWidth: 0,
-      initialHeight: 0,
-      initialRadius: Math.round(curRadius),
-      initialPadTop: 0,
-      initialPadRight: 0,
-      initialPadBottom: 0,
-      initialPadLeft: 0,
-    });
-    soundEngine.playProceduralSound('switch');
-  };
-
-  // Start Interior Padding adjustment
-  const handleStartPadding = (node: DesignNode, edge: PaddingEdge, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const padStr = (node.styles.padding || '0px').trim();
-    const parts = padStr.split(/\s+/).map(p => parsePx(p, 0));
-    let t = 0, r = 0, b = 0, l = 0;
-    if (parts.length === 1) { t = parts[0]; r = parts[0]; b = parts[0]; l = parts[0]; }
-    else if (parts.length === 2) { t = parts[0]; r = parts[1]; b = parts[0]; l = parts[1]; }
-    else if (parts.length === 3) { t = parts[0]; r = parts[1]; b = parts[2]; l = parts[1]; }
-    else if (parts.length >= 4) { t = parts[0]; r = parts[1]; b = parts[2]; l = parts[3]; }
-
-    setActiveTransform({
-      type: 'padding',
-      paddingEdge: edge,
-      nodeId: node.id,
-      startX: e.clientX,
-      startY: e.clientY,
-      initialWidth: 0,
-      initialHeight: 0,
-      initialRadius: 0,
-      initialPadTop: t,
-      initialPadRight: r,
-      initialPadBottom: b,
-      initialPadLeft: l,
-    });
-    soundEngine.playProceduralSound('pop');
-  };
-
-  // Handle global mouse move when transforming
-  const handleGlobalMouseMove = (e: React.MouseEvent) => {
-    if (!activeTransform) return;
-
-    const deltaX = (e.clientX - activeTransform.startX) / (zoom || 1);
-    const deltaY = (e.clientY - activeTransform.startY) / (zoom || 1);
-
-    if (activeTransform.type === 'resize' && activeTransform.handle) {
-      let newW = activeTransform.initialWidth;
-      let newH = activeTransform.initialHeight;
-
-      switch (activeTransform.handle) {
-        case 'right':
-          newW = Math.max(20, Math.round(activeTransform.initialWidth + deltaX));
-          break;
-        case 'left':
-          newW = Math.max(20, Math.round(activeTransform.initialWidth - deltaX));
-          break;
-        case 'bottom':
-          newH = Math.max(16, Math.round(activeTransform.initialHeight + deltaY));
-          break;
-        case 'top':
-          newH = Math.max(16, Math.round(activeTransform.initialHeight - deltaY));
-          break;
-        case 'bottom-right':
-          newW = Math.max(20, Math.round(activeTransform.initialWidth + deltaX));
-          newH = Math.max(16, Math.round(activeTransform.initialHeight + deltaY));
-          break;
-        case 'bottom-left':
-          newW = Math.max(20, Math.round(activeTransform.initialWidth - deltaX));
-          newH = Math.max(16, Math.round(activeTransform.initialHeight + deltaY));
-          break;
-        case 'top-right':
-          newW = Math.max(20, Math.round(activeTransform.initialWidth + deltaX));
-          newH = Math.max(16, Math.round(activeTransform.initialHeight - deltaY));
-          break;
-        case 'top-left':
-          newW = Math.max(20, Math.round(activeTransform.initialWidth - deltaX));
-          newH = Math.max(16, Math.round(activeTransform.initialHeight - deltaY));
-          break;
-      }
-
-      if (onUpdateMultipleStyles) {
-        onUpdateMultipleStyles(activeTransform.nodeId, {
-          width: `${newW}px`,
-          height: `${newH}px`,
-        });
-      } else if (onUpdateStyle) {
-        onUpdateStyle(activeTransform.nodeId, 'width', `${newW}px`);
-        onUpdateStyle(activeTransform.nodeId, 'height', `${newH}px`);
-      }
-    } else if (activeTransform.type === 'radius') {
-      // Inward drag increases radius, outward decreases
-      const distance = Math.round(Math.max(0, activeTransform.initialRadius + (deltaX + deltaY) * 0.5));
-      if (onUpdateStyle) {
-        onUpdateStyle(activeTransform.nodeId, 'borderRadius', `${distance}px`);
-      }
-    } else if (activeTransform.type === 'padding' && activeTransform.paddingEdge) {
-      let t = activeTransform.initialPadTop;
-      let r = activeTransform.initialPadRight;
-      let b = activeTransform.initialPadBottom;
-      let l = activeTransform.initialPadLeft;
-
-      switch (activeTransform.paddingEdge) {
-        case 'pad-top':
-          t = Math.max(0, Math.round(activeTransform.initialPadTop + deltaY));
-          break;
-        case 'pad-bottom':
-          b = Math.max(0, Math.round(activeTransform.initialPadBottom - deltaY));
-          break;
-        case 'pad-left':
-          l = Math.max(0, Math.round(activeTransform.initialPadLeft + deltaX));
-          break;
-        case 'pad-right':
-          r = Math.max(0, Math.round(activeTransform.initialPadRight - deltaX));
-          break;
-      }
-
-      if (onUpdateStyle) {
-        onUpdateStyle(activeTransform.nodeId, 'padding', `${t}px ${r}px ${b}px ${l}px`);
-      }
-    }
-  };
-
-  const handleGlobalMouseUp = () => {
-    if (activeTransform) {
-      soundEngine.playProceduralSound('click');
-      setActiveTransform(null);
-    }
-  };
 
   const getDeviceDimensions = () => {
     switch (deviceMode) {
@@ -476,18 +281,6 @@ export const Canvas: React.FC<CanvasProps> = ({
       </div>
     );
 
-    // Direct Mouse Transform Controls (Resize edges, corner radius, and padding)
-    const directTransformOverlay = !isPreviewMode && isSelected && isDrawingActive && isTransformActive && (
-      <DirectTransformOverlay
-        nodeName={node.name}
-        borderRadius={node.styles.borderRadius}
-        padding={node.styles.padding}
-        onStartResize={(handle, e) => handleStartResize(node, handle, e)}
-        onStartRadius={(handle, e) => handleStartRadius(node, handle, e)}
-        onStartPadding={(edge, e) => handleStartPadding(node, edge, e)}
-      />
-    );
-
     // Animated Background Video Overlay
     const isPlayOnHover = node.styles.videoHoverBehavior === 'play_pause_on_hover';
     const videoBackgroundOverlay = node.styles.backgroundVideo ? (
@@ -535,7 +328,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' select-none active:scale-[0.98] inline-flex items-center justify-center gap-2 overflow-hidden'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           {videoBackgroundOverlay}
           <span className="relative z-10 flex items-center gap-2">
             {IconComponent && <IconComponent size={16} />}
@@ -560,7 +352,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' select-none inline-flex items-center gap-1.5'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           {IconComponent && <IconComponent size={12} />}
           <span>{node.content}</span>
         </span>
@@ -578,7 +369,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           {node.content}
         </div>
       );
@@ -588,7 +378,6 @@ export const Canvas: React.FC<CanvasProps> = ({
       return (
         <div key={node.id} className={baseClass} onClick={handleNodeClick}>
           {selectionBadge}
-          {directTransformOverlay}
           <input
             type="text"
             readOnly={!isPreviewMode}
@@ -611,7 +400,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' inline-flex items-center justify-between gap-3 select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <span className="text-xs font-medium">{node.content || 'Activar opción'}</span>
           <div className={'w-10 h-5 rounded-full transition-colors relative p-0.5 ' + (node.checked ? 'bg-indigo-600' : 'bg-slate-700')}>
             <div className={'w-4 h-4 rounded-full bg-white transition-transform ' + (node.checked ? 'translate-x-5' : 'translate-x-0')} />
@@ -630,7 +418,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' overflow-hidden flex items-center justify-center bg-slate-900'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           {node.imageUrl ? (
             <img
               src={node.imageUrl}
@@ -657,7 +444,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' flex items-center gap-3 select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           {node.avatarUrl ? (
             <img
               src={node.avatarUrl}
@@ -688,7 +474,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' flex items-center justify-between shadow-md'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <div className="flex items-center gap-2">
             <button className="p-1 rounded-lg hover:bg-white/10 text-slate-300 transition-colors">
               <ChevronLeft size={18} />
@@ -713,7 +498,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' flex items-center justify-around shadow-lg'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <div className="flex flex-col items-center gap-0.5 text-indigo-400">
             <Home size={18} />
             <span className="text-[10px] font-medium">Inicio</span>
@@ -744,7 +528,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' flex items-center gap-2 shadow-inner'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <Search size={16} className="text-slate-400 shrink-0" />
           <input
             type="text"
@@ -768,7 +551,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' flex flex-col gap-2 select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <div className="flex justify-between items-center text-xs">
             <span className="text-slate-300 font-medium">{node.content || 'Nivel de Volumen'}</span>
             <span className="text-indigo-400 font-mono font-bold text-[11px]">{sliderVal}%</span>
@@ -794,7 +576,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' flex items-center p-1 select-none shadow-inner'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           {options.map((opt, idx) => (
             <div
               key={idx}
@@ -822,7 +603,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' flex flex-col gap-1 shadow'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>{node.content || 'Ventas Totales'}</span>
             <span className="flex items-center gap-0.5 text-emerald-400 font-medium text-[11px] bg-emerald-950/60 border border-emerald-800/40 px-1.5 py-0.5 rounded-full">
@@ -848,7 +628,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' flex flex-col gap-1.5 select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <div className="flex justify-between items-center text-xs">
             <span className="text-slate-300 font-medium">{node.content || 'Carga del Proyecto'}</span>
             <span className="text-emerald-400 font-mono font-semibold text-[11px]">{progVal}%</span>
@@ -873,7 +652,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' flex items-center justify-center my-2'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <div className="w-full border-t border-slate-700/80 relative flex items-center justify-center">
             {node.content && (
               <span className="bg-slate-900 px-3 text-[11px] text-slate-400 -translate-y-1/2 absolute">
@@ -902,7 +680,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           title={node.content || 'Botón de Icono'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <IconComponent size={18} />
         </button>
       );
@@ -923,7 +700,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' select-none active:scale-95 flex items-center justify-center gap-2 shadow-2xl rounded-full transition-transform'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <IconComponent size={20} />
           {node.content && <span className="font-semibold text-xs pr-1">{node.content}</span>}
         </button>
@@ -941,7 +717,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' inline-flex p-1 rounded-xl bg-slate-900 border border-slate-800 gap-1 select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           {opts.map((opt, i) => (
             <button
               key={i}
@@ -971,7 +746,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' inline-flex items-center gap-1 underline underline-offset-4 hover:opacity-80 transition-opacity select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <span>{node.content || 'Visitar enlace'}</span>
           <ExternalLink size={12} className="opacity-70" />
         </a>
@@ -989,7 +763,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' flex flex-col gap-1.5 select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           {node.content && <span className="text-xs font-medium text-slate-300">{node.content}</span>}
           <textarea
             readOnly={!isPreviewMode}
@@ -1012,7 +785,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' inline-flex items-center gap-2.5 cursor-pointer select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
             isChecked ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-slate-600 bg-slate-900'
           }`}>
@@ -1034,7 +806,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' inline-flex items-center gap-2.5 cursor-pointer select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
             isChecked ? 'border-indigo-500' : 'border-slate-600'
           }`}>
@@ -1055,7 +826,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' flex items-center justify-between p-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-slate-200 select-none shadow-sm'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <span>{node.content || 'Seleccionar categoría...'}</span>
           <ChevronDown size={14} className="text-slate-400" />
         </div>
@@ -1089,7 +859,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' p-3.5 bg-slate-900/90 border border-slate-700/80 rounded-2xl select-none shadow-lg flex flex-col gap-2.5 backdrop-blur-md'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           {/* Header del Calendario */}
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
@@ -1200,7 +969,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' inline-flex items-center justify-between p-2 bg-slate-900 border border-slate-700/80 rounded-xl select-none shadow-sm gap-3'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <span className="text-xs font-medium text-slate-300 pl-1">{node.content || 'Cantidad:'}</span>
           <div className="flex items-center bg-black/60 rounded-lg border border-white/10 p-0.5 shadow-inner">
             <button
@@ -1250,7 +1018,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' p-3.5 bg-gradient-to-r from-slate-900/90 to-indigo-950/60 border border-indigo-500/40 rounded-2xl select-none shadow-lg flex flex-col items-center gap-2 backdrop-blur-md'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-indigo-300 uppercase tracking-wider">
             <Clock size={12} className="text-cyan-400" />
             <span>{node.content || 'OFERTA FLASH DE LANZAMIENTO'}</span>
@@ -1295,7 +1062,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' flex items-center justify-between p-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-slate-200 select-none shadow-sm'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <div className="flex items-center gap-2">
             <Calendar size={14} className="text-indigo-400" />
             <span>{node.content || '07 Sep 2026, 14:30'}</span>
@@ -1316,7 +1082,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' flex items-center gap-2.5 p-2 bg-slate-900 border border-slate-800 rounded-xl select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <div className="w-6 h-6 rounded-lg shadow-inner border border-white/20" style={{ backgroundColor: colorVal }} />
           <div className="flex flex-col">
             <span className="text-[10px] text-slate-400 font-medium">{node.content || 'Color Primario'}</span>
@@ -1336,7 +1101,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' border-2 border-dashed border-slate-700 hover:border-indigo-500/70 p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-1.5 transition-colors select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <UploadCloud size={24} className="text-indigo-400" />
           <span className="text-xs font-semibold text-slate-200">{node.content || 'Arrastra archivos aquí o examina'}</span>
           <span className="text-[10px] text-slate-500">Soporta PNG, JPG, PDF (máx. 15MB)</span>
@@ -1355,7 +1119,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' flex flex-wrap gap-1.5 p-2 bg-slate-900 border border-slate-800 rounded-xl select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           {chips.map((chip, idx) => (
             <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-800 text-indigo-300 text-[11px] font-medium border border-indigo-500/30">
               {chip}
@@ -1377,7 +1140,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' p-4 bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl space-y-3 select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <div className="flex items-center justify-between pb-2 border-b border-slate-800">
             <span className="text-xs font-bold text-white">{node.content || 'Título del Modal'}</span>
             <button className="text-slate-500 hover:text-white p-1">✕</button>
@@ -1403,7 +1165,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' p-3.5 bg-slate-900 border-l border-indigo-500/40 rounded-xl shadow-xl space-y-2 select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-white uppercase tracking-wider">{node.content || 'Panel Lateral / Sheet'}</span>
             <span className="text-[10px] font-mono text-indigo-400">SIDE SHEET</span>
@@ -1425,7 +1186,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' bg-slate-900 border border-slate-800 rounded-xl overflow-hidden select-none shadow-sm'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <div className="flex items-center justify-between p-3 cursor-pointer hover:bg-slate-800/50 transition-colors">
             <span className="text-xs font-semibold text-white">{node.content || '¿Cómo funciona la exportación?'}</span>
             <ChevronRight size={14} className="text-slate-400" />
@@ -1447,7 +1207,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' flex flex-col gap-2 select-none overflow-hidden'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <div className="flex gap-2.5 overflow-x-auto pb-1">
             {[1, 2, 3].map(item => (
               <div key={item} className="min-w-[140px] h-24 rounded-xl bg-gradient-to-br from-indigo-900/60 to-purple-900/60 border border-indigo-500/30 p-2.5 flex flex-col justify-end">
@@ -1476,7 +1235,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' p-3 bg-slate-900/90 border border-slate-800 rounded-2xl flex flex-col gap-1 select-none shadow-md'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5 px-2">
             {node.content || 'Menú Navegación'}
           </div>
@@ -1509,7 +1267,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' p-4 bg-slate-950 border-t border-slate-800/80 flex flex-col gap-2 text-center select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <div className="flex justify-center gap-4 text-xs text-slate-400">
             <a href="#" className="hover:text-white">Términos</a>
             <a href="#" className="hover:text-white">Privacidad</a>
@@ -1532,7 +1289,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' flex items-center gap-1.5 text-xs select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <span className="text-slate-400 hover:text-white cursor-pointer">Inicio</span>
           <span className="text-slate-600">/</span>
           <span className="text-slate-400 hover:text-white cursor-pointer">Componentes</span>
@@ -1552,7 +1308,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' inline-flex items-center gap-1 select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <button className="px-2 py-1 rounded bg-slate-900 text-slate-400 text-xs border border-slate-800">‹</button>
           <button className="px-2.5 py-1 rounded bg-indigo-600 text-white font-bold text-xs">1</button>
           <button className="px-2.5 py-1 rounded bg-slate-900 text-slate-300 text-xs hover:bg-slate-800">2</button>
@@ -1573,7 +1328,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' inline-flex items-center justify-center p-3 select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <RotateCw size={24} className="text-indigo-500 animate-spin" />
         </div>
       );
@@ -1589,7 +1343,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' space-y-2 p-3 bg-slate-900/60 border border-slate-800 rounded-xl select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <div className="w-1/3 h-3 bg-slate-700/60 rounded animate-pulse" />
           <div className="w-full h-8 bg-slate-800/80 rounded-lg animate-pulse" />
           <div className="w-4/5 h-3 bg-slate-700/40 rounded animate-pulse" />
@@ -1607,7 +1360,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' p-3 bg-slate-900/95 border border-emerald-500/50 rounded-xl shadow-2xl flex items-center justify-between gap-3 select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
               <Check size={12} />
@@ -1629,7 +1381,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center justify-between select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <div className="flex items-center gap-2">
             <AlertTriangle size={16} className="text-amber-400 shrink-0" />
             <span className="text-xs font-medium text-amber-200 leading-snug">
@@ -1652,7 +1403,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' relative inline-block select-none'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <div className="bg-slate-900 text-white text-xs font-medium px-2.5 py-1 rounded-lg border border-slate-700 shadow-xl inline-flex items-center gap-1">
             <span>{node.content || 'Explicación del elemento'}</span>
           </div>
@@ -1670,7 +1420,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' border border-slate-800 rounded-xl overflow-hidden select-none shadow-sm'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-slate-900 border-b border-slate-800 text-slate-400">
@@ -1708,7 +1457,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' p-3 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col gap-2.5 select-none shadow-lg'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           {youtubeId ? (
             <div className="w-full aspect-video rounded-xl overflow-hidden bg-black shadow-inner">
               <iframe
@@ -1753,7 +1501,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + ' flex items-center justify-center overflow-hidden'}
         >
           {selectionBadge}
-          {directTransformOverlay}
           <svg
             viewBox="0 0 420 340"
             className="w-full h-full drop-shadow-md"
@@ -1786,7 +1533,6 @@ export const Canvas: React.FC<CanvasProps> = ({
           className={baseClass + (node.styles.backgroundVideo || youtubeEmbed ? ' overflow-hidden' : '')}
         >
           {selectionBadge}
-          {directTransformOverlay}
           {videoBackgroundOverlay}
           {youtubeEmbed}
           {node.content && !youtubeEmbed && <span className="relative z-10">{node.content}</span>}
@@ -1802,9 +1548,7 @@ export const Canvas: React.FC<CanvasProps> = ({
       onMouseMove={(e) => {
         const rect = e.currentTarget.getBoundingClientRect();
         setCursorPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-        handleGlobalMouseMove(e);
       }}
-      onMouseUp={handleGlobalMouseUp}
       onMouseLeave={() => setCursorPos(undefined)}
     >
       {/* Precision Graduated Rulers & Guides */}
@@ -1816,8 +1560,7 @@ export const Canvas: React.FC<CanvasProps> = ({
         onClose={onCloseDrawing}
         strokes={strokes}
         onUpdateStrokes={onUpdateStrokes}
-        isTransformActive={isTransformActive}
-        onToggleTransform={() => setIsTransformActive(prev => !prev)}
+
       />
 
       {/* Interactive Collaboration & Design Comments Overlay */}

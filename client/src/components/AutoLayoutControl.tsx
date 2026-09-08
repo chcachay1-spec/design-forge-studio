@@ -2,8 +2,11 @@ import React, { useState } from 'react';
 import { 
   ArrowRight, 
   ArrowDown, 
-  Columns,
-  Grid
+  Columns, 
+  Grid,
+  Minus,
+  Plus,
+  SlidersHorizontal
 } from 'lucide-react';
 import type { DesignNode } from '../lib/types';
 import { soundEngine } from '../lib/audio-engine';
@@ -352,6 +355,91 @@ export const AutoLayoutControl: React.FC<AutoLayoutControlProps> = ({ node, onUp
             </div>
           </div>
         )}
+      </div>
+
+      {/* Herramienta de Estirar y Encoger Caras (Ancho y Alto) */}
+      <div className="space-y-2 pt-2 border-t border-slate-800/80">
+        <div className="flex items-center justify-between">
+          <label className="text-[10px] text-cyan-300 font-semibold flex items-center gap-1">
+            <SlidersHorizontal className="w-3 h-3" />
+            <span>Ajuste Rápido de Caras (Estirar / Encoger)</span>
+          </label>
+          <span className="text-[9px] text-slate-500 font-mono">±10px</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          {/* Ancho */}
+          <div className="bg-slate-950 p-1.5 rounded-lg border border-slate-800/80 flex items-center justify-between">
+            <span className="text-[10px] text-slate-400 font-mono font-medium">Ancho:</span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => {
+                  const cur = parseFloat(String(styles.width || '100')) || 100;
+                  const next = Math.max(20, Math.round(cur - 10));
+                  onUpdateStyle(node.id, 'width', `${next}px`);
+                  soundEngine.playProceduralSound('pop');
+                }}
+                className="w-5 h-5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center text-xs border border-slate-800"
+                title="Encoger ancho (-10px)"
+              >
+                <Minus className="w-2.5 h-2.5" />
+              </button>
+              <span className="text-[10px] text-cyan-300 font-mono min-w-[36px] text-center">
+                {styles.width || 'auto'}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  const cur = parseFloat(String(styles.width || '100')) || 100;
+                  const next = Math.round(cur + 10);
+                  onUpdateStyle(node.id, 'width', `${next}px`);
+                  soundEngine.playProceduralSound('pop');
+                }}
+                className="w-5 h-5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center text-xs border border-slate-800"
+                title="Estirar ancho (+10px)"
+              >
+                <Plus className="w-2.5 h-2.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Alto */}
+          <div className="bg-slate-950 p-1.5 rounded-lg border border-slate-800/80 flex items-center justify-between">
+            <span className="text-[10px] text-slate-400 font-mono font-medium">Alto:</span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => {
+                  const cur = parseFloat(String(styles.height || '40')) || 40;
+                  const next = Math.max(16, Math.round(cur - 10));
+                  onUpdateStyle(node.id, 'height', `${next}px`);
+                  soundEngine.playProceduralSound('pop');
+                }}
+                className="w-5 h-5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center text-xs border border-slate-800"
+                title="Encoger alto (-10px)"
+              >
+                <Minus className="w-2.5 h-2.5" />
+              </button>
+              <span className="text-[10px] text-cyan-300 font-mono min-w-[36px] text-center">
+                {styles.height || 'auto'}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  const cur = parseFloat(String(styles.height || '40')) || 40;
+                  const next = Math.round(cur + 10);
+                  onUpdateStyle(node.id, 'height', `${next}px`);
+                  soundEngine.playProceduralSound('pop');
+                }}
+                className="w-5 h-5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center text-xs border border-slate-800"
+                title="Estirar alto (+10px)"
+              >
+                <Plus className="w-2.5 h-2.5" />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -4,8 +4,7 @@ import {
   Eraser, 
   Trash2, 
   Highlighter, 
-  X,
-  Maximize2
+  X
 } from 'lucide-react';
 import type { DrawingStroke } from '../lib/types';
 import { soundEngine } from '../lib/audio-engine';
@@ -15,8 +14,6 @@ interface DrawingLayerProps {
   onClose: () => void;
   strokes: DrawingStroke[];
   onUpdateStrokes: (strokes: DrawingStroke[]) => void;
-  isTransformActive?: boolean;
-  onToggleTransform?: () => void;
 }
 
 export const DrawingLayer: React.FC<DrawingLayerProps> = ({
@@ -24,8 +21,6 @@ export const DrawingLayer: React.FC<DrawingLayerProps> = ({
   onClose,
   strokes,
   onUpdateStrokes,
-  isTransformActive = false,
-  onToggleTransform,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -172,29 +167,11 @@ export const DrawingLayer: React.FC<DrawingLayerProps> = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        className={'w-full h-full ' + (isTransformActive ? 'pointer-events-none' : 'pointer-events-auto cursor-crosshair ' + (isEraser ? 'cursor-cell' : ''))}
+        className={'w-full h-full cursor-crosshair ' + (isEraser ? 'cursor-cell' : '')}
       />
 
       <div className="absolute bottom-5 left-1/2 -translate-x-1/2 bg-slate-950/90 backdrop-blur-md border border-slate-800/80 rounded-xl p-1.5 px-2.5 shadow-2xl flex items-center gap-2 z-50">
         <div className="flex items-center gap-0.5 bg-slate-900/60 p-0.5 rounded-lg border border-slate-800/50">
-          {onToggleTransform && (
-            <button
-              onClick={() => {
-                onToggleTransform();
-                soundEngine.playProceduralSound('switch');
-              }}
-              className={'px-2 py-1 rounded-md text-xs flex items-center gap-1.5 transition-all ' + (
-                isTransformActive
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 shadow-[0_0_12px_rgba(6,182,212,0.3)] font-semibold'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent'
-              )}
-              title="Modo Estirar / Encoger: ajusta bordes, esquinas y padding directamente con el ratón"
-            >
-              <Maximize2 className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Estirar Caras</span>
-            </button>
-          )}
-
           <button
             onClick={() => {
               setIsEraser(false);
