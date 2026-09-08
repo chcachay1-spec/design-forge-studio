@@ -267,7 +267,6 @@ export async function extractRichPaletteFromImage(imageDataUrl: string): Promise
               perimeterColors.push({ r, g, b });
             }
 
-            // Quantize to groups of 16
             const qr = Math.round(r / 16) * 16;
             const qg = Math.round(g / 16) * 16;
             const qb = Math.round(b / 16) * 16;
@@ -283,7 +282,7 @@ export async function extractRichPaletteFromImage(imageDataUrl: string): Promise
         const avgLum = pixelCount > 0 ? totalLum / pixelCount : 40;
         const isLightMode = avgLum > 130;
 
-        // Background color detection from perimeter & dominance
+        // Background color detection from perimeter
         let backgroundColor = isLightMode ? '#f8fafc' : '#090d16';
         if (perimeterColors.length > 0) {
           let prSum = 0, pgSum = 0, pbSum = 0;
@@ -316,7 +315,6 @@ export async function extractRichPaletteFromImage(imageDataUrl: string): Promise
           secondaryColor = rgbToHex(vibrantCandidates[1].r, vibrantCandidates[1].g, vibrantCandidates[1].b);
         }
 
-        // Compute Card / Surface color
         let cardColor: string;
         let textColor: string;
         let mutedColor: string;
@@ -401,7 +399,6 @@ export function synthesizeSkillFromReferences({
   const allExtractedColors = references.flatMap(r => r.extractedColors || []);
   const primaryAnalysis = analysisList && analysisList.length > 0 ? analysisList[0] : null;
 
-  // 1. Determine Mode (Prompt explicit overrides, otherwise image analysis)
   const promptExplicitLight = promptLower.includes('claro') || promptLower.includes('light') || promptLower.includes('blanco') || promptLower.includes('white');
   const promptExplicitDark = promptLower.includes('oscuro') || promptLower.includes('dark') || promptLower.includes('negro') || promptLower.includes('black');
   
@@ -410,7 +407,6 @@ export function synthesizeSkillFromReferences({
   else if (promptExplicitDark) isLightMode = false;
   else if (primaryAnalysis) isLightMode = primaryAnalysis.isLightMode;
 
-  // 2. Determine Primary Brand Color
   let primaryColor = primaryAnalysis?.primaryColor || '#6366f1';
   if (promptLower.includes('verde') || promptLower.includes('green') || promptLower.includes('esmeralda') || promptLower.includes('emerald')) {
     primaryColor = '#10b981';
@@ -428,7 +424,6 @@ export function synthesizeSkillFromReferences({
     primaryColor = allExtractedColors[0];
   }
 
-  // 3. Determine Background & Card Surface Colors
   let backgroundColor = isLightMode 
     ? (primaryAnalysis?.isLightMode ? primaryAnalysis.backgroundColor : '#f8fafc')
     : (primaryAnalysis && !primaryAnalysis.isLightMode ? primaryAnalysis.backgroundColor : '#090d16');
@@ -441,14 +436,12 @@ export function synthesizeSkillFromReferences({
   let mutedColor = isLightMode ? '#64748b' : '#94a3b8';
   let borderColor = isLightMode ? '#e2e8f0' : 'rgba(255, 255, 255, 0.12)';
 
-  // Glassmorphism check
   const hasGlass = promptLower.includes('cristal') || promptLower.includes('glass') || promptLower.includes('vision');
   if (hasGlass) {
     cardColor = isLightMode ? 'rgba(255, 255, 255, 0.8)' : 'rgba(18, 24, 38, 0.75)';
     borderColor = isLightMode ? 'rgba(255, 255, 255, 0.4)' : 'rgba(255, 255, 255, 0.15)';
   }
 
-  // 4. Border Radius & Elevation
   let borderRadius = '14px';
   if (promptLower.includes('pill') || promptLower.includes('redondeado') || promptLower.includes('circular') || promptLower.includes('round') || hasGlass) {
     borderRadius = '24px';
@@ -547,25 +540,48 @@ ${references.map(r => `- ${r.type.toUpperCase()}: ${r.name}`).join('\n')}
 }
 
 // ==========================================
-// 4. GENERADOR DE PANTALLA Y LAYOUT COMPLETO
+// 4. TIPOS DE ESTILOS VISUALES EXPANDIDOS
 // ==========================================
+export type BackgroundStyle = 'aurora' | 'glass' | 'tech_grid' | 'editorial' | 'solid';
+export type ButtonShape = 'pill' | 'squircle' | 'sharp' | 'glow' | 'glass';
+export type MenuStyle = 'floating_dock' | 'classic_topbar' | 'bottom_tabbar' | 'sidebar';
+
 export interface GenerateScreenParams {
   skill: SkillDefinition;
   prompt: string;
   screenName?: string;
   deviceMode: DeviceMode;
+  backgroundStyle?: BackgroundStyle;
+  buttonShape?: ButtonShape;
+  menuStyle?: MenuStyle;
+  useUploadedImages?: boolean;
 }
 
+// ==========================================
+// 5. GENERADOR DE PANTALLA Y LAYOUT COMPLETO
+// ==========================================
 export function generateScreenFromSkillAndPrompt({
   skill,
   prompt,
   screenName,
   deviceMode,
+  backgroundStyle = 'aurora',
+  buttonShape = 'squircle',
+  menuStyle = 'floating_dock',
+  useUploadedImages = true,
 }: GenerateScreenParams): ScreenDefinition {
   const { tokens } = skill;
   const promptLower = prompt.toLowerCase();
   const screenId = `screen-skill-${Date.now()}`;
   const title = screenName?.trim() || 'Diseño Sintetizado';
+
+  // Extract reference images if available
+  const refImages = skill.references
+    .filter(r => r.type === 'image' && r.content && r.content.startsWith('data:image'))
+    .map(r => r.content);
+
+  const heroImage = (useUploadedImages && refImages.length > 0) ? refImages[0] : null;
+  const secondaryImage = (useUploadedImages && refImages.length > 1) ? refImages[1] : heroImage;
 
   // Identify Archetype
   let archetype: 'fintech' | 'saas' | 'ecommerce' | 'social' | 'auth' | 'general' = 'general';
@@ -585,22 +601,23 @@ export function generateScreenFromSkillAndPrompt({
   const isDesktop = deviceMode === 'desktop';
   const isTablet = deviceMode === 'tablet';
 
+  // 1. Navigation / Menu rendering according to menuStyle
+  rootChildren.push(buildNavigationNode(title, menuStyle, isDesktop, tokens, buttonShape, heroImage));
+
   // ----------------------------------------------------
   // ARCHETYPE 1: FINTECH / CRIPTO / BILLETERA
   // ----------------------------------------------------
   if (archetype === 'fintech') {
     if (isDesktop) {
-      rootChildren.push(buildDesktopHeader(title, tokens));
       rootChildren.push({
         id: `metrics-row-${Date.now()}`,
-        name: 'Fila de Métricas Clave',
+        name: 'Fila de Métricas Financieras',
         type: 'container',
         styles: {
           width: '100%',
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)',
           gap: '16px',
-          padding: '8px 0',
         },
         children: [
           buildMetricCard('Balance Total en Cuenta', '$48,250.00 USD', '+14.8% este mes', tokens),
@@ -636,7 +653,13 @@ export function generateScreenFromSkillAndPrompt({
                   { id: `c-badge-${Date.now()}`, name: 'Badge', type: 'badge', content: 'En Vivo 🟢', styles: buildBadgeStyle(tokens) },
                 ]
               },
-              {
+              heroImage ? {
+                id: `chart-img-${Date.now()}`,
+                name: 'Imagen de Referencia / Gráfico',
+                type: 'image',
+                imageUrl: heroImage,
+                styles: { width: '100%', height: '160px', borderRadius: tokens.borderRadius, marginBottom: '14px', objectFit: 'cover' }
+              } : {
                 id: `chart-metric-${Date.now()}`,
                 name: 'Valor Numérico',
                 type: 'metric',
@@ -650,8 +673,8 @@ export function generateScreenFromSkillAndPrompt({
                 type: 'container',
                 styles: { display: 'flex', gap: '10px', width: '100%' },
                 children: [
-                  buildPrimaryButton('Comprar Activo +', tokens),
-                  buildSecondaryButton('Transferir Fondos', tokens),
+                  buildCustomButton('Comprar Activo +', tokens, buttonShape, true),
+                  buildCustomButton('Transferir Fondos', tokens, buttonShape, false),
                 ]
               }
             ]
@@ -665,13 +688,13 @@ export function generateScreenFromSkillAndPrompt({
               { id: `sp-title-${Date.now()}`, name: 'Título', type: 'text', content: 'Envío Instantáneo', styles: { fontSize: '15px', fontWeight: 'bold', color: tokens.textColor, marginBottom: '12px' } },
               { id: `sp-input1-${Date.now()}`, name: 'Input Destinatario', type: 'input', placeholder: 'Dirección de billetera o email...', styles: buildInputStyle(tokens) },
               { id: `sp-input2-${Date.now()}`, name: 'Input Monto', type: 'input', placeholder: 'Monto en USD ($0.00)', styles: buildInputStyle(tokens) },
-              buildPrimaryButton('Confirmar Envío Inmediato →', tokens),
+              buildCustomButton('Confirmar Envío Inmediato →', tokens, buttonShape, true),
             ]
           }
         ]
       });
     } else {
-      rootChildren.push(buildMobileHeader(title, tokens));
+      // Mobile Hero Card with optional image texture/background
       rootChildren.push({
         id: `hero-balance-${Date.now()}`,
         name: 'Tarjeta de Balance Maestro',
@@ -684,8 +707,24 @@ export function generateScreenFromSkillAndPrompt({
           display: 'flex',
           flexDirection: 'column',
           gap: '12px',
+          position: 'relative',
+          overflow: 'hidden',
         },
         children: [
+          heroImage ? {
+            id: `hb-cover-${Date.now()}`,
+            name: 'Textura de Fondo Visual',
+            type: 'image',
+            imageUrl: heroImage,
+            styles: {
+              width: '100%',
+              height: '80px',
+              borderRadius: tokens.borderRadius,
+              objectFit: 'cover',
+              opacity: '0.6',
+              marginBottom: '6px',
+            }
+          } : null,
           { id: `hb-sub-${Date.now()}`, name: 'Etiqueta', type: 'text', content: 'Balance Total Disponible', styles: { fontSize: '12px', color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.5px' } },
           { id: `hb-num-${Date.now()}`, name: 'Cifra Balance', type: 'metric', content: '$28,450.00', secondaryContent: '+$2,150.00 (7.4%)', styles: { fontSize: '32px', fontWeight: 'bold', color: '#ffffff' } },
           {
@@ -694,12 +733,12 @@ export function generateScreenFromSkillAndPrompt({
             type: 'container',
             styles: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginTop: '8px' },
             children: [
-              buildPrimaryButton('Enviar ↗', tokens),
-              buildSecondaryButton('Recibir ↙', tokens),
-              buildSecondaryButton('Canjear ⇄', tokens),
+              buildCustomButton('Enviar ↗', tokens, buttonShape, true),
+              buildCustomButton('Recibir ↙', tokens, buttonShape, false),
+              buildCustomButton('Canjear ⇄', tokens, buttonShape, false),
             ]
           }
-        ]
+        ].filter(Boolean) as DesignNode[]
       });
 
       rootChildren.push({
@@ -714,6 +753,11 @@ export function generateScreenFromSkillAndPrompt({
           buildListItem('Solana (SOL)', '$142.50', '+8.4%', tokens),
         ]
       });
+
+      // Mobile Bottom Tabbar
+      if (menuStyle === 'bottom_tabbar') {
+        rootChildren.push(buildBottomTabbarNode(tokens, buttonShape));
+      }
     }
   }
 
@@ -721,7 +765,6 @@ export function generateScreenFromSkillAndPrompt({
   // ARCHETYPE 2: SAAS / DASHBOARD DE ANALÍTICAS
   // ----------------------------------------------------
   else if (archetype === 'saas') {
-    rootChildren.push(buildDesktopHeader(title, tokens));
     rootChildren.push({
       id: `saas-kpi-row-${Date.now()}`,
       name: 'Métricas KPI de Alto Rendimiento',
@@ -753,21 +796,31 @@ export function generateScreenFromSkillAndPrompt({
           styles: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '14px' },
           children: [
             { id: `saas-th-${Date.now()}`, name: 'Título', type: 'text', content: 'Actividad Reciente del Sistema', styles: { fontSize: '16px', fontWeight: 'bold', color: tokens.textColor } },
-            buildPrimaryButton('+ Generar Reporte', tokens),
+            buildCustomButton('+ Generar Reporte', tokens, buttonShape, true),
           ]
         },
+        heroImage ? {
+          id: `saas-banner-img-${Date.now()}`,
+          name: 'Banner Visual Analítico',
+          type: 'image',
+          imageUrl: heroImage,
+          styles: { width: '100%', height: '180px', borderRadius: tokens.borderRadius, marginBottom: '16px', objectFit: 'cover' }
+        } : null,
         buildListItem('Usuario Pro registrado: @alex_founder', 'Plan Enterprise', 'Hace 2 min', tokens),
         buildListItem('Pago procesado con éxito: $299.00', 'Stripe Connect', 'Hace 14 min', tokens),
         buildListItem('Nuevo despliegue en producción v2.4.0', '100% verificado', 'Hace 1 hora', tokens),
-      ]
+      ].filter(Boolean) as DesignNode[]
     });
+
+    if (!isDesktop && menuStyle === 'bottom_tabbar') {
+      rootChildren.push(buildBottomTabbarNode(tokens, buttonShape));
+    }
   }
 
   // ----------------------------------------------------
   // ARCHETYPE 3: E-COMMERCE / TIENDA
   // ----------------------------------------------------
   else if (archetype === 'ecommerce') {
-    rootChildren.push(buildDesktopHeader(title, tokens));
     rootChildren.push({
       id: `ecom-search-row-${Date.now()}`,
       name: 'Buscador y Filtros',
@@ -775,10 +828,11 @@ export function generateScreenFromSkillAndPrompt({
       styles: { width: '100%', display: 'flex', gap: '10px' },
       children: [
         { id: `ecom-search-${Date.now()}`, name: 'Barra de Búsqueda', type: 'searchbar', placeholder: 'Buscar productos, marcas y ofertas...', styles: { ...buildInputStyle(tokens), flex: '1' } },
-        buildPrimaryButton('Filtrar 🔍', tokens),
+        buildCustomButton('Filtrar 🔍', tokens, buttonShape, false),
       ]
     });
 
+    // Promo banner with injected user image
     rootChildren.push({
       id: `ecom-promo-banner-${Date.now()}`,
       name: 'Banner Promocional Destacado',
@@ -787,17 +841,33 @@ export function generateScreenFromSkillAndPrompt({
         ...buildCardStyle(tokens),
         background: tokens.accentGradient || tokens.primaryColor,
         color: '#ffffff',
-        padding: '28px',
+        padding: '24px',
         display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
+        flexDirection: isDesktop ? 'row' : 'column',
+        alignItems: 'center',
+        gap: '20px',
       },
       children: [
-        { id: `ep-b-${Date.now()}`, name: 'Badge', type: 'badge', content: 'OFERTA DE TEMPORADA ⚡', styles: { backgroundColor: 'rgba(255,255,255,0.2)', color: '#ffffff', padding: '4px 10px', borderRadius: '9999px', alignSelf: 'flex-start', fontSize: '11px', fontWeight: 'bold' } },
-        { id: `ep-title-${Date.now()}`, name: 'Título Banner', type: 'text', content: 'Hasta 40% de Descuento en Colección Pro', styles: { fontSize: '22px', fontWeight: 'bold', color: '#ffffff' } },
-        { id: `ep-desc-${Date.now()}`, name: 'Descripción', type: 'text', content: 'Aprovecha las novedades con diseño exclusivo y materiales de máxima calidad.', styles: { fontSize: '13px', color: 'rgba(255,255,255,0.9)' } },
-        buildPrimaryButton('Explorar Ofertas Ahora →', { ...tokens, primaryColor: '#000000' }),
-      ]
+        heroImage ? {
+          id: `ecom-hero-img-${Date.now()}`,
+          name: 'Imagen Principal de Oferta',
+          type: 'image',
+          imageUrl: heroImage,
+          styles: { width: isDesktop ? '260px' : '100%', height: '160px', borderRadius: tokens.borderRadius, objectFit: 'cover' }
+        } : null,
+        {
+          id: `ecom-banner-text-${Date.now()}`,
+          name: 'Textos de Promoción',
+          type: 'container',
+          styles: { display: 'flex', flexDirection: 'column', gap: '8px', flex: '1' },
+          children: [
+            { id: `ep-b-${Date.now()}`, name: 'Badge', type: 'badge', content: 'OFERTA DE TEMPORADA ⚡', styles: { backgroundColor: 'rgba(255,255,255,0.25)', color: '#ffffff', padding: '4px 10px', borderRadius: '9999px', alignSelf: 'flex-start', fontSize: '11px', fontWeight: 'bold' } },
+            { id: `ep-title-${Date.now()}`, name: 'Título Banner', type: 'text', content: 'Hasta 40% de Descuento en Colección Pro', styles: { fontSize: '22px', fontWeight: 'bold', color: '#ffffff' } },
+            { id: `ep-desc-${Date.now()}`, name: 'Descripción', type: 'text', content: 'Diseño exclusivo, acabados de alta gama y envío express gratuito.', styles: { fontSize: '13px', color: 'rgba(255,255,255,0.9)' } },
+            buildCustomButton('Explorar Ofertas Ahora →', tokens, buttonShape, true),
+          ]
+        }
+      ].filter(Boolean) as DesignNode[]
     });
 
     rootChildren.push({
@@ -811,31 +881,53 @@ export function generateScreenFromSkillAndPrompt({
         gap: '16px',
       },
       children: [
-        buildProductCard('Sneakers Cyber Edition', '$189.00 USD', '★ 4.9 (124 reseñas)', tokens),
-        buildProductCard('Smartwatch Titanium X', '$320.00 USD', '★ 5.0 (89 reseñas)', tokens),
-        buildProductCard('Mochila Impermeable Modular', '$95.00 USD', '★ 4.8 (210 reseñas)', tokens),
+        buildProductCard('Sneakers Cyber Edition', '$189.00 USD', '★ 4.9 (124 reseñas)', tokens, buttonShape, secondaryImage),
+        buildProductCard('Smartwatch Titanium X', '$320.00 USD', '★ 5.0 (89 reseñas)', tokens, buttonShape, heroImage),
+        buildProductCard('Mochila Impermeable Modular', '$95.00 USD', '★ 4.8 (210 reseñas)', tokens, buttonShape, secondaryImage),
       ]
     });
+
+    if (!isDesktop && menuStyle === 'bottom_tabbar') {
+      rootChildren.push(buildBottomTabbarNode(tokens, buttonShape));
+    }
   }
 
   // ----------------------------------------------------
   // ARCHETYPE 4: SOCIAL / PERFIL
   // ----------------------------------------------------
   else if (archetype === 'social') {
-    rootChildren.push(buildMobileHeader(title, tokens));
     rootChildren.push({
       id: `social-profile-card-${Date.now()}`,
       name: 'Ventana de Perfil de Usuario',
       type: 'card',
       styles: buildCardStyle(tokens),
       children: [
+        heroImage ? {
+          id: `sp-banner-${Date.now()}`,
+          name: 'Foto de Portada de Perfil',
+          type: 'image',
+          imageUrl: heroImage,
+          styles: { width: '100%', height: '130px', borderRadius: tokens.borderRadius, objectFit: 'cover', marginBottom: '14px' }
+        } : null,
         {
           id: `sp-hdr-${Date.now()}`,
           name: 'Avatar y Nombre',
           type: 'container',
           styles: { display: 'flex', alignItems: 'center', gap: '14px', width: '100%' },
           children: [
-            { id: `avatar-${Date.now()}`, name: 'Avatar', type: 'avatar', content: 'CR', styles: { width: '56px', height: '56px', borderRadius: '9999px', backgroundColor: tokens.primaryColor, color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '18px' } },
+            secondaryImage ? {
+              id: `avatar-img-${Date.now()}`,
+              name: 'Foto de Avatar',
+              type: 'image',
+              imageUrl: secondaryImage,
+              styles: { width: '56px', height: '56px', borderRadius: '9999px', objectFit: 'cover', border: `2px solid ${tokens.primaryColor}` }
+            } : {
+              id: `avatar-${Date.now()}`,
+              name: 'Avatar',
+              type: 'avatar',
+              content: 'CR',
+              styles: { width: '56px', height: '56px', borderRadius: '9999px', backgroundColor: tokens.primaryColor, color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '18px' }
+            },
             {
               id: `sp-meta-${Date.now()}`,
               name: 'Meta Información',
@@ -865,12 +957,16 @@ export function generateScreenFromSkillAndPrompt({
           type: 'container',
           styles: { display: 'flex', gap: '10px', marginTop: '14px', width: '100%' },
           children: [
-            buildPrimaryButton('Seguir Perfil +', tokens),
-            buildSecondaryButton('Enviar Mensaje', tokens),
+            buildCustomButton('Seguir Perfil +', tokens, buttonShape, true),
+            buildCustomButton('Enviar Mensaje', tokens, buttonShape, false),
           ]
         }
-      ]
+      ].filter(Boolean) as DesignNode[]
     });
+
+    if (!isDesktop && menuStyle === 'bottom_tabbar') {
+      rootChildren.push(buildBottomTabbarNode(tokens, buttonShape));
+    }
   }
 
   // ----------------------------------------------------
@@ -891,14 +987,21 @@ export function generateScreenFromSkillAndPrompt({
         gap: '16px',
       },
       children: [
+        heroImage ? {
+          id: `auth-logo-${Date.now()}`,
+          name: 'Isotipo Visual de Acceso',
+          type: 'image',
+          imageUrl: heroImage,
+          styles: { width: '64px', height: '64px', borderRadius: '16px', objectFit: 'cover', margin: '0 auto', boxShadow: tokens.boxShadow }
+        } : null,
         { id: `auth-badge-${Date.now()}`, name: 'Badge', type: 'badge', content: 'Acceso Seguro 🔒', styles: buildBadgeStyle(tokens) },
         { id: `auth-title-${Date.now()}`, name: 'Título Principal', type: 'text', content: 'Bienvenido de Nuevo', styles: { fontSize: '24px', fontWeight: 'bold', color: tokens.textColor } },
         { id: `auth-sub-${Date.now()}`, name: 'Subtítulo', type: 'text', content: 'Ingresa tus credenciales para acceder a tu espacio de trabajo.', styles: { fontSize: '13px', color: tokens.mutedColor } },
         { id: `auth-in-email-${Date.now()}`, name: 'Input Correo', type: 'input', placeholder: 'nombre@empresa.com', styles: buildInputStyle(tokens) },
         { id: `auth-in-pwd-${Date.now()}`, name: 'Input Contraseña', type: 'input', placeholder: '••••••••••••', styles: buildInputStyle(tokens) },
-        buildPrimaryButton('Iniciar Sesión Ahora →', tokens),
-        buildSecondaryButton('Continuar con Google', tokens),
-      ]
+        buildCustomButton('Iniciar Sesión Ahora →', tokens, buttonShape, true),
+        buildCustomButton('Continuar con Google', tokens, buttonShape, false),
+      ].filter(Boolean) as DesignNode[]
     });
   }
 
@@ -906,13 +1009,19 @@ export function generateScreenFromSkillAndPrompt({
   // ARCHETYPE 6: GENERAL / MULTIPROPÓSITO
   // ----------------------------------------------------
   else {
-    rootChildren.push(buildDesktopHeader(title, tokens));
     rootChildren.push({
       id: `gen-hero-card-${Date.now()}`,
       name: 'Ventana Principal de Módulo',
       type: 'card',
       styles: buildCardStyle(tokens),
       children: [
+        heroImage ? {
+          id: `gen-img-${Date.now()}`,
+          name: 'Imagen Principal',
+          type: 'image',
+          imageUrl: heroImage,
+          styles: { width: '100%', height: isDesktop ? '220px' : '150px', borderRadius: tokens.borderRadius, objectFit: 'cover', marginBottom: '14px' }
+        } : null,
         { id: `gh-sub-${Date.now()}`, name: 'Etiqueta', type: 'text', content: 'Directriz Activa', styles: { fontSize: '11px', color: tokens.primaryColor, fontWeight: 'bold', textTransform: 'uppercase' } },
         { id: `gh-title-${Date.now()}`, name: 'Título Hero', type: 'text', content: prompt.slice(0, 75) || title, styles: { fontSize: '20px', fontWeight: 'bold', color: tokens.textColor, marginTop: '4px' } },
         { id: `gh-desc-${Date.now()}`, name: 'Descripción', type: 'text', content: 'Diseño sintetizado con coherencia estética, contraste calibrado y paleta extraída.', styles: { fontSize: '13px', color: tokens.mutedColor, marginTop: '4px' } },
@@ -922,11 +1031,11 @@ export function generateScreenFromSkillAndPrompt({
           type: 'container',
           styles: { display: 'flex', gap: '10px', marginTop: '16px' },
           children: [
-            buildPrimaryButton('Comenzar Flujo →', tokens),
-            buildSecondaryButton('Ver Detalles', tokens),
+            buildCustomButton('Comenzar Flujo →', tokens, buttonShape, true),
+            buildCustomButton('Ver Detalles', tokens, buttonShape, false),
           ]
         }
-      ]
+      ].filter(Boolean) as DesignNode[]
     });
 
     rootChildren.push({
@@ -945,9 +1054,26 @@ export function generateScreenFromSkillAndPrompt({
         buildMetricCard('Eficiencia de Red', '12ms', 'Latencia ultra baja', tokens),
       ]
     });
+
+    if (!isDesktop && menuStyle === 'bottom_tabbar') {
+      rootChildren.push(buildBottomTabbarNode(tokens, buttonShape));
+    }
   }
 
-  // Construct Root Screen Node
+  // Determine Root Background Style
+  let rootBgGradient: string | undefined = undefined;
+  let rootBgColor = tokens.backgroundColor;
+
+  if (backgroundStyle === 'aurora') {
+    rootBgGradient = `radial-gradient(at 15% 15%, ${tokens.primaryColor}30 0px, transparent 55%), radial-gradient(at 85% 85%, ${tokens.secondaryColor}25 0px, transparent 55%), ${tokens.backgroundColor}`;
+  } else if (backgroundStyle === 'glass') {
+    rootBgGradient = `radial-gradient(circle at 50% 0%, ${tokens.primaryColor}35 0%, transparent 60%), ${tokens.backgroundColor}`;
+  } else if (backgroundStyle === 'tech_grid') {
+    rootBgGradient = `linear-gradient(to right, ${tokens.primaryColor}15 1px, transparent 1px), linear-gradient(to bottom, ${tokens.primaryColor}15 1px, ${tokens.backgroundColor} 1px)`;
+  } else if (backgroundStyle === 'editorial') {
+    rootBgColor = '#faf8f5';
+  }
+
   const rootNode: DesignNode = {
     id: `root-${screenId}`,
     name: title,
@@ -955,7 +1081,8 @@ export function generateScreenFromSkillAndPrompt({
     styles: {
       width: '100%',
       minHeight: '100%',
-      backgroundColor: tokens.backgroundColor,
+      backgroundColor: rootBgColor,
+      backgroundGradient: rootBgGradient,
       color: tokens.textColor,
       padding: isDesktop ? '32px' : '20px',
       display: 'flex',
@@ -975,7 +1102,7 @@ export function generateScreenFromSkillAndPrompt({
 }
 
 // ----------------------------------------------------
-// UI BUILDER HELPERS
+// UI BUILDER HELPERS WITH MORPHOLOGY STYLES
 // ----------------------------------------------------
 function buildCardStyle(tokens: SkillDesignTokens) {
   return {
@@ -1021,52 +1148,202 @@ function buildInputStyle(tokens: SkillDesignTokens) {
   };
 }
 
-function buildPrimaryButton(label: string, tokens: SkillDesignTokens): DesignNode {
+// Custom Button with ButtonShape Support
+function buildCustomButton(
+  label: string, 
+  tokens: SkillDesignTokens, 
+  shape: ButtonShape = 'squircle', 
+  isPrimary = true
+): DesignNode {
+  let borderRadius = tokens.borderRadius;
+  let borderWidth = '0px';
+  let boxShadow = tokens.boxShadow;
+  let padding = '12px 18px';
+  let bg = isPrimary ? tokens.primaryColor : 'transparent';
+  let color = isPrimary ? '#ffffff' : tokens.textColor;
+  let backdropFilter: string | undefined = undefined;
+
+  if (shape === 'pill') {
+    borderRadius = '9999px';
+    padding = '12px 24px';
+  } else if (shape === 'sharp') {
+    borderRadius = '2px';
+    borderWidth = '2px';
+    boxShadow = isPrimary ? '3px 3px 0px #000000' : 'none';
+  } else if (shape === 'glow') {
+    borderRadius = '12px';
+    boxShadow = isPrimary ? `0 0 20px ${tokens.primaryColor}80` : tokens.boxShadow;
+  } else if (shape === 'glass') {
+    borderRadius = '16px';
+    bg = isPrimary ? `${tokens.primaryColor}30` : 'rgba(255,255,255,0.06)';
+    borderWidth = '1px';
+    backdropFilter = 'blur(10px)';
+  }
+
   return {
-    id: `btn-pri-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    id: `btn-${isPrimary ? 'pri' : 'sec'}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     name: `Botón ${label}`,
     type: 'button',
     content: label,
     styles: {
-      backgroundColor: tokens.primaryColor,
-      color: '#ffffff',
-      borderRadius: tokens.borderRadius,
-      padding: '12px 18px',
+      backgroundColor: bg,
+      color,
+      borderRadius,
+      borderWidth,
+      borderColor: isPrimary && shape === 'sharp' ? '#000000' : tokens.borderColor,
+      boxShadow,
+      padding,
       fontWeight: '600',
       fontSize: '13px',
-      borderWidth: '0px',
-      boxShadow: tokens.boxShadow,
       cursor: 'pointer',
       textAlign: 'center',
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
+      backdropFilter,
     },
-    action: { type: 'confetti' },
+    action: isPrimary ? { type: 'confetti' } : undefined,
   };
 }
 
-function buildSecondaryButton(label: string, tokens: SkillDesignTokens): DesignNode {
+// Navigation Builder with MenuStyle Support
+function buildNavigationNode(
+  title: string,
+  menuStyle: MenuStyle,
+  _isDesktop: boolean,
+  tokens: SkillDesignTokens,
+  buttonShape: ButtonShape,
+  logoImg: string | null
+): DesignNode {
+  // 1. Floating Dock Menu (Floating Island style)
+  if (menuStyle === 'floating_dock') {
+    return {
+      id: `floating-dock-${Date.now()}`,
+      name: 'Menú Dock Flotante',
+      type: 'container',
+      styles: {
+        width: '100%',
+        backgroundColor: `${tokens.cardColor}dd`,
+        backdropFilter: 'blur(16px)',
+        border: `1px solid ${tokens.borderColor}`,
+        borderRadius: '9999px',
+        padding: '8px 20px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        boxShadow: '0 12px 30px rgba(0,0,0,0.5)',
+      },
+      children: [
+        {
+          id: `dock-left-${Date.now()}`,
+          name: 'Identidad Dock',
+          type: 'container',
+          styles: { display: 'flex', alignItems: 'center', gap: '10px' },
+          children: [
+            logoImg ? {
+              id: `dock-logo-${Date.now()}`,
+              name: 'Logo Dock',
+              type: 'image',
+              imageUrl: logoImg,
+              styles: { width: '28px', height: '28px', borderRadius: '9999px', objectFit: 'cover' }
+            } : {
+              id: `dock-dot-${Date.now()}`,
+              name: 'Dot Activo',
+              type: 'container',
+              styles: { width: '10px', height: '10px', borderRadius: '9999px', backgroundColor: tokens.primaryColor, boxShadow: `0 0 10px ${tokens.primaryColor}` }
+            },
+            { id: `dock-title-${Date.now()}`, name: 'Título Dock', type: 'text', content: title, styles: { fontSize: '15px', fontWeight: 'bold', color: tokens.textColor } }
+          ]
+        },
+        {
+          id: `dock-actions-${Date.now()}`,
+          name: 'Acciones Dock',
+          type: 'container',
+          styles: { display: 'flex', alignItems: 'center', gap: '8px' },
+          children: [
+            buildCustomButton('Menú ☰', tokens, 'pill', false),
+            buildCustomButton('Acción', tokens, 'pill', true),
+          ]
+        }
+      ]
+    };
+  }
+
+  // 2. Classic Topbar / Edge-to-edge Header
   return {
-    id: `btn-sec-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-    name: `Botón Secundario ${label}`,
-    type: 'button',
-    content: label,
+    id: `desktop-header-${Date.now()}`,
+    name: 'Cabecera Superior Clásica',
+    type: 'container',
     styles: {
-      backgroundColor: 'transparent',
-      color: tokens.textColor,
-      borderColor: tokens.borderColor,
-      borderWidth: tokens.borderWidth,
-      borderRadius: tokens.borderRadius,
-      padding: '12px 18px',
-      fontWeight: '500',
-      fontSize: '13px',
-      cursor: 'pointer',
-      textAlign: 'center',
-      display: 'inline-flex',
+      width: '100%',
+      display: 'flex',
+      justifyContent: 'space-between',
       alignItems: 'center',
-      justifyContent: 'center',
-    }
+      paddingBottom: '16px',
+      borderBottom: `1px solid ${tokens.borderColor}`,
+    },
+    children: [
+      {
+        id: `dh-brand-${Date.now()}`,
+        name: 'Logo y Título',
+        type: 'container',
+        styles: { display: 'flex', alignItems: 'center', gap: '12px' },
+        children: [
+          logoImg ? {
+            id: `dh-logo-${Date.now()}`,
+            name: 'Logo',
+            type: 'image',
+            imageUrl: logoImg,
+            styles: { width: '32px', height: '32px', borderRadius: '8px', objectFit: 'cover' }
+          } : {
+            id: `dh-dot-${Date.now()}`,
+            name: 'Dot',
+            type: 'container',
+            styles: { width: '12px', height: '12px', borderRadius: '9999px', backgroundColor: tokens.primaryColor, boxShadow: `0 0 10px ${tokens.primaryColor}` }
+          },
+          { id: `dh-title-${Date.now()}`, name: 'Título Pantalla', type: 'text', content: title, styles: { fontSize: '18px', fontWeight: 'bold', color: tokens.textColor } },
+        ]
+      },
+      {
+        id: `dh-nav-links-${Date.now()}`,
+        name: 'Acciones de Cabecera',
+        type: 'container',
+        styles: { display: 'flex', alignItems: 'center', gap: '10px' },
+        children: [
+          buildCustomButton('⚙ Ajustes', tokens, buttonShape, false),
+          buildCustomButton('+ Operación', tokens, buttonShape, true),
+        ]
+      }
+    ]
+  };
+}
+
+// Bottom Mobile Tabbar with Center Action Button
+function buildBottomTabbarNode(tokens: SkillDesignTokens, _buttonShape: ButtonShape): DesignNode {
+  return {
+    id: `mobile-tabbar-${Date.now()}`,
+    name: 'Barra de Pestañas Inferior (Tabbar)',
+    type: 'tabbar',
+    styles: {
+      width: '100%',
+      backgroundColor: `${tokens.cardColor}ee`,
+      backdropFilter: 'blur(16px)',
+      borderTop: `1px solid ${tokens.borderColor}`,
+      borderRadius: tokens.borderRadius,
+      padding: '10px 16px',
+      display: 'flex',
+      justifyContent: 'space-around',
+      alignItems: 'center',
+      marginTop: 'auto',
+      boxShadow: '0 -10px 25px rgba(0,0,0,0.3)',
+    },
+    children: [
+      { id: `tb-1-${Date.now()}`, name: 'Tab Inicio', type: 'text', content: '🏠 Inicio', styles: { fontSize: '11px', color: tokens.primaryColor, fontWeight: 'bold' } },
+      { id: `tb-2-${Date.now()}`, name: 'Tab Explorar', type: 'text', content: '🔍 Explorar', styles: { fontSize: '11px', color: tokens.mutedColor } },
+      buildCustomButton('+', tokens, 'pill', true),
+      { id: `tb-3-${Date.now()}`, name: 'Tab Actividad', type: 'text', content: '🔔 Alertas', styles: { fontSize: '11px', color: tokens.mutedColor } },
+      { id: `tb-4-${Date.now()}`, name: 'Tab Perfil', type: 'text', content: '👤 Perfil', styles: { fontSize: '11px', color: tokens.mutedColor } },
+    ]
   };
 }
 
@@ -1116,7 +1393,14 @@ function buildListItem(title: string, subtitle: string, meta: string, tokens: Sk
   };
 }
 
-function buildProductCard(title: string, price: string, rating: string, tokens: SkillDesignTokens): DesignNode {
+function buildProductCard(
+  title: string, 
+  price: string, 
+  rating: string, 
+  tokens: SkillDesignTokens,
+  shape: ButtonShape,
+  cardImg: string | null
+): DesignNode {
   return {
     id: `prod-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     name: `Producto ${title}`,
@@ -1126,7 +1410,13 @@ function buildProductCard(title: string, price: string, rating: string, tokens: 
       gap: '10px',
     },
     children: [
-      {
+      cardImg ? {
+        id: `prod-img-real-${Date.now()}`,
+        name: 'Imagen de Producto',
+        type: 'image',
+        imageUrl: cardImg,
+        styles: { width: '100%', height: '140px', borderRadius: tokens.borderRadius, objectFit: 'cover' }
+      } : {
         id: `prod-img-${Date.now()}`,
         name: 'Placeholder Visual',
         type: 'container',
@@ -1155,97 +1445,15 @@ function buildProductCard(title: string, price: string, rating: string, tokens: 
         styles: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginTop: '6px' },
         children: [
           { id: `p-pr-${Date.now()}`, name: 'Precio', type: 'metric', content: price, styles: { fontSize: '16px', fontWeight: 'bold', color: tokens.textColor } },
-          buildPrimaryButton('Comprar', tokens),
+          buildCustomButton('Comprar', tokens, shape, true),
         ]
-      }
-    ]
-  };
-}
-
-function buildDesktopHeader(title: string, tokens: SkillDesignTokens): DesignNode {
-  return {
-    id: `desktop-header-${Date.now()}`,
-    name: 'Cabecera de Navegación Maestro',
-    type: 'container',
-    styles: {
-      width: '100%',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingBottom: '16px',
-      borderBottom: `1px solid ${tokens.borderColor}`,
-    },
-    children: [
-      {
-        id: `dh-brand-${Date.now()}`,
-        name: 'Logo y Título',
-        type: 'container',
-        styles: { display: 'flex', alignItems: 'center', gap: '12px' },
-        children: [
-          { id: `dh-dot-${Date.now()}`, name: 'Dot', type: 'container', styles: { width: '14px', height: '14px', borderRadius: '9999px', backgroundColor: tokens.primaryColor, boxShadow: `0 0 10px ${tokens.primaryColor}` } },
-          { id: `dh-title-${Date.now()}`, name: 'Título Pantalla', type: 'text', content: title, styles: { fontSize: '20px', fontWeight: 'bold', color: tokens.textColor } },
-        ]
-      },
-      {
-        id: `dh-nav-links-${Date.now()}`,
-        name: 'Acciones de Cabecera',
-        type: 'container',
-        styles: { display: 'flex', alignItems: 'center', gap: '10px' },
-        children: [
-          buildSecondaryButton('⚙ Configurar', tokens),
-          buildPrimaryButton('+ Nueva Operación', tokens),
-        ]
-      }
-    ]
-  };
-}
-
-function buildMobileHeader(title: string, tokens: SkillDesignTokens): DesignNode {
-  return {
-    id: `mobile-header-${Date.now()}`,
-    name: 'Cabecera Móvil Compacta',
-    type: 'container',
-    styles: {
-      width: '100%',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingBottom: '12px',
-    },
-    children: [
-      {
-        id: `mh-title-box-${Date.now()}`,
-        name: 'Título',
-        type: 'container',
-        styles: { display: 'flex', flexDirection: 'column' },
-        children: [
-          { id: `mh-sub-${Date.now()}`, name: 'Sub', type: 'text', content: 'DesignForge Pro', styles: { fontSize: '11px', color: tokens.primaryColor, fontWeight: '600' } },
-          { id: `mh-tit-${Date.now()}`, name: 'Tit', type: 'text', content: title, styles: { fontSize: '18px', fontWeight: 'bold', color: tokens.textColor } },
-        ]
-      },
-      {
-        id: `mh-avatar-${Date.now()}`,
-        name: 'Avatar',
-        type: 'avatar',
-        content: '👤',
-        styles: {
-          width: '36px',
-          height: '36px',
-          borderRadius: '9999px',
-          backgroundColor: `${tokens.primaryColor}25`,
-          color: tokens.primaryColor,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontWeight: 'bold',
-        }
       }
     ]
   };
 }
 
 // ==========================================
-// 5. APLICADOR DE SKILL A NODOS EXISTENTES
+// 6. APLICADOR DE SKILL A NODOS EXISTENTES
 // ==========================================
 export function applySkillToDesignNodes(
   nodes: DesignNode[],

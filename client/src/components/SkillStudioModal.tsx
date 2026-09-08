@@ -14,8 +14,8 @@ import {
   Tablet,
   Monitor,
   RefreshCw,
-  Palette,
-  CheckCircle2
+  CheckCircle2,
+  Image as ImageIcon
 } from 'lucide-react';
 import type { SkillDefinition, SkillReference, DesignNode, ScreenDefinition, DeviceMode } from '../lib/types';
 import { 
@@ -23,7 +23,10 @@ import {
   extractRichPaletteFromImage, 
   synthesizeSkillFromReferences, 
   generateScreenFromSkillAndPrompt,
-  type ExtractedImageAnalysis 
+  type ExtractedImageAnalysis,
+  type BackgroundStyle,
+  type ButtonShape,
+  type MenuStyle
 } from '../lib/skill-engine';
 import { soundEngine } from '../lib/audio-engine';
 
@@ -60,6 +63,13 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
   const [skillName, setSkillName] = useState('');
   const [promptText, setPromptText] = useState('');
   const [selectedFormat, setSelectedFormat] = useState<DeviceMode>(deviceMode || 'mobile');
+  
+  // Visual Styles State
+  const [backgroundStyle, setBackgroundStyle] = useState<BackgroundStyle>('aurora');
+  const [buttonShape, setButtonShape] = useState<ButtonShape>('squircle');
+  const [menuStyle, setMenuStyle] = useState<MenuStyle>('floating_dock');
+  const [useUploadedImages, setUseUploadedImages] = useState(true);
+
   const [references, setReferences] = useState<SkillReference[]>([]);
   const [analysisList, setAnalysisList] = useState<ExtractedImageAnalysis[]>([]);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
@@ -70,6 +80,11 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
   useEffect(() => {
     if (deviceMode) {
       setSelectedFormat(deviceMode);
+      if (deviceMode === 'desktop') {
+        setMenuStyle('classic_topbar');
+      } else {
+        setMenuStyle('floating_dock');
+      }
     }
   }, [deviceMode]);
 
@@ -93,7 +108,6 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
         reader.readAsDataURL(file);
       });
 
-      // Analyze image deeply using HTML5 canvas
       const analysis = await extractRichPaletteFromImage(dataUrl);
       newAnalyses.push(analysis);
 
@@ -107,9 +121,9 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
         detectedFormat: analysis.detectedFormat,
       });
 
-      // Auto-adapt format if first image is clearly desktop or mobile
       if (i === 0 && analysis.detectedFormat) {
         setSelectedFormat(analysis.detectedFormat);
+        if (analysis.detectedFormat === 'desktop') setMenuStyle('classic_topbar');
       }
     }
 
@@ -118,7 +132,6 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
     setReferences(updatedRefs);
     setAnalysisList(updatedAnalyses);
 
-    // Auto-synthesize skill preview
     const syn = synthesizeSkillFromReferences({
       name: skillName || 'Skill Extraída de Captura',
       userPrompt: promptText,
@@ -128,7 +141,7 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
     setGeneratedSkill(syn);
   };
 
-  // Handle Clipboard Paste (Ctrl+V) for instant screenshots
+  // Clipboard Paste (Ctrl+V)
   const handlePaste = async (e: React.ClipboardEvent) => {
     const items = e.clipboardData?.items;
     if (!items) return;
@@ -153,12 +166,23 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
     setIsSynthesizing(true);
     soundEngine.playProceduralSound('chime');
 
-    // If prompt has layout hints, adapt format
     const pLow = promptText.toLowerCase();
     if (pLow.includes('dashboard') || pLow.includes('panel') || pLow.includes('web') || pLow.includes('landing') || pLow.includes('saas') || pLow.includes('escritorio')) {
       setSelectedFormat('desktop');
+      setMenuStyle('classic_topbar');
     } else if (pLow.includes('app') || pLow.includes('móvil') || pLow.includes('celular') || pLow.includes('mobile')) {
       setSelectedFormat('mobile');
+    }
+
+    if (pLow.includes('píldora') || pLow.includes('pill') || pLow.includes('cápsula')) {
+      setButtonShape('pill');
+    } else if (pLow.includes('brutalis') || pLow.includes('sharp') || pLow.includes('cuadrado') || pLow.includes('afilado')) {
+      setButtonShape('sharp');
+    } else if (pLow.includes('glow') || pLow.includes('neón') || pLow.includes('resplandor')) {
+      setButtonShape('glow');
+    } else if (pLow.includes('cristal') || pLow.includes('glass') || pLow.includes('translúcido')) {
+      setButtonShape('glass');
+      setBackgroundStyle('glass');
     }
 
     setTimeout(() => {
@@ -186,7 +210,6 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
 
   const currentPreviewSkill = generatedSkill || activeSkill || PRESET_SKILLS[0];
 
-  // Action: Generate complete brand new screen layout
   const handleGenerateNewScreen = () => {
     soundEngine.playProceduralSound('chime');
     const newScreen = generateScreenFromSkillAndPrompt({
@@ -194,12 +217,15 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
       prompt: promptText || currentPreviewSkill.description,
       screenName: skillName || currentPreviewSkill.name,
       deviceMode: selectedFormat,
+      backgroundStyle,
+      buttonShape,
+      menuStyle,
+      useUploadedImages,
     });
     onGenerateScreenFromSkill(newScreen, selectedFormat);
     onClose();
   };
 
-  // Action: Morph & redesign active screen layout
   const handleMorphCurrentScreen = () => {
     soundEngine.playProceduralSound('switch');
     const morphedScreen = generateScreenFromSkillAndPrompt({
@@ -207,12 +233,15 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
       prompt: promptText || currentPreviewSkill.description,
       screenName: skillName || currentPreviewSkill.name,
       deviceMode: selectedFormat,
+      backgroundStyle,
+      buttonShape,
+      menuStyle,
+      useUploadedImages,
     });
     onMorphActiveScreenFromSkill(morphedScreen.rootNode, selectedFormat);
     onClose();
   };
 
-  // Quick prompt suggestions
   const PROMPT_SUGGESTIONS = [
     { label: '💳 Dashboard Fintech Cripto', prompt: 'Dashboard fintech oscuro con balance numérico, tarjetas de criptoactivos, botones de transferir y transacciones recientes.' },
     { label: '📊 SaaS de Métricas y Analíticas', prompt: 'Panel SaaS administrativo con tarjetas KPI de rendimiento, gráfico de crecimiento y lista de usuarios activos.' },
@@ -226,10 +255,10 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
       className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
       onPaste={handlePaste}
     >
-      <div className="bg-[#0c1017] border border-white/10 rounded-2xl w-full max-w-5xl h-[88vh] flex flex-col shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden">
+      <div className="bg-[#0c1017] border border-white/10 rounded-2xl w-full max-w-5xl h-[92vh] flex flex-col shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden">
         
         {/* Header */}
-        <div className="px-6 py-4 border-b border-white/[0.08] flex items-center justify-between bg-black/40">
+        <div className="px-6 py-3.5 border-b border-white/[0.08] flex items-center justify-between bg-black/40">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.4)]">
               <Wand2 className="w-5 h-5 text-white" />
@@ -244,7 +273,7 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Sintetiza capturas, define ventanas y genera interfaces completas con coherencia estética anti-slop.
+                Sintetiza capturas, copia imágenes, elige formas de botones, fondos y menús para crear interfaces profesionales.
               </p>
             </div>
           </div>
@@ -299,15 +328,15 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
           {activeTab === 'creator' && (
             <div className="flex-1 flex overflow-hidden">
               
-              {/* Left Column: Multi-Image Input & Prompt Controls */}
-              <div className="w-[58%] p-6 overflow-y-auto border-r border-white/[0.08] space-y-5">
+              {/* Left Column: Multi-Image Input, Prompt & Visual Styles */}
+              <div className="w-[58%] p-5 overflow-y-auto border-r border-white/[0.08] space-y-4">
                 
                 {/* 1. Format / Device Window Selector */}
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                       <Sliders className="w-3.5 h-3.5 text-cyan-400" />
-                      <span>Formato y Tamaño de Ventana</span>
+                      <span>Formato de Ventana</span>
                     </label>
                     <span className="text-[10px] text-slate-400 font-mono">
                       {selectedFormat === 'mobile' ? '390 x 844 px' : selectedFormat === 'tablet' ? '768 x 1024 px' : '1200 x 800 px'}
@@ -317,57 +346,61 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
                     <button
                       type="button"
                       onClick={() => { setSelectedFormat('mobile'); soundEngine.playProceduralSound('pop'); }}
-                      className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+                      className={`py-1.5 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                         selectedFormat === 'mobile'
                           ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.25)]'
                           : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white'
                       }`}
                     >
-                      <Smartphone className="w-4 h-4" />
+                      <Smartphone className="w-3.5 h-3.5" />
                       <span>Móvil</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => { setSelectedFormat('tablet'); soundEngine.playProceduralSound('pop'); }}
-                      className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+                      className={`py-1.5 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                         selectedFormat === 'tablet'
                           ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.25)]'
                           : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white'
                       }`}
                     >
-                      <Tablet className="w-4 h-4" />
+                      <Tablet className="w-3.5 h-3.5" />
                       <span>Tablet</span>
                     </button>
                     <button
                       type="button"
-                      onClick={() => { setSelectedFormat('desktop'); soundEngine.playProceduralSound('pop'); }}
-                      className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+                      onClick={() => { 
+                        setSelectedFormat('desktop'); 
+                        setMenuStyle('classic_topbar');
+                        soundEngine.playProceduralSound('pop'); 
+                      }}
+                      className={`py-1.5 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                         selectedFormat === 'desktop'
                           ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.25)]'
                           : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white'
                       }`}
                     >
-                      <Monitor className="w-4 h-4" />
+                      <Monitor className="w-3.5 h-3.5" />
                       <span>Escritorio</span>
                     </button>
                   </div>
                 </div>
 
                 {/* 2. Visual References Dropzone & Paste */}
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                      <Palette className="w-3.5 h-3.5 text-indigo-400" />
-                      <span>Referencias Visuales (Capturas / Imágenes)</span>
+                      <ImageIcon className="w-3.5 h-3.5 text-indigo-400" />
+                      <span>Imágenes & Capturas de Referencia</span>
                     </label>
                     <span className="text-[10px] text-slate-400 font-mono">
-                      Arrastra o presiona <strong className="text-cyan-400">Ctrl + V</strong>
+                      Copia o presiona <strong className="text-cyan-400">Ctrl + V</strong>
                     </span>
                   </div>
 
                   <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-white/15 hover:border-cyan-400/50 bg-white/[0.02] hover:bg-cyan-500/[0.03] rounded-2xl p-4 text-center cursor-pointer transition-all group"
+                    className="border-2 border-dashed border-white/15 hover:border-cyan-400/50 bg-white/[0.02] hover:bg-cyan-500/[0.03] rounded-2xl p-3.5 text-center cursor-pointer transition-all group"
                   >
                     <input
                       ref={fileInputRef}
@@ -377,39 +410,38 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
                       className="hidden"
                       onChange={(e) => handleFilesUpload(e.target.files)}
                     />
-                    <Upload className="w-7 h-7 text-slate-400 group-hover:text-cyan-300 mx-auto mb-1.5 transition-colors" />
+                    <Upload className="w-6 h-6 text-slate-400 group-hover:text-cyan-300 mx-auto mb-1 transition-colors" />
                     <p className="text-xs text-slate-300 font-medium">
-                      Suelta aquí capturas de pantalla o haz clic para examinar
+                      Suelta aquí tus capturas o haz clic para subir
                     </p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      Soporta múltiples imágenes a la vez con extracción cromática precisa
+                    <p className="text-[10px] text-slate-500 mt-0.5">
+                      Copia paletas exactas y puede inyectar estas imágenes como banners y productos
                     </p>
                   </div>
 
                   {/* Thumbnail List of Uploaded References */}
                   {references.length > 0 && (
-                    <div className="grid grid-cols-2 gap-2.5 pt-1">
+                    <div className="grid grid-cols-2 gap-2 pt-1">
                       {references.map((ref) => (
                         <div
                           key={ref.id}
-                          className="bg-black/50 border border-white/10 rounded-xl p-2.5 flex items-center gap-2.5 relative group"
+                          className="bg-black/50 border border-white/10 rounded-xl p-2 flex items-center gap-2 relative group"
                         >
                           <img
                             src={ref.content}
                             alt={ref.name}
-                            className="w-12 h-12 object-cover rounded-lg border border-white/10 bg-black/60"
+                            className="w-10 h-10 object-cover rounded-lg border border-white/10 bg-black/60"
                           />
                           <div className="flex-1 min-w-0">
                             <span className="text-xs font-semibold text-slate-200 truncate block">
                               {ref.name}
                             </span>
-                            {/* Extracted Colors Badges */}
                             <div className="flex items-center gap-1 mt-1">
-                              {(ref.extractedColors || []).slice(0, 5).map((col, idx) => (
+                              {(ref.extractedColors || []).slice(0, 4).map((col, idx) => (
                                 <span
                                   key={idx}
                                   style={{ backgroundColor: col }}
-                                  className="w-3.5 h-3.5 rounded-full border border-white/20 shadow-sm"
+                                  className="w-3 h-3 rounded-full border border-white/20 shadow-sm"
                                   title={col}
                                 />
                               ))}
@@ -430,83 +462,118 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
                       ))}
                     </div>
                   )}
+
+                  {references.length > 0 && (
+                    <label className="flex items-center gap-2 cursor-pointer pt-1">
+                      <input
+                        type="checkbox"
+                        checked={useUploadedImages}
+                        onChange={(e) => setUseUploadedImages(e.target.checked)}
+                        className="rounded border-white/20 text-cyan-500 focus:ring-0 bg-black/40"
+                      />
+                      <span className="text-[11px] text-cyan-300 font-medium">
+                        📸 Inyectar estas imágenes como Banners / Productos en el diseño generado
+                      </span>
+                    </label>
+                  )}
                 </div>
 
-                {/* 3. Extracted Colors Palette Preview with Roles */}
-                <div className="bg-black/30 border border-white/[0.08] rounded-xl p-3.5 space-y-2">
-                  <div className="flex items-center justify-between text-[11px] font-mono text-slate-300">
-                    <span className="flex items-center gap-1.5 font-bold">
-                      <Palette className="w-3.5 h-3.5 text-cyan-400" />
-                      PALETA Y CONTRASTE SINTETIZADOS
-                    </span>
-                    <span className="text-slate-500 text-[10px]">Asignación en vivo</span>
+                {/* 3. Morphological Visual Style Pickers */}
+                <div className="bg-black/30 border border-white/[0.08] rounded-xl p-3 space-y-2.5">
+                  <span className="text-[11px] font-mono font-bold text-slate-300 uppercase tracking-wider block">
+                    MORFOLOGÍA & ESTILOS DE DISEÑO
+                  </span>
+
+                  {/* A. Estilo de Fondo */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] text-slate-400 block font-medium">Estilo de Fondo:</span>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {[
+                        { id: 'aurora', label: '🌌 Aurora' },
+                        { id: 'glass', label: '🪟 Cristal' },
+                        { id: 'tech_grid', label: '🏁 Grid' },
+                        { id: 'editorial', label: '📄 Editorial' },
+                        { id: 'solid', label: '⬛ Sólido' },
+                      ].map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => { setBackgroundStyle(item.id as BackgroundStyle); soundEngine.playProceduralSound('pop'); }}
+                          className={`py-1 px-1.5 rounded-lg border text-[10px] font-medium transition-all text-center truncate ${
+                            backgroundStyle === item.id
+                              ? 'bg-indigo-500/20 border-indigo-400 text-indigo-200'
+                              : 'bg-white/[0.02] border-white/10 text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-5 gap-2 pt-1">
-                    <div className="bg-black/50 p-2 rounded-lg border border-white/5 text-center">
-                      <span className="text-[9px] text-slate-400 block mb-1">FONDO</span>
-                      <div 
-                        style={{ backgroundColor: currentPreviewSkill.tokens.backgroundColor }}
-                        className="w-6 h-6 rounded-md border border-white/20 mx-auto shadow-inner mb-1" 
-                      />
-                      <span className="text-[10px] font-mono text-slate-300 block truncate">
-                        {currentPreviewSkill.tokens.backgroundColor}
-                      </span>
+                  {/* B. Forma de Botones */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] text-slate-400 block font-medium">Forma de Botones:</span>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {[
+                        { id: 'pill', label: '💊 Píldora' },
+                        { id: 'squircle', label: '🔲 Pro' },
+                        { id: 'sharp', label: '📐 Afilado' },
+                        { id: 'glow', label: '💡 Neón' },
+                        { id: 'glass', label: '🧊 Cristal' },
+                      ].map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => { setButtonShape(item.id as ButtonShape); soundEngine.playProceduralSound('pop'); }}
+                          className={`py-1 px-1.5 rounded-lg border text-[10px] font-medium transition-all text-center truncate ${
+                            buttonShape === item.id
+                              ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200'
+                              : 'bg-white/[0.02] border-white/10 text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
                     </div>
-                    <div className="bg-black/50 p-2 rounded-lg border border-white/5 text-center">
-                      <span className="text-[9px] text-slate-400 block mb-1">TARJETAS</span>
-                      <div 
-                        style={{ backgroundColor: currentPreviewSkill.tokens.cardColor }}
-                        className="w-6 h-6 rounded-md border border-white/20 mx-auto shadow-inner mb-1" 
-                      />
-                      <span className="text-[10px] font-mono text-slate-300 block truncate">
-                        {currentPreviewSkill.tokens.cardColor}
-                      </span>
-                    </div>
-                    <div className="bg-black/50 p-2 rounded-lg border border-white/5 text-center">
-                      <span className="text-[9px] text-slate-400 block mb-1">PRIMARIO</span>
-                      <div 
-                        style={{ backgroundColor: currentPreviewSkill.tokens.primaryColor }}
-                        className="w-6 h-6 rounded-md border border-white/20 mx-auto shadow-inner mb-1" 
-                      />
-                      <span className="text-[10px] font-mono text-cyan-300 font-bold block truncate">
-                        {currentPreviewSkill.tokens.primaryColor}
-                      </span>
-                    </div>
-                    <div className="bg-black/50 p-2 rounded-lg border border-white/5 text-center">
-                      <span className="text-[9px] text-slate-400 block mb-1">ACENTO</span>
-                      <div 
-                        style={{ backgroundColor: currentPreviewSkill.tokens.secondaryColor }}
-                        className="w-6 h-6 rounded-md border border-white/20 mx-auto shadow-inner mb-1" 
-                      />
-                      <span className="text-[10px] font-mono text-slate-300 block truncate">
-                        {currentPreviewSkill.tokens.secondaryColor}
-                      </span>
-                    </div>
-                    <div className="bg-black/50 p-2 rounded-lg border border-white/5 text-center">
-                      <span className="text-[9px] text-slate-400 block mb-1">TEXTO</span>
-                      <div 
-                        style={{ backgroundColor: currentPreviewSkill.tokens.textColor }}
-                        className="w-6 h-6 rounded-md border border-white/20 mx-auto shadow-inner mb-1" 
-                      />
-                      <span className="text-[10px] font-mono text-slate-300 block truncate">
-                        {currentPreviewSkill.tokens.textColor}
-                      </span>
+                  </div>
+
+                  {/* C. Estilo de Menú */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] text-slate-400 block font-medium">Estilo de Menú / Navegación:</span>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {[
+                        { id: 'floating_dock', label: '🏝️ Dock Flotante' },
+                        { id: 'classic_topbar', label: '🏛️ Barra Superior' },
+                        { id: 'bottom_tabbar', label: '📱 Tabbar Móvil' },
+                      ].map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => { setMenuStyle(item.id as MenuStyle); soundEngine.playProceduralSound('pop'); }}
+                          className={`py-1 px-2 rounded-lg border text-[10px] font-medium transition-all text-center truncate ${
+                            menuStyle === item.id
+                              ? 'bg-emerald-500/20 border-emerald-400 text-emerald-200'
+                              : 'bg-white/[0.02] border-white/10 text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
 
                 {/* 4. Text Prompt Input & Suggestions */}
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Prompt de Diseño / Intención de Pantalla</span>
+                      <span>Prompt de Diseño / Intención</span>
                     </label>
                   </div>
 
-                  {/* Suggestions Pills */}
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-1">
                     {PROMPT_SUGGESTIONS.map((item, idx) => (
                       <button
                         key={idx}
@@ -515,7 +582,7 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
                           setPromptText(item.prompt);
                           soundEngine.playProceduralSound('pop');
                         }}
-                        className="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg text-[11px] transition-all hover:border-cyan-400/40"
+                        className="px-2 py-0.5 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg text-[10px] transition-all hover:border-cyan-400/40"
                       >
                         {item.label}
                       </button>
@@ -525,73 +592,92 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
                   <textarea
                     value={promptText}
                     onChange={(e) => setPromptText(e.target.value)}
-                    placeholder="Describe el diseño, orden de ventanas, módulos o vibra (ej. 'Dashboard fintech oscuro con balance, portafolio de cripto, gráfico y botones de transferir')..."
-                    rows={3}
-                    className="w-full bg-black/40 border border-white/15 focus:border-cyan-400 rounded-xl p-3 text-xs text-white placeholder-slate-500 outline-none transition-all resize-none"
+                    placeholder="Describe módulos, ventanas o vibra (ej. 'Dashboard fintech con balance, portafolio de cripto, botones estilo píldora y menú flotante')..."
+                    rows={2}
+                    className="w-full bg-black/40 border border-white/15 focus:border-cyan-400 rounded-xl p-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all resize-none"
                   />
                 </div>
 
                 {/* 5. Name Input & Synthesize Button */}
-                <div className="flex items-center gap-3 pt-1">
+                <div className="flex items-center gap-2 pt-0.5">
                   <input
                     type="text"
                     value={skillName}
                     onChange={(e) => setSkillName(e.target.value)}
                     placeholder="Nombre del diseño (ej. Neo Fintech Pro)..."
-                    className="flex-1 bg-black/40 border border-white/15 focus:border-cyan-400 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 outline-none transition-all"
+                    className="flex-1 bg-black/40 border border-white/15 focus:border-cyan-400 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none transition-all"
                   />
 
                   <button
                     onClick={handleSynthesize}
                     disabled={isSynthesizing}
-                    className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-[0_0_15px_rgba(6,182,212,0.3)] flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                    className="px-3.5 py-1.5 bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-[0_0_15px_rgba(6,182,212,0.3)] flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${isSynthesizing ? 'animate-spin' : ''}`} />
-                    <span>Sintetizar ADN</span>
+                    <span>Sintetizar</span>
                   </button>
                 </div>
               </div>
 
               {/* Right Column: Live Simulation & Generation Actions */}
-              <div className="w-[42%] p-6 flex flex-col justify-between bg-black/20">
-                <div className="space-y-4">
+              <div className="w-[42%] p-5 flex flex-col justify-between bg-black/20">
+                <div className="space-y-3.5">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider">
-                      SIMULADOR DE ADN VISUAL
+                      SIMULADOR DE ADN & FORMAS
                     </span>
                     <span className="text-[10px] font-mono text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded">
-                      {selectedFormat.toUpperCase()}
+                      {selectedFormat.toUpperCase()} • {buttonShape.toUpperCase()}
                     </span>
                   </div>
 
-                  {/* Spec Chips */}
-                  <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
-                    <div className="bg-black/40 p-2 rounded-lg border border-white/5">
-                      <span className="text-slate-500 block text-[9px]">RADIO ESQUINAS</span>
-                      <span className="text-cyan-300 font-bold">{currentPreviewSkill.tokens.borderRadius}</span>
+                  {/* Colors Bar */}
+                  <div className="grid grid-cols-5 gap-1.5">
+                    <div className="bg-black/50 p-1.5 rounded-lg border border-white/5 text-center">
+                      <span className="text-[8px] text-slate-400 block mb-0.5">FONDO</span>
+                      <div style={{ backgroundColor: currentPreviewSkill.tokens.backgroundColor }} className="w-5 h-5 rounded-md border border-white/20 mx-auto" />
                     </div>
-                    <div className="bg-black/40 p-2 rounded-lg border border-white/5">
-                      <span className="text-slate-500 block text-[9px]">BORDE / ELEVACIÓN</span>
-                      <span className="text-cyan-300 font-bold">{currentPreviewSkill.tokens.borderWidth}</span>
+                    <div className="bg-black/50 p-1.5 rounded-lg border border-white/5 text-center">
+                      <span className="text-[8px] text-slate-400 block mb-0.5">TARJETA</span>
+                      <div style={{ backgroundColor: currentPreviewSkill.tokens.cardColor }} className="w-5 h-5 rounded-md border border-white/20 mx-auto" />
+                    </div>
+                    <div className="bg-black/50 p-1.5 rounded-lg border border-white/5 text-center">
+                      <span className="text-[8px] text-slate-400 block mb-0.5">PRIMARIO</span>
+                      <div style={{ backgroundColor: currentPreviewSkill.tokens.primaryColor }} className="w-5 h-5 rounded-md border border-white/20 mx-auto" />
+                    </div>
+                    <div className="bg-black/50 p-1.5 rounded-lg border border-white/5 text-center">
+                      <span className="text-[8px] text-slate-400 block mb-0.5">ACENTO</span>
+                      <div style={{ backgroundColor: currentPreviewSkill.tokens.secondaryColor }} className="w-5 h-5 rounded-md border border-white/20 mx-auto" />
+                    </div>
+                    <div className="bg-black/50 p-1.5 rounded-lg border border-white/5 text-center">
+                      <span className="text-[8px] text-slate-400 block mb-0.5">TEXTO</span>
+                      <div style={{ backgroundColor: currentPreviewSkill.tokens.textColor }} className="w-5 h-5 rounded-md border border-white/20 mx-auto" />
                     </div>
                   </div>
 
-                  {/* Mock Window Simulation Box */}
+                  {/* Mock Window Simulation Box with Button & Menu Shapes */}
                   <div 
                     style={{
                       backgroundColor: currentPreviewSkill.tokens.backgroundColor,
                       color: currentPreviewSkill.tokens.textColor,
                     }}
-                    className="p-4 rounded-xl border border-white/10 shadow-2xl space-y-3 transition-all"
+                    className="p-3.5 rounded-xl border border-white/10 shadow-2xl space-y-2.5 transition-all"
                   >
-                    <div className="text-[10px] font-mono text-slate-400 flex items-center justify-between border-b border-white/[0.08] pb-2">
-                      <span className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                        <span>VENTANA SIMULADA</span>
-                      </span>
-                      <span className="text-slate-400 truncate max-w-[120px]">
-                        {currentPreviewSkill.name}
-                      </span>
+                    {/* Simulated Floating Dock or Topbar */}
+                    <div 
+                      style={{
+                        backgroundColor: menuStyle === 'floating_dock' ? `${currentPreviewSkill.tokens.cardColor}ee` : 'transparent',
+                        borderRadius: menuStyle === 'floating_dock' ? '9999px' : '0px',
+                        border: menuStyle === 'floating_dock' ? `1px solid ${currentPreviewSkill.tokens.borderColor}` : undefined,
+                        borderBottom: menuStyle === 'classic_topbar' ? `1px solid ${currentPreviewSkill.tokens.borderColor}` : undefined,
+                      }}
+                      className="px-3 py-1.5 flex items-center justify-between text-xs"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span style={{ backgroundColor: currentPreviewSkill.tokens.primaryColor }} className="w-2 h-2 rounded-full animate-pulse" />
+                        <span className="font-bold text-[11px] truncate max-w-[120px]">{skillName || 'Navegación'}</span>
+                      </div>
+                      <span className="text-[9px] font-mono text-cyan-400 font-semibold">{menuStyle.replace('_', ' ').toUpperCase()}</span>
                     </div>
 
                     {/* Simulated Content Card */}
@@ -603,7 +689,7 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
                         borderRadius: currentPreviewSkill.tokens.borderRadius,
                         boxShadow: currentPreviewSkill.tokens.boxShadow,
                       }}
-                      className="p-3.5 space-y-2.5 border"
+                      className="p-3 space-y-2 border"
                     >
                       <div className="flex items-center justify-between text-xs font-bold">
                         <span>{skillName || 'Módulo Principal'}</span>
@@ -612,30 +698,33 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
                             backgroundColor: `${currentPreviewSkill.tokens.primaryColor}33`,
                             color: currentPreviewSkill.tokens.primaryColor,
                           }}
-                          className="px-2 py-0.5 rounded-full text-[10px]"
+                          className="px-2 py-0.5 rounded-full text-[9px]"
                         >
                           Activo
                         </span>
                       </div>
                       <p style={{ color: currentPreviewSkill.tokens.mutedColor }} className="text-[11px] leading-relaxed">
-                        {promptText.slice(0, 95) || 'Contenido adaptado automáticamente con las reglas de contraste, fuentes y radios de la Skill.'}
+                        {promptText.slice(0, 85) || 'Contenido adaptado automáticamente con las reglas de formas, contraste y fondos.'}
                       </p>
+                      
+                      {/* Button Shape Preview */}
                       <button
                         style={{
                           backgroundColor: currentPreviewSkill.tokens.primaryColor,
-                          borderRadius: currentPreviewSkill.tokens.borderRadius,
-                          boxShadow: currentPreviewSkill.tokens.boxShadow,
+                          borderRadius: buttonShape === 'pill' ? '9999px' : buttonShape === 'sharp' ? '2px' : '12px',
+                          borderWidth: buttonShape === 'sharp' ? '2px' : '0px',
+                          boxShadow: buttonShape === 'glow' ? `0 0 15px ${currentPreviewSkill.tokens.primaryColor}80` : currentPreviewSkill.tokens.boxShadow,
                         }}
-                        className="w-full py-2 text-white text-xs font-semibold shadow transition-transform active:scale-95"
+                        className="w-full py-1.5 text-white text-xs font-semibold shadow transition-transform active:scale-95"
                       >
-                        Acción Principal →
+                        Botón ({buttonShape.toUpperCase()}) →
                       </button>
                     </div>
                   </div>
                 </div>
 
                 {/* Primary Generation Actions */}
-                <div className="space-y-2 pt-4 border-t border-white/[0.08]">
+                <div className="space-y-2 pt-3 border-t border-white/[0.08]">
                   
                   {/* GENERAR NUEVO DISEÑO COMPLETO */}
                   <button
@@ -649,27 +738,24 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
                   {/* REDISEÑAR PANTALLA ACTUAL */}
                   <button
                     onClick={handleMorphCurrentScreen}
-                    className="w-full py-2.5 bg-indigo-600/80 hover:bg-indigo-600 text-white rounded-xl text-xs font-semibold border border-indigo-400/40 flex items-center justify-center gap-2 transition-all active:scale-95"
+                    className="w-full py-2 bg-indigo-600/80 hover:bg-indigo-600 text-white rounded-xl text-xs font-semibold border border-indigo-400/40 flex items-center justify-center gap-2 transition-all active:scale-95"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
                     <span>⚡ Rediseñar y Reestructurar Pantalla Activa</span>
                   </button>
 
                   {/* Secondary Recoloring Actions */}
-                  <div className="pt-2">
-                    <span className="text-[9px] font-mono text-slate-500 block uppercase mb-1">
-                      O solo inyectar colores y estilos a nodos existentes:
-                    </span>
-                    <div className="grid grid-cols-2 gap-2">
+                  <div className="pt-1">
+                    <div className="grid grid-cols-2 gap-1.5">
                       <button
                         onClick={() => {
                           onApplySkill(currentPreviewSkill, 'screen');
                           soundEngine.playProceduralSound('switch');
                           onClose();
                         }}
-                        className="px-2.5 py-1.5 bg-white/5 hover:bg-white/10 text-slate-300 rounded-lg text-[11px] font-medium transition-all"
+                        className="px-2 py-1 bg-white/5 hover:bg-white/10 text-slate-300 rounded-lg text-[10px] font-medium transition-all"
                       >
-                        Pantalla Activa
+                        Color: Pantalla Activa
                       </button>
                       <button
                         onClick={() => {
@@ -677,9 +763,9 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
                           soundEngine.playProceduralSound('chime');
                           onClose();
                         }}
-                        className="px-2.5 py-1.5 bg-white/5 hover:bg-white/10 text-slate-300 rounded-lg text-[11px] font-medium transition-all"
+                        className="px-2 py-1 bg-white/5 hover:bg-white/10 text-slate-300 rounded-lg text-[10px] font-medium transition-all"
                       >
-                        Todo el Proyecto
+                        Color: Todo Proyecto
                       </button>
                     </div>
 
@@ -690,10 +776,10 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
                           soundEngine.playProceduralSound('pop');
                           onClose();
                         }}
-                        className="w-full mt-1.5 py-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1.5"
+                        className="w-full mt-1.5 py-1 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 rounded-lg text-[10px] font-medium transition-all flex items-center justify-center gap-1.5"
                       >
                         <Check className="w-3 h-3" />
-                        <span>Aplicar solo a elemento #{selectedNode.name}</span>
+                        <span>Aplicar solo a #{selectedNode.name}</span>
                       </button>
                     )}
                   </div>
@@ -788,6 +874,10 @@ export const SkillStudioModal: React.FC<SkillStudioModalProps> = ({
                                 prompt: sk.description,
                                 screenName: sk.name,
                                 deviceMode: selectedFormat,
+                                backgroundStyle,
+                                buttonShape,
+                                menuStyle,
+                                useUploadedImages,
                               });
                               onGenerateScreenFromSkill(newScreen, selectedFormat);
                               onClose();
