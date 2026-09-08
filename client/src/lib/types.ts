@@ -550,15 +550,10 @@ export interface DrawingStroke {
 export const INITIAL_PROJECT_SCREENS: ScreenDefinition[] = [
   {
     id: 'screen-home',
-    name: 'Home Dashboard',
-    rootNode: INITIAL_PROJECT_NODES[0]
-  },
-  {
-    id: 'screen-details',
-    name: 'Transfer & Details',
+    name: 'Inicio',
     rootNode: {
-      id: 'app-root-details',
-      name: 'Details Window',
+      id: 'app-root',
+      name: 'Ventana Principal',
       type: 'container',
       styles: {
         backgroundColor: '#090d16',
@@ -571,130 +566,7 @@ export const INITIAL_PROJECT_SCREENS: ScreenDefinition[] = [
         height: '100%',
         borderRadius: '0px'
       },
-      children: [
-        {
-          id: 'details-header',
-          name: 'Details Header',
-          type: 'container',
-          styles: {
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '12px 16px',
-            backgroundColor: '#1e293b',
-            borderRadius: '16px',
-            borderWidth: '1px',
-            borderColor: '#334155'
-          },
-          children: [
-            {
-              id: 'back-btn',
-              name: 'Back Button',
-              type: 'button',
-              content: '← Volver',
-              styles: {
-                backgroundColor: '#334155',
-                color: '#ffffff',
-                padding: '8px 14px',
-                borderRadius: '10px',
-                fontSize: '12px',
-                fontWeight: '600'
-              },
-              sounds: {
-                onClick: 'switch'
-              },
-              action: {
-                type: 'navigate',
-                targetScreenId: 'screen-home'
-              }
-            },
-            {
-              id: 'details-title',
-              name: 'Window Title',
-              type: 'text',
-              content: 'Detalles de Cuenta',
-              styles: {
-                fontSize: '15px',
-                fontWeight: '700',
-                color: '#ffffff'
-              }
-            }
-          ]
-        },
-        {
-          id: 'card-details-info',
-          name: 'Info Card',
-          type: 'card',
-          styles: {
-            backgroundColor: 'rgba(30, 41, 59, 0.7)',
-            backdropFilter: 'blur(12px)',
-            borderRadius: '24px',
-            padding: '24px',
-            borderWidth: '1px',
-            borderColor: '#6366f1',
-            boxShadow: '0 8px 32px rgba(99, 102, 241, 0.15)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px'
-          },
-          children: [
-            {
-              id: 'info-amount-label',
-              name: 'Amount Label',
-              type: 'text',
-              content: 'Balance Disponible',
-              styles: {
-                color: '#94a3b8',
-                fontSize: '12px',
-                fontWeight: '500'
-              }
-            },
-            {
-              id: 'info-amount-val',
-              name: 'Amount Value',
-              type: 'text',
-              content: '$24,580.00 USD',
-              styles: {
-                color: '#10b981',
-                fontSize: '28px',
-                fontWeight: '800'
-              }
-            },
-            {
-              id: 'info-desc',
-              name: 'Info Description',
-              type: 'text',
-              content: 'Transfiere fondos de manera instantánea con cero comisiones a cualquier cuenta verificada.',
-              styles: {
-                color: '#cbd5e1',
-                fontSize: '13px'
-              }
-            },
-            {
-              id: 'confirm-pay-btn',
-              name: 'Confirm Transfer Button',
-              type: 'button',
-              content: 'Confirmar Transferencia ✨',
-              styles: {
-                backgroundColor: '#10b981',
-                color: '#ffffff',
-                padding: '14px 20px',
-                borderRadius: '14px',
-                fontSize: '14px',
-                fontWeight: '700',
-                boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)'
-              },
-              sounds: {
-                onClick: 'chime'
-              },
-              action: {
-                type: 'alert',
-                alertMessage: '¡Transferencia realizada con éxito!'
-              }
-            }
-          ]
-        }
-      ]
+      children: []
     }
   }
 ];
