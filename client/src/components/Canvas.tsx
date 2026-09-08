@@ -93,6 +93,7 @@ export const Canvas: React.FC<CanvasProps> = ({
 }) => {
   const [dragOverNodeId, setDragOverNodeId] = useState<string | null>(null);
   const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | undefined>(undefined);
+  const [isTransformActive, setIsTransformActive] = useState(false);
 
   // Direct Drag Transform State
   const [activeTransform, setActiveTransform] = useState<{
@@ -474,7 +475,7 @@ export const Canvas: React.FC<CanvasProps> = ({
     );
 
     // Direct Mouse Transform Controls (Resize edges, corner radius, and padding)
-    const directTransformOverlay = !isPreviewMode && isSelected && (
+    const directTransformOverlay = !isPreviewMode && isSelected && isDrawingActive && isTransformActive && (
       <DirectTransformOverlay
         nodeName={node.name}
         borderRadius={node.styles.borderRadius}
@@ -1813,6 +1814,8 @@ export const Canvas: React.FC<CanvasProps> = ({
         onClose={onCloseDrawing}
         strokes={strokes}
         onUpdateStrokes={onUpdateStrokes}
+        isTransformActive={isTransformActive}
+        onToggleTransform={() => setIsTransformActive(prev => !prev)}
       />
 
       {/* Interactive Collaboration & Design Comments Overlay */}
