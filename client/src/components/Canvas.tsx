@@ -335,6 +335,8 @@ export const Canvas: React.FC<CanvasProps> = ({
 
   // Recursive Element Renderer with Selection, Actions, and Droppable Zones
   const renderNode = (node: DesignNode): React.ReactNode => {
+    if (!node || !node.id || !node.styles) return null;
+
     const isSelected = selectedNodeId === node.id;
     const isDragTarget = dragOverNodeId === node.id;
 

@@ -197,9 +197,12 @@ export function App() {
     injectCustomAnimationStyles(customAnimations);
   }, [customAnimations]);
 
-  // Get active screen and its nodes
-  const currentScreen = screens.find(s => s.id === activeScreenId) || screens[0];
-  const nodes = [currentScreen.rootNode];
+  // Get active screen and its nodes with robust fallback
+  const currentScreen = (screens && screens.length > 0)
+    ? (screens.find(s => s.id === activeScreenId) || screens[0])
+    : INITIAL_PROJECT_SCREENS[0];
+    
+  const nodes = currentScreen && currentScreen.rootNode ? [currentScreen.rootNode] : [INITIAL_PROJECT_SCREENS[0].rootNode];
 
   // Helper to mutate nodes on the active screen with Undo/Redo history
   const setNodes = (updateFn: (prev: DesignNode[]) => DesignNode[]) => {
@@ -207,12 +210,13 @@ export function App() {
     setFutureScreens([]);
 
     setScreens(prevScreens => {
+      const activeId = activeScreenId || (prevScreens[0] ? prevScreens[0].id : 'screen-home');
       return prevScreens.map(s => {
-        if (s.id === activeScreenId) {
+        if (s.id === activeId && s.rootNode) {
           const updatedNodes = updateFn([s.rootNode]);
           return {
             ...s,
-            rootNode: updatedNodes[0] || s.rootNode
+            rootNode: (updatedNodes && updatedNodes[0]) ? updatedNodes[0] : s.rootNode
           };
         }
         return s;
