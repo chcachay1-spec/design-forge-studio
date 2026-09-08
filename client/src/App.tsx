@@ -1325,18 +1325,43 @@ export function App() {
 
   // Delete node by ID (preserving root)
   const handleDeleteNode = (nodeId: string) => {
-    if (nodeId === currentScreen.rootNode.id) {
-      alert('La ventana o pantalla principal no se puede eliminar directamente.');
+    if (!nodeId) return;
+    if (nodeId === currentScreen.rootNode.id || nodeId === 'app-root' || nodeId === 'app-root-details') {
+      setToastMessage('La ventana o pantalla principal no se puede eliminar.');
+      soundEngine.playProceduralSound('switch');
+      setTimeout(() => setToastMessage(null), 2500);
       return;
     }
 
     soundEngine.playProceduralSound('switch');
 
+    // Deselect if currently selected node is the deleted node or any of its descendants
+    if (selectedNodeId) {
+      const isOrDescendantOf = (targetId: string, parentNodeId: string): boolean => {
+        if (targetId === parentNodeId) return true;
+        const parent = findNode(parentNodeId, nodes);
+        if (!parent || !parent.children) return false;
+        const checkChildren = (children: DesignNode[]): boolean => {
+          for (const c of children) {
+            if (c.id === targetId) return true;
+            if (c.children && checkChildren(c.children)) return true;
+          }
+          return false;
+        };
+        return checkChildren(parent.children);
+      };
+
+      if (isOrDescendantOf(selectedNodeId, nodeId)) {
+        setSelectedNodeId(null);
+      }
+    }
+
     const deleteRecursive = (list: DesignNode[]): DesignNode[] => {
+      if (!list || !Array.isArray(list)) return [];
       return list
-        .filter(n => n.id !== nodeId)
+        .filter(n => n && n.id !== nodeId)
         .map(n => {
-          if (n.children) {
+          if (n.children && Array.isArray(n.children)) {
             return {
               ...n,
               children: deleteRecursive(n.children),
@@ -1347,10 +1372,32 @@ export function App() {
     };
 
     setNodes(prev => deleteRecursive(prev));
-    if (selectedNodeId === nodeId) {
-      setSelectedNodeId(null);
-    }
+    setToastMessage('Elemento eliminado correctamente');
+    setTimeout(() => setToastMessage(null), 2000);
   };
+
+  // Keyboard shortcut to delete currently selected node (Delete / Backspace)
+  useEffect(() => {
+    const handleKeyDelete = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' || 
+        target.tagName === 'TEXTAREA' || 
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedNodeId) {
+        // Prevent backspace from navigating backward in browser
+        e.preventDefault();
+        handleDeleteNode(selectedNodeId);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDelete);
+    return () => window.removeEventListener('keydown', handleKeyDelete);
+  }, [selectedNodeId, nodes, currentScreen]);
 
   // Reorder nodes hierarchically
   const handleReorderNodes = (draggedId: string, targetId: string, position: 'before' | 'after' | 'inside') => {

@@ -188,7 +188,9 @@ export const Inspector: React.FC<InspectorProps> = ({
               <Camera className="w-3.5 h-3.5" />
             </button>
           )}
-          {selectedNode.id !== 'app-root' && selectedNode.id !== 'app-root-details' && (
+          {selectedNode.id !== 'app-root' && 
+           selectedNode.id !== 'app-root-details' && 
+           !screens.some(s => s.rootNode && s.rootNode.id === selectedNode.id) && (
             <button
               onClick={() => onDeleteNode(selectedNode.id)}
               className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors border border-transparent hover:border-rose-500/30"

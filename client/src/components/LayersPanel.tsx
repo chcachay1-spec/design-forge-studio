@@ -230,14 +230,16 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
   };
 
   const renderLayerItem = (node: DesignNode, depth = 0): React.ReactNode => {
+    if (!node || !node.id) return null;
     const isSelected = selectedNodeId === node.id;
     const isOver = dropTargetId === node.id;
+    const isRoot = depth === 0 || node.id === 'app-root' || node.id === 'app-root-details';
 
     return (
       <div 
         key={node.id} 
         className="select-none group relative"
-        draggable={node.id !== 'app-root' && node.id !== 'app-root-details'}
+        draggable={!isRoot}
         onDragStart={(e) => handleLayerDragStart(e, node.id)}
         onDragOver={(e) => handleLayerDragOver(e, node.id)}
         onDrop={(e) => handleLayerDrop(e, node.id)}
@@ -285,7 +287,7 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
                 ❖
               </span>
             )}
-            {node.id !== 'app-root' && node.id !== 'app-root-details' && onConvertToMaster && (
+            {!isRoot && onConvertToMaster && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -298,7 +300,7 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
                 <Component className="w-3 h-3" />
               </button>
             )}
-            {node.id !== 'app-root' && node.id !== 'app-root-details' && (
+            {!isRoot && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
