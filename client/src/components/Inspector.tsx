@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { 
+  Minus,
+  Plus,
   Volume2, 
   Type, 
   Square, 
@@ -1322,9 +1324,39 @@ export const Inspector: React.FC<InspectorProps> = ({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            {/* Corner Radius */}
+            {/* Corner Radius con Stepper */}
             <div className="space-y-1">
-              <label className="text-[11px] text-slate-500">Radio Esquinas</label>
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] text-slate-400">Radio Esquinas</label>
+                <div className="flex items-center gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cur = parseFloat(String(styles.borderRadius || '0')) || 0;
+                      const next = Math.max(0, Math.round(cur - 4));
+                      onUpdateStyle(selectedNode.id, 'borderRadius', `${next}px`);
+                      soundEngine.playProceduralSound('pop');
+                    }}
+                    className="w-4 h-4 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center text-[10px] border border-slate-800"
+                    title="Reducir radio de esquinas (-4px)"
+                  >
+                    <Minus className="w-2.5 h-2.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cur = parseFloat(String(styles.borderRadius || '0')) || 0;
+                      const next = Math.round(cur + 4);
+                      onUpdateStyle(selectedNode.id, 'borderRadius', `${next}px`);
+                      soundEngine.playProceduralSound('pop');
+                    }}
+                    className="w-4 h-4 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center text-[10px] border border-slate-800"
+                    title="Aumentar radio de esquinas (+4px)"
+                  >
+                    <Plus className="w-2.5 h-2.5" />
+                  </button>
+                </div>
+              </div>
               <input
                 type="text"
                 value={styles.borderRadius || ''}
@@ -1334,9 +1366,39 @@ export const Inspector: React.FC<InspectorProps> = ({
               />
             </div>
 
-            {/* Padding */}
+            {/* Padding con Stepper */}
             <div className="space-y-1">
-              <label className="text-[11px] text-slate-500">Padding Interno</label>
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] text-slate-400">Padding Interno</label>
+                <div className="flex items-center gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cur = parseFloat(String(styles.padding || '0')) || 0;
+                      const next = Math.max(0, Math.round(cur - 4));
+                      onUpdateStyle(selectedNode.id, 'padding', `${next}px`);
+                      soundEngine.playProceduralSound('pop');
+                    }}
+                    className="w-4 h-4 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center text-[10px] border border-slate-800"
+                    title="Reducir padding (-4px)"
+                  >
+                    <Minus className="w-2.5 h-2.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cur = parseFloat(String(styles.padding || '0')) || 0;
+                      const next = Math.round(cur + 4);
+                      onUpdateStyle(selectedNode.id, 'padding', `${next}px`);
+                      soundEngine.playProceduralSound('pop');
+                    }}
+                    className="w-4 h-4 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center text-[10px] border border-slate-800"
+                    title="Aumentar padding (+4px)"
+                  >
+                    <Plus className="w-2.5 h-2.5" />
+                  </button>
+                </div>
+              </div>
               <input
                 type="text"
                 value={styles.padding || ''}
@@ -1363,7 +1425,37 @@ export const Inspector: React.FC<InspectorProps> = ({
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] text-slate-500">Grosor de Borde</label>
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] text-slate-400">Grosor de Borde</label>
+                <div className="flex items-center gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cur = parseFloat(String(styles.borderWidth || '0')) || 0;
+                      const next = Math.max(0, Math.round(cur - 1));
+                      onUpdateStyle(selectedNode.id, 'borderWidth', `${next}px`);
+                      soundEngine.playProceduralSound('pop');
+                    }}
+                    className="w-4 h-4 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center text-[10px] border border-slate-800"
+                    title="Reducir grosor de borde (-1px)"
+                  >
+                    <Minus className="w-2.5 h-2.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cur = parseFloat(String(styles.borderWidth || '0')) || 0;
+                      const next = Math.round(cur + 1);
+                      onUpdateStyle(selectedNode.id, 'borderWidth', `${next}px`);
+                      soundEngine.playProceduralSound('pop');
+                    }}
+                    className="w-4 h-4 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center text-[10px] border border-slate-800"
+                    title="Aumentar grosor de borde (+1px)"
+                  >
+                    <Plus className="w-2.5 h-2.5" />
+                  </button>
+                </div>
+              </div>
               <input
                 type="text"
                 value={styles.borderWidth || ''}

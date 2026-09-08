@@ -99,7 +99,6 @@ export function App() {
 
   // Debounced auto-save project state to localStorage
   useEffect(() => {
-    setIsSaving(true);
     const timer = setTimeout(() => {
       storageEngine.saveProject({
         id: 'forge_active',
@@ -112,7 +111,9 @@ export function App() {
       });
       setIsSaving(false);
     }, 800);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+    };
   }, [screens, activeScreenId, theme, customSounds, customAnimations]);
 
   // Handle Save Snapshot
@@ -2105,7 +2106,10 @@ export function App() {
         setIsPreviewMode={setIsPreviewMode}
         screens={screens}
         activeScreenId={activeScreenId}
-        onSelectScreen={setActiveScreenId}
+        onSelectScreen={(screenId) => {
+          setActiveScreenId(screenId);
+          setSelectedNodeId(null);
+        }}
         onAddScreen={handleAddScreen}
         onRenameScreen={handleRenameScreen}
         onDeleteScreen={handleDeleteScreen}
@@ -2193,6 +2197,14 @@ export function App() {
             showRulers={showRulers}
             onUpdateStyle={handleUpdateStyle}
             onUpdateMultipleStyles={handleUpdateMultipleStyles}
+            onOpenInspector={() => {
+              const inspectorEl = document.querySelector('aside');
+              if (inspectorEl) {
+                inspectorEl.scrollIntoView({ behavior: 'smooth' });
+              }
+              setToastMessage('Panel Inspector activo: Ajusta bordes, esquinas y caras');
+              setTimeout(() => setToastMessage(null), 2500);
+            }}
           />
         )}
 

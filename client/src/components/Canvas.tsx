@@ -64,6 +64,7 @@ interface CanvasProps {
   // Direct Interactive Transformation
   onUpdateStyle?: (nodeId: string, styleKey: string, value: string) => void;
   onUpdateMultipleStyles?: (nodeId: string, updates: Record<string, string>) => void;
+  onOpenInspector?: () => void;
 }
 
 export const Canvas: React.FC<CanvasProps> = ({
@@ -89,6 +90,7 @@ export const Canvas: React.FC<CanvasProps> = ({
   showRulers = true,
   onUpdateStyle: _onUpdateStyle,
   onUpdateMultipleStyles: _onUpdateMultipleStyles,
+  onOpenInspector,
 }) => {
   const [dragOverNodeId, setDragOverNodeId] = useState<string | null>(null);
   const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | undefined>(undefined);
@@ -1560,7 +1562,7 @@ export const Canvas: React.FC<CanvasProps> = ({
         onClose={onCloseDrawing}
         strokes={strokes}
         onUpdateStrokes={onUpdateStrokes}
-
+        onOpenInspector={onOpenInspector}
       />
 
       {/* Interactive Collaboration & Design Comments Overlay */}

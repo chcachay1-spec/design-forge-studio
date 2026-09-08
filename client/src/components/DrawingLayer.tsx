@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { 
+  Sliders,
   Pencil, 
   Eraser, 
   Trash2, 
@@ -14,6 +15,7 @@ interface DrawingLayerProps {
   onClose: () => void;
   strokes: DrawingStroke[];
   onUpdateStrokes: (strokes: DrawingStroke[]) => void;
+  onOpenInspector?: () => void;
 }
 
 export const DrawingLayer: React.FC<DrawingLayerProps> = ({
@@ -21,6 +23,7 @@ export const DrawingLayer: React.FC<DrawingLayerProps> = ({
   onClose,
   strokes,
   onUpdateStrokes,
+  onOpenInspector,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -270,6 +273,23 @@ export const DrawingLayer: React.FC<DrawingLayerProps> = ({
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
+
+        {onOpenInspector && (
+          <>
+            <div className="h-4 w-px bg-slate-800/60" />
+            <button
+              onClick={() => {
+                onOpenInspector();
+                soundEngine.playProceduralSound('pop');
+              }}
+              className="px-2 py-1 rounded-md text-xs flex items-center gap-1.5 bg-gradient-to-r from-indigo-600/40 to-cyan-600/40 hover:from-indigo-600/60 hover:to-cyan-600/60 text-cyan-300 border border-cyan-500/30 transition-all shadow"
+              title="Ajustar bordes, esquinas y padding del elemento seleccionado"
+            >
+              <Sliders className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="font-medium text-[11px]">Bordes & Caras</span>
+            </button>
+          </>
+        )}
 
         <button
           onClick={onClose}
