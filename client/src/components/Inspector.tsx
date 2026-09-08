@@ -90,6 +90,15 @@ export const Inspector: React.FC<InspectorProps> = ({
     }
   });
 
+  const [activeTab, setActiveTab] = useState<'design' | 'dev'>('design');
+  const [codeFormat, setCodeFormat] = useState<'tailwind' | 'css' | 'jsx'>('tailwind');
+  const [copied, setCopied] = useState(false);
+  const [iconSearch, setIconSearch] = useState('');
+  const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
+  const [isPhotoPickerOpen, setIsPhotoPickerOpen] = useState(false);
+  const [photoCategory, setPhotoCategory] = useState<'avatars' | 'products' | 'tech' | 'abstract'>('avatars');
+  const [fontCategoryFilter, setFontCategoryFilter] = useState<string>('all');
+
   if (!selectedNode) {
     return (
       <aside className={(isWideWidth ? 'w-[420px]' : 'w-80') + ' neo-glass-panel border-y-0 border-r-0 rounded-none p-6 flex flex-col items-center justify-center text-center text-slate-500 select-none z-20 transition-all duration-200'}>
@@ -107,15 +116,6 @@ export const Inspector: React.FC<InspectorProps> = ({
       </aside>
     );
   }
-
-  const [activeTab, setActiveTab] = useState<'design' | 'dev'>('design');
-  const [codeFormat, setCodeFormat] = useState<'tailwind' | 'css' | 'jsx'>('tailwind');
-  const [copied, setCopied] = useState(false);
-  const [iconSearch, setIconSearch] = useState('');
-  const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
-  const [isPhotoPickerOpen, setIsPhotoPickerOpen] = useState(false);
-  const [photoCategory, setPhotoCategory] = useState<'avatars' | 'products' | 'tech' | 'abstract'>('avatars');
-  const [fontCategoryFilter, setFontCategoryFilter] = useState<string>('all');
 
   const filteredFontFamilies = fontCategoryFilter === 'all'
     ? FONT_FAMILIES_CATALOG

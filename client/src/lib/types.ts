@@ -421,8 +421,8 @@ export const INITIAL_PROJECT_NODES: DesignNode[] = [
                   onClick: 'click'
                 },
                 action: {
-                  type: 'alert',
-                  alertMessage: 'Tu dirección de depósito es: 0x71C...9B4'
+                  type: 'navigate',
+                  targetScreenId: 'screen-deposit'
                 }
               }
             ]
@@ -550,10 +550,15 @@ export interface DrawingStroke {
 export const INITIAL_PROJECT_SCREENS: ScreenDefinition[] = [
   {
     id: 'screen-home',
-    name: 'Inicio',
+    name: 'Home Dashboard',
+    rootNode: INITIAL_PROJECT_NODES[0]
+  },
+  {
+    id: 'screen-details',
+    name: 'Transfer & Details',
     rootNode: {
-      id: 'app-root',
-      name: 'Ventana Principal',
+      id: 'app-root-details',
+      name: 'Details Window',
       type: 'container',
       styles: {
         backgroundColor: '#090d16',
@@ -566,7 +571,285 @@ export const INITIAL_PROJECT_SCREENS: ScreenDefinition[] = [
         height: '100%',
         borderRadius: '0px'
       },
-      children: []
+      children: [
+        {
+          id: 'details-header',
+          name: 'Details Header',
+          type: 'container',
+          styles: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '12px 16px',
+            backgroundColor: '#1e293b',
+            borderRadius: '16px',
+            borderWidth: '1px',
+            borderColor: '#334155'
+          },
+          children: [
+            {
+              id: 'back-btn',
+              name: 'Back Button',
+              type: 'button',
+              content: '← Volver',
+              styles: {
+                backgroundColor: '#334155',
+                color: '#ffffff',
+                padding: '8px 14px',
+                borderRadius: '10px',
+                fontSize: '12px',
+                fontWeight: '600'
+              },
+              sounds: {
+                onClick: 'switch'
+              },
+              action: {
+                type: 'navigate',
+                targetScreenId: 'screen-home'
+              }
+            },
+            {
+              id: 'details-title',
+              name: 'Window Title',
+              type: 'text',
+              content: 'Transfer Details',
+              styles: {
+                fontSize: '15px',
+                fontWeight: '700',
+                color: '#ffffff'
+              }
+            }
+          ]
+        },
+        {
+          id: 'card-details-info',
+          name: 'Transfer Details Card',
+          type: 'card',
+          styles: {
+            backgroundColor: 'rgba(30, 41, 59, 0.7)',
+            backdropFilter: 'blur(12px)',
+            borderRadius: '24px',
+            padding: '24px',
+            borderWidth: '1px',
+            borderColor: '#6366f1',
+            boxShadow: '0 8px 32px rgba(99, 102, 241, 0.15)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px'
+          },
+          children: [
+            {
+              id: 'info-amount-label',
+              name: 'Amount Label',
+              type: 'text',
+              content: 'Balance Disponible',
+              styles: {
+                color: '#94a3b8',
+                fontSize: '12px',
+                fontWeight: '500'
+              }
+            },
+            {
+              id: 'info-amount-val',
+              name: 'Amount Value',
+              type: 'text',
+              content: '$24,580.00 USD',
+              styles: {
+                color: '#10b981',
+                fontSize: '28px',
+                fontWeight: '800'
+              }
+            },
+            {
+              id: 'recipient-label',
+              name: 'Recipient Label',
+              type: 'text',
+              content: 'Recipient',
+              styles: {
+                color: '#cbd5e1',
+                fontSize: '13px',
+                fontWeight: '600'
+              }
+            },
+            {
+              id: 'recipient-input',
+              name: 'Recipient Field',
+              type: 'input',
+              placeholder: 'Enter recipient name, wallet or email...',
+              content: '',
+              styles: {
+                backgroundColor: '#0f172a',
+                color: '#ffffff',
+                padding: '12px 16px',
+                borderRadius: '12px',
+                borderWidth: '1px',
+                borderColor: '#334155',
+                fontSize: '13px'
+              }
+            },
+            {
+              id: 'confirm-pay-btn',
+              name: 'Confirm Transfer Button',
+              type: 'button',
+              content: 'Confirmar Transferencia ✨',
+              styles: {
+                backgroundColor: '#10b981',
+                color: '#ffffff',
+                padding: '14px 20px',
+                borderRadius: '14px',
+                fontSize: '14px',
+                fontWeight: '700',
+                boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)'
+              },
+              sounds: {
+                onClick: 'chime'
+              },
+              action: {
+                type: 'alert',
+                alertMessage: '¡Transferencia realizada con éxito!'
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    id: 'screen-deposit',
+    name: 'Deposit Details',
+    rootNode: {
+      id: 'app-root-deposit',
+      name: 'Deposit Window',
+      type: 'container',
+      styles: {
+        backgroundColor: '#090d16',
+        color: '#f8fafc',
+        padding: '24px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '20px',
+        width: '100%',
+        height: '100%',
+        borderRadius: '0px'
+      },
+      children: [
+        {
+          id: 'deposit-header',
+          name: 'Deposit Header',
+          type: 'container',
+          styles: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '12px 16px',
+            backgroundColor: '#1e293b',
+            borderRadius: '16px',
+            borderWidth: '1px',
+            borderColor: '#334155'
+          },
+          children: [
+            {
+              id: 'deposit-back-btn',
+              name: 'Back Button',
+              type: 'button',
+              content: '← Volver',
+              styles: {
+                backgroundColor: '#334155',
+                color: '#ffffff',
+                padding: '8px 14px',
+                borderRadius: '10px',
+                fontSize: '12px',
+                fontWeight: '600'
+              },
+              sounds: {
+                onClick: 'switch'
+              },
+              action: {
+                type: 'navigate',
+                targetScreenId: 'screen-home'
+              }
+            },
+            {
+              id: 'deposit-title',
+              name: 'Window Title',
+              type: 'text',
+              content: 'Depósito de Fondos',
+              styles: {
+                fontSize: '15px',
+                fontWeight: '700',
+                color: '#ffffff'
+              }
+            }
+          ]
+        },
+        {
+          id: 'card-deposit-info',
+          name: 'Deposit Info Card',
+          type: 'card',
+          styles: {
+            backgroundColor: 'rgba(30, 41, 59, 0.7)',
+            backdropFilter: 'blur(12px)',
+            borderRadius: '24px',
+            padding: '24px',
+            borderWidth: '1px',
+            borderColor: '#10b981',
+            boxShadow: '0 8px 32px rgba(16, 185, 129, 0.15)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '14px'
+          },
+          children: [
+            {
+              id: 'deposit-address-label',
+              name: 'Deposit Address Label',
+              type: 'text',
+              content: 'Tu dirección de depósito',
+              styles: {
+                color: '#34d399',
+                fontSize: '14px',
+                fontWeight: '700'
+              }
+            },
+            {
+              id: 'deposit-address-val',
+              name: 'Deposit Address Value',
+              type: 'text',
+              content: '0x71C28B92eA9F4B3C58dE74b8895b62b109F629B4',
+              styles: {
+                color: '#f8fafc',
+                fontSize: '13px',
+                fontFamily: 'monospace',
+                backgroundColor: '#0f172a',
+                padding: '12px 14px',
+                borderRadius: '12px',
+                borderWidth: '1px',
+                borderColor: '#334155'
+              }
+            },
+            {
+              id: 'deposit-copy-btn',
+              name: 'Copy Address Button',
+              type: 'button',
+              content: '📋 Copiar Dirección',
+              styles: {
+                backgroundColor: '#10b981',
+                color: '#ffffff',
+                padding: '12px 18px',
+                borderRadius: '12px',
+                fontSize: '13px',
+                fontWeight: '700'
+              },
+              sounds: {
+                onClick: 'chime'
+              },
+              action: {
+                type: 'copy_clipboard',
+                clipboardText: '0x71C28B92eA9F4B3C58dE74b8895b62b109F629B4'
+              }
+            }
+          ]
+        }
+      ]
     }
   }
 ];

@@ -1,5 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { AlertTriangle, RotateCcw } from 'lucide-react';
+import { AlertTriangle, RotateCcw, X } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -28,6 +28,8 @@ export class ErrorBoundary extends Component<Props, State> {
     // Clear potentially corrupted local project cache and reload safely
     try {
       localStorage.removeItem('forge_active');
+      localStorage.removeItem('designforge_active_project_v1');
+      localStorage.removeItem('designforge_snapshots_v1');
     } catch {}
     this.setState({ hasError: false, error: null });
     window.location.reload();
@@ -41,7 +43,17 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="h-screen w-screen bg-[#030712] flex items-center justify-center p-6 text-slate-100 font-sans select-none">
-          <div className="max-w-md w-full neo-glass-panel border-rose-500/40 rounded-3xl p-6 shadow-2xl flex flex-col items-center text-center space-y-4 animate-in fade-in zoom-in-95 duration-200">
+          <div className="max-w-md w-full neo-glass-panel border-rose-500/40 rounded-3xl p-6 shadow-2xl flex flex-col items-center text-center space-y-4 animate-in fade-in zoom-in-95 duration-200 relative">
+            {/* Dismiss / Close button */}
+            <button
+              type="button"
+              onClick={this.handleSoftRecover}
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              title="Cerrar y continuar"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
             <div className="w-14 h-14 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.3)]">
               <AlertTriangle className="w-7 h-7" />
             </div>

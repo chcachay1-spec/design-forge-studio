@@ -1899,10 +1899,21 @@ export function App() {
   const handleExportZip = async () => {
     try {
       soundEngine.playProceduralSound('chime');
-      await exportProjectZip(nodes, theme);
+      setToastMessage('Generando archivo ZIP descargable...');
+      const blob = await exportProjectZip(nodes, theme);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'designforge-project.zip';
+      link.click();
+      URL.revokeObjectURL(url);
+
       const currentLic = loadUserLicense();
       const updatedLic = recordExportUsed(currentLic);
       setUserLicense(updatedLic);
+
+      setToastMessage('¡Proyecto ZIP exportado con éxito!');
+      setTimeout(() => setToastMessage(null), 3000);
     } catch (e) {
       alert('Error exporting project ZIP: ' + String(e));
     }

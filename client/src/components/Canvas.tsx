@@ -1545,7 +1545,7 @@ export const Canvas: React.FC<CanvasProps> = ({
 
   return (
     <div 
-      className="flex-1 neo-canvas-grid relative overflow-auto flex items-center justify-center p-12 select-none"
+      className={'flex-1 relative overflow-auto flex items-center justify-center p-12 select-none ' + (isGridActive ? 'neo-canvas-grid' : 'bg-[#030712]')}
       onClick={() => onSelectNode(null)}
       onMouseMove={(e) => {
         const rect = e.currentTarget.getBoundingClientRect();
@@ -1607,7 +1607,7 @@ export const Canvas: React.FC<CanvasProps> = ({
               className="absolute inset-0 pointer-events-none z-20 opacity-30"
               style={{
                 backgroundImage: 'linear-gradient(to right, #6366f1 1px, transparent 1px), linear-gradient(to bottom, #6366f1 1px, transparent 1px)',
-                backgroundSize: '16px 16px',
+                backgroundSize: '8px 8px',
               }}
             />
           )}
