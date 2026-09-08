@@ -249,6 +249,46 @@ export interface CustomAnimationDefinition {
   category?: 'motion' | 'glow' | 'attention' | 'fade';
 }
 
+export interface SkillDesignTokens {
+  primaryColor: string;
+  secondaryColor: string;
+  backgroundColor: string;
+  cardColor: string;
+  textColor: string;
+  mutedColor: string;
+  borderColor: string;
+  accentGradient?: string;
+  borderRadius: string;
+  borderWidth: string;
+  boxShadow: string;
+  backdropBlur?: string;
+  fontFamily: string;
+  spacingDensity: 'compact' | 'normal' | 'relaxed';
+}
+
+export interface SkillReference {
+  id: string;
+  type: 'image' | 'text';
+  name: string;
+  content: string; // Data URL for images or text prompt
+  extractedColors?: string[];
+  role?: string;
+}
+
+export interface SkillDefinition {
+  id: string;
+  name: string;
+  version: string;
+  description: string;
+  purpose: string;
+  tokens: SkillDesignTokens;
+  constraints: string[];
+  antiPatterns: string[];
+  references: SkillReference[];
+  rawMarkdown: string;
+  createdDate?: string;
+}
+
 export interface AIProviderConfig {
   provider: AIProvider;
   apiKey?: string;

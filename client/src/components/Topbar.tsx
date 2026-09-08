@@ -96,6 +96,8 @@ interface TopbarProps {
   onToggleAnimationStudio?: () => void;
   // Vector Studio (Figma / Illustrator / Affinity)
   onToggleVectorStudio?: () => void;
+  // Skill Studio (Claude Design Style & Anti-Slop System)
+  onToggleSkillStudio?: () => void;
   // Pro Features: Persistence, AI Generator, Theme Swapping & Rulers
   onSaveSnapshot?: () => void;
   onExportForgeFile?: () => void;
@@ -149,6 +151,7 @@ export const Topbar: React.FC<TopbarProps> = ({
   onOpenPaywall,
   onToggleAnimationStudio,
   onToggleVectorStudio,
+  onToggleSkillStudio,
   onSaveSnapshot,
   onExportForgeFile,
   onImportForgeFile,
@@ -401,6 +404,19 @@ export const Topbar: React.FC<TopbarProps> = ({
                     <span>Tokens de Diseño Globales</span>
                   </span>
                 </button>
+
+                {onToggleSkillStudio && (
+                  <button
+                    onClick={() => { onToggleSkillStudio(); setOpenDropdown(null); }}
+                    className="w-full px-3 py-2 text-left hover:bg-white/10 flex items-center justify-between text-slate-200 transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Wand2 className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Maletín de Skills (ADN Visual)</span>
+                    </span>
+                    <span className="text-[10px] bg-cyan-500/20 text-cyan-300 px-1 rounded font-mono">Claude</span>
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -461,6 +477,19 @@ export const Topbar: React.FC<TopbarProps> = ({
                       <span>Animaciones & Profundidad</span>
                     </span>
                     <span className="text-[10px] bg-pink-500/20 text-pink-300 px-1 rounded font-mono">Keyframes</span>
+                  </button>
+                )}
+
+                {onToggleSkillStudio && (
+                  <button
+                    onClick={() => { onToggleSkillStudio(); setOpenDropdown(null); }}
+                    className="w-full px-3 py-2 text-left hover:bg-white/10 flex items-center justify-between text-slate-200 transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Wand2 className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Maletín de Skills (ADN Visual)</span>
+                    </span>
+                    <span className="text-[10px] bg-cyan-500/20 text-cyan-300 px-1.5 py-0.5 rounded font-mono font-bold">Claude</span>
                   </button>
                 )}
 

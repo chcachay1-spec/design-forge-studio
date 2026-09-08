@@ -10,6 +10,7 @@ interface ClaudeDesignPillBarProps {
   onModeChange: (mode: ClaudeDesignMode) => void;
   selectedNode: DesignNode | null;
   onOpenVectorStudio: () => void;
+  onOpenSkillStudio?: () => void;
   onApplyElementAiChange: (nodeId: string, prompt: string) => Promise<void> | void;
   isAiLoading?: boolean;
 }
@@ -19,6 +20,7 @@ export const ClaudeDesignPillBar: React.FC<ClaudeDesignPillBarProps> = ({
   onModeChange,
   selectedNode,
   onOpenVectorStudio,
+  onOpenSkillStudio,
   onApplyElementAiChange,
   isAiLoading = false,
 }) => {
@@ -112,6 +114,21 @@ export const ClaudeDesignPillBar: React.FC<ClaudeDesignPillBarProps> = ({
             <PenTool className="w-3.5 h-3.5 text-cyan-300" />
             <span>Herramientas Vectoriales</span>
           </button>
+
+          {/* Quick Launch Skill Studio */}
+          {onOpenSkillStudio && (
+            <button
+              onClick={() => {
+                soundEngine.playProceduralSound('chime');
+                onOpenSkillStudio();
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1 bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-200 border border-indigo-400/40 rounded-lg text-xs font-medium transition-all shadow-[0_0_10px_rgba(99,102,241,0.2)]"
+              title="Abrir Maletín de Skills (Sintetizador ADN Visual)"
+            >
+              <Wand2 className="w-3.5 h-3.5 text-indigo-300" />
+              <span>Skills ADN</span>
+            </button>
+          )}
 
           {/* Prompt quick comment for this element */}
           <button

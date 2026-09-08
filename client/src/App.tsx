@@ -17,6 +17,7 @@ import { FlowView } from './components/FlowView';
 import { PresentationModal } from './components/PresentationModal';
 import { AnimationStudioModal } from './components/AnimationStudioModal';
 import { VectorStudioModal } from './components/VectorStudioModal';
+import { SkillStudioModal } from './components/SkillStudioModal';
 import { ClaudeDesignPillBar, type ClaudeDesignMode } from './components/ClaudeDesignPillBar';
 import { type ProjectTemplate } from './lib/templates';
 import { toPng } from 'html-to-image';
@@ -30,8 +31,10 @@ import {
   type DrawingStroke,
   type CanvasComment,
   type CustomSoundDefinition,
-  type CustomAnimationDefinition
+  type CustomAnimationDefinition,
+  type SkillDefinition
 } from './lib/types';
+import { PRESET_SKILLS, applySkillToDesignNodes } from './lib/skill-engine';
 import { exportProjectZip, exportFullViteReactProject } from './lib/zip-handler';
 import { soundEngine } from './lib/audio-engine';
 import { INITIAL_CUSTOM_ANIMATIONS, injectCustomAnimationStyles } from './lib/animation-engine';
@@ -72,6 +75,9 @@ export function App() {
   const [isPresentationOpen, setIsPresentationOpen] = useState(false);
   const [isAnimationStudioOpen, setIsAnimationStudioOpen] = useState(false);
   const [isVectorStudioOpen, setIsVectorStudioOpen] = useState(false);
+  const [isSkillStudioOpen, setIsSkillStudioOpen] = useState(false);
+  const [skills, setSkills] = useState<SkillDefinition[]>([]);
+  const [activeSkill, setActiveSkill] = useState<SkillDefinition | null>(PRESET_SKILLS[0]);
   const [claudeMode, setClaudeMode] = useState<ClaudeDesignMode>('select');
   const [isElementAiLoading, setIsElementAiLoading] = useState(false);
   const [masterComponents, setMasterComponents] = useState<DesignNode[]>([]);
@@ -1865,6 +1871,63 @@ export function App() {
     })));
   };
 
+  // Apply Skill to nodes (Claude Design style)
+  const handleApplySkill = (skill: SkillDefinition, scope: 'all' | 'screen' | 'selection') => {
+    setActiveSkill(skill);
+    soundEngine.playProceduralSound('chime');
+
+    // Update Project Theme to match skill tokens
+    setTheme({
+      name: skill.name,
+      primaryColor: skill.tokens.primaryColor,
+      secondaryColor: skill.tokens.secondaryColor,
+      backgroundColor: skill.tokens.backgroundColor,
+      cardColor: skill.tokens.cardColor,
+      textColor: skill.tokens.textColor,
+      mutedColor: skill.tokens.mutedColor,
+      borderRadius: skill.tokens.borderRadius,
+    });
+
+    if (scope === 'selection') {
+      if (!selectedNodeId) {
+        setToastMessage('Selecciona primero un elemento para aplicarle la Skill.');
+        setTimeout(() => setToastMessage(null), 2500);
+        return;
+      }
+      setNodes(prev => applySkillToDesignNodes(prev, skill, 'selection', selectedNodeId));
+      setToastMessage(`✓ Skill "${skill.name}" aplicada al elemento seleccionado`);
+    } else if (scope === 'screen') {
+      setNodes(prev => applySkillToDesignNodes(prev, skill, 'screen'));
+      setToastMessage(`✓ Skill "${skill.name}" aplicada a la pantalla activa`);
+    } else {
+      setPastScreens(prev => [...prev.slice(-25), screens]);
+      setFutureScreens([]);
+      setScreens(prev => prev.map(s => ({
+        ...s,
+        rootNode: applySkillToDesignNodes([s.rootNode], skill, 'all')[0],
+      })));
+      setToastMessage(`✓ Skill "${skill.name}" inyectada en todo el proyecto`);
+    }
+
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  // Save new or updated Skill
+  const handleSaveSkill = (skill: SkillDefinition) => {
+    setSkills(prev => [...prev.filter(s => s.id !== skill.id), skill]);
+    setActiveSkill(skill);
+    setToastMessage(`Skill "${skill.name}" guardada en el maletín`);
+    setTimeout(() => setToastMessage(null), 2500);
+  };
+
+  // Delete Skill
+  const handleDeleteSkill = (skillId: string) => {
+    setSkills(prev => prev.filter(s => s.id !== skillId));
+    if (activeSkill?.id === skillId) {
+      setActiveSkill(PRESET_SKILLS[0]);
+    }
+  };
+
   // Collaboration Canvas Comments Handlers
   const handleAddComment = (newComment: CanvasComment) => {
     setComments(prev => [...prev, newComment]);
@@ -2202,6 +2265,7 @@ export function App() {
         onOpenPaywall={() => setIsPaywallOpen(true)}
         onToggleAnimationStudio={() => setIsAnimationStudioOpen(true)}
         onToggleVectorStudio={() => setIsVectorStudioOpen(true)}
+        onToggleSkillStudio={() => setIsSkillStudioOpen(true)}
         onSaveSnapshot={handleSaveSnapshot}
         onExportForgeFile={handleExportForgeFile}
         onImportForgeFile={handleImportForgeFile}
@@ -2290,6 +2354,7 @@ export function App() {
             }}
             selectedNode={selectedNode}
             onOpenVectorStudio={() => setIsVectorStudioOpen(true)}
+            onOpenSkillStudio={() => setIsSkillStudioOpen(true)}
             onApplyElementAiChange={handleApplyElementAiChange}
             isAiLoading={isElementAiLoading}
           />
@@ -2373,6 +2438,19 @@ export function App() {
           theme={theme}
           onUpdateTheme={setTheme}
           onPropagateThemeToAllNodes={handlePropagateThemeToAllNodes}
+        />
+
+        {/* Skill Studio Modal (Claude Design Inspired Style & Anti-Slop Engine) */}
+        <SkillStudioModal
+          isOpen={isSkillStudioOpen}
+          onClose={() => setIsSkillStudioOpen(false)}
+          skills={skills}
+          activeSkill={activeSkill}
+          onSelectSkill={setActiveSkill}
+          onSaveSkill={handleSaveSkill}
+          onDeleteSkill={handleDeleteSkill}
+          onApplySkill={handleApplySkill}
+          selectedNode={selectedNode}
         />
 
         {/* 1-Click UI Project Templates Modal */}
