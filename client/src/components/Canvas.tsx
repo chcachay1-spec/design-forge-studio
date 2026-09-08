@@ -59,6 +59,8 @@ interface CanvasProps {
   onDeleteComment: (id: string) => void;
   // 8px Alignment Grid
   isGridActive?: boolean;
+  // Reordering Nodes
+  onReorderNodes?: (draggedId: string, targetId: string, position: 'before' | 'after' | 'inside') => void;
   // Graduated Rulers
   showRulers?: boolean;
   // Direct Interactive Transformation
@@ -76,6 +78,7 @@ export const Canvas: React.FC<CanvasProps> = ({
   isPreviewMode,
   onExecuteAction,
   onAddNode,
+  onReorderNodes,
   isDrawingActive,
   onCloseDrawing,
   strokes,
@@ -93,6 +96,9 @@ export const Canvas: React.FC<CanvasProps> = ({
   onOpenInspector,
 }) => {
   const [dragOverNodeId, setDragOverNodeId] = useState<string | null>(null);
+  const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  const [dropPosition, setDropPosition] = useState<'before' | 'after' | 'inside'>('after');
   const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | undefined>(undefined);
 
   const getDeviceDimensions = () => {
@@ -108,35 +114,91 @@ export const Canvas: React.FC<CanvasProps> = ({
 
   const currentDevice = getDeviceDimensions();
 
-  // Drop Handler for Drag-and-Drop Creation
-  const handleDrop = (e: React.DragEvent, targetParentId: string) => {
+  // Root screen IDs that cannot be dragged or nested
+  const isRootNode = (id: string) => {
+    return id.startsWith('root-') || id === 'app-root' || id === 'app-root-details' || id === 'app-root-deposit';
+  };
+
+  // Node Drag Start (from canvas)
+  const handleNodeDragStart = (e: React.DragEvent, nodeId: string) => {
+    if (isPreviewMode || isRootNode(nodeId)) {
+      e.preventDefault();
+      return;
+    }
+    e.stopPropagation();
+    setDraggedNodeId(nodeId);
+    e.dataTransfer.setData('text/plain', JSON.stringify({ nodeId, source: 'canvas' }));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  // Node Drag Over (on-canvas reordering target)
+  const handleNodeDragOver = (e: React.DragEvent, targetNode: DesignNode) => {
     e.preventDefault();
     e.stopPropagation();
-    setDragOverNodeId(null);
+
+    // Cannot drop on itself
+    if (draggedNodeId === targetNode.id) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const relY = e.clientY - rect.top;
+    const isContainer = targetNode.type === 'container' || targetNode.type === 'card' || isRootNode(targetNode.id);
+
+    let pos: 'before' | 'after' | 'inside' = 'after';
+    if (isContainer) {
+      if (relY < rect.height * 0.25 && !isRootNode(targetNode.id)) {
+        pos = 'before';
+      } else if (relY > rect.height * 0.75 && !isRootNode(targetNode.id)) {
+        pos = 'after';
+      } else {
+        pos = 'inside';
+      }
+    } else {
+      if (relY < rect.height * 0.5) {
+        pos = 'before';
+      } else {
+        pos = 'after';
+      }
+    }
+
+    setDropTargetId(targetNode.id);
+    setDropPosition(pos);
+    setDragOverNodeId(targetNode.id);
+  };
+
+  // Node Drop (reorder on canvas or insert from palette)
+  const handleNodeDrop = (e: React.DragEvent, targetNode: DesignNode) => {
+    e.preventDefault();
+    e.stopPropagation();
 
     try {
       const dataStr = e.dataTransfer.getData('text/plain');
       if (!dataStr) return;
       const data = JSON.parse(dataStr);
-      if (data.source === 'palette' && data.type) {
+
+      if ((data.source === 'canvas' || data.source === 'layer') && data.nodeId && onReorderNodes) {
+        if (data.nodeId !== targetNode.id) {
+          onReorderNodes(data.nodeId, targetNode.id, dropPosition);
+        }
+      } else if (data.source === 'palette' && data.type) {
+        // If dropped onto container middle, add inside; else add as sibling
+        const targetParentId = dropPosition === 'inside' || isRootNode(targetNode.id)
+          ? targetNode.id
+          : undefined;
         onAddNode(data.type, targetParentId);
       }
     } catch (err) {
       console.error('Failed to parse dropped element data', err);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent, nodeId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (dragOverNodeId !== nodeId) {
-      setDragOverNodeId(nodeId);
+    } finally {
+      setDraggedNodeId(null);
+      setDropTargetId(null);
+      setDragOverNodeId(null);
     }
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setDropTargetId(null);
     setDragOverNodeId(null);
   };
 
@@ -1521,24 +1583,45 @@ export const Canvas: React.FC<CanvasProps> = ({
       );
     }
 
+      const isDropTarget = dropTargetId === node.id;
+      const showIndicatorBefore = isDropTarget && dropPosition === 'before';
+      const showIndicatorAfter = isDropTarget && dropPosition === 'after';
+      const showIndicatorInside = isDropTarget && dropPosition === 'inside';
+
       return (
         <div
           key={node.id}
           id={node.id}
+          draggable={!isPreviewMode && !isRootNode(node.id)}
+          onDragStart={(e) => handleNodeDragStart(e, node.id)}
           onClick={handleNodeClick}
           onMouseEnter={handleNodeMouseEnter}
           onMouseLeave={handleNodeMouseLeave}
-          onDragOver={(e) => handleDragOver(e, node.id)}
+          onDragOver={(e) => handleNodeDragOver(e, node)}
           onDragLeave={handleDragLeave}
-          onDrop={(e) => handleDrop(e, node.id)}
+          onDrop={(e) => handleNodeDrop(e, node)}
           style={inlineStyles}
-          className={baseClass + (node.styles.backgroundVideo || youtubeEmbed ? ' overflow-hidden' : '')}
+          className={
+            baseClass +
+            (node.styles.backgroundVideo || youtubeEmbed ? ' overflow-hidden' : '') +
+            (showIndicatorInside ? ' ring-2 ring-cyan-400 ring-offset-1 ring-offset-slate-900 shadow-[0_0_15px_rgba(34,211,238,0.3)] ' : '')
+          }
         >
+          {/* Drop indicator bar for 'before' position */}
+          {showIndicatorBefore && (
+            <div className="absolute -top-1 left-0 right-0 h-1 bg-cyan-400 shadow-[0_0_10px_#22d3ee] rounded-full z-30 pointer-events-none animate-pulse" />
+          )}
+
           {selectionBadge}
           {videoBackgroundOverlay}
           {youtubeEmbed}
           {node.content && !youtubeEmbed && <span className="relative z-10">{node.content}</span>}
           {node.children && node.children.map(child => renderNode(child))}
+
+          {/* Drop indicator bar for 'after' position */}
+          {showIndicatorAfter && (
+            <div className="absolute -bottom-1 left-0 right-0 h-1 bg-cyan-400 shadow-[0_0_10px_#22d3ee] rounded-full z-30 pointer-events-none animate-pulse" />
+          )}
         </div>
       );
   };
@@ -1620,7 +1703,20 @@ export const Canvas: React.FC<CanvasProps> = ({
           )}
 
           {/* Render Active Mockup Node Hierarchy with Transition Effect */}
-          <div className={'w-full h-full overflow-y-auto pt-6 relative z-10 ' + (screenTransitionClass || '')}>
+          <div 
+            className={'w-full h-full overflow-y-auto pt-6 relative z-10 ' + (screenTransitionClass || '')}
+            onDragOver={(e) => {
+              if (nodes.length > 0) {
+                handleNodeDragOver(e, nodes[0]);
+              }
+            }}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => {
+              if (nodes.length > 0) {
+                handleNodeDrop(e, nodes[0]);
+              }
+            }}
+          >
             {nodes.map(node => renderNode(node))}
           </div>
         </div>

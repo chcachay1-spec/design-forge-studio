@@ -2250,6 +2250,7 @@ export function App() {
             isPreviewMode={isPreviewMode}
             onExecuteAction={handleExecuteAction}
             onAddNode={handleAddNode}
+            onReorderNodes={handleReorderNodes}
             isDrawingActive={isDrawingActive}
             onCloseDrawing={() => setIsDrawingActive(false)}
             strokes={strokes}
